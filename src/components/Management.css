@@ -1,0 +1,247 @@
+/* Management Specific Layouts */
+
+.management-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.title-section h2 {
+  font-size: 22px;
+  color: var(--text-primary);
+  margin-bottom: 5px;
+}
+
+.title-section p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.box-card {
+  background-color: transparent;
+  border: 1px solid var(--accent-gold-dark);
+  border-radius: 12px;
+  padding: 25px;
+  background-image: linear-gradient(180deg, rgba(212, 175, 55, 0.03) 0%, transparent 100%);
+}
+
+.search-section {
+  display: flex;
+  align-items: flex-end;
+  gap: 15px;
+}
+
+.search-row {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-row label {
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.search-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.btn-primary {
+  background-color: var(--accent-gold);
+  color: #000;
+  border: 1px solid var(--accent-gold);
+}
+
+.btn-primary:hover {
+  background-color: #eab308;
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.btn-gold-outline {
+  background-color: rgba(212, 175, 55, 0.1);
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.table-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.table-stats {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  flex-direction: row-reverse; /* + add manager on right */
+}
+
+.table-wrapper {
+  padding: 0;
+  overflow-x: auto;
+}
+
+.management-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.management-table th {
+  background-color: #555555;
+  color: #fff;
+  text-align: right;
+  padding: 15px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.management-table td {
+  padding: 15px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.management-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.actions-cell {
+  display: flex;
+  gap: 10px;
+}
+
+.action-icon {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.action-icon.delete { color: #ef4444; border-color: rgba(239, 68, 68, 0.3); }
+.action-icon.edit { color: var(--text-secondary); }
+
+/* Create Form Styles */
+.form-section {
+  margin-bottom: 40px;
+}
+
+.section-title {
+  color: var(--accent-gold);
+  font-size: 16px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  row-gap: 25px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  color: var(--text-primary);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.req {
+  color: #ef4444;
+}
+
+.form-input, .form-select {
+  background-color: #11141D;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 12px 15px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+}
+
+.textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.phone-input-wrapper {
+  display: flex;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #11141D;
+}
+
+.phone-input-wrapper:focus-within {
+  border-color: var(--accent-gold);
+}
+
+.country-code {
+  padding: 12px 15px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-left: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+}
+
+.phone-input {
+  border: none !important;
+  flex: 1;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}

@@ -1,0 +1,1093 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import egyptCenters from '../data/egyptCenters';
+import {
+  managersAPI, coordinatorsAPI, mohfezsAPI, studentsAPI, branchesAPI, sessionsAPI, usersAPI,
+  monthlyReportsAPI, followUpReportsAPI, applicantsAPI, rowaqsAPI, applicantBranchesAPI,
+  sessionReportsAPI, platformTopManagementAPI, platformSupervisorsAPI, platformCoordinatorsAPI,
+  platformMohfezsAPI, platformSessionsAPI, platformStudentsAPI, platformApplicantsAPI,
+  platformRowaqsAPI, administrationsAPI, rolePermissionsAPI
+} from '../utils/apiService';
+
+const AppDataContext = createContext(null);
+
+// Helper functions to manage localStorage
+const getFromLocalStorage = (key, defaultValue) => {
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch (error) {
+    console.error(`Error reading from localStorage (${key}):`, error);
+    return defaultValue;
+  }
+};
+
+const saveToLocalStorage = (key, value) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error(`Error saving to localStorage (${key}):`, error);
+  }
+};
+
+const defaultPermissions = {
+  admin: {
+    sessions: { view: true, add: true, edit: true, delete: true },
+    mohfezs: { view: true, add: true, edit: true, delete: true },
+    coordinators: { view: true, add: true, edit: true, delete: true },
+    students: { view: true, add: true, edit: true, delete: true },
+    reports: { view: true, add: true, edit: true, delete: true },
+    branches: { view: true, add: true, edit: true, delete: true },
+  },
+  rowaq_admin: {
+    sessions: { view: true, add: true, edit: true, delete: true },
+    mohfezs: { view: true, add: true, edit: true, delete: true },
+    coordinators: { view: true, add: true, edit: true, delete: true },
+    students: { view: true, add: true, edit: true, delete: true },
+    reports: { view: true, add: true, edit: true, delete: true },
+    branches: { view: true, add: true, edit: true, delete: true },
+  },
+  platform_admin: {
+    sessions: { view: true, add: true, edit: true, delete: true },
+    mohfezs: { view: true, add: true, edit: true, delete: true },
+    coordinators: { view: true, add: true, edit: true, delete: true },
+    students: { view: true, add: true, edit: true, delete: true },
+    reports: { view: true, add: true, edit: true, delete: true },
+    branches: { view: true, add: true, edit: true, delete: true },
+  },
+  rowaq_manager: {
+    sessions: { view: true, add: true, edit: true, delete: false },
+    mohfezs: { view: true, add: true, edit: true, delete: false },
+    coordinators: { view: true, add: true, edit: true, delete: false },
+    students: { view: true, add: true, edit: true, delete: false },
+    reports: { view: true, add: true, edit: true, delete: true },
+    branches: { view: true, add: true, edit: true, delete: false },
+  },
+  rowaq_tech: {
+    sessions: { view: true, add: true, edit: true, delete: false },
+    mohfezs: { view: true, add: true, edit: true, delete: false },
+    coordinators: { view: true, add: true, edit: true, delete: false },
+    students: { view: true, add: true, edit: true, delete: false },
+    reports: { view: true, add: true, edit: true, delete: false },
+    branches: { view: true, add: true, edit: true, delete: false },
+  },
+  rowaq_member: {
+    sessions: { view: true, add: false, edit: false, delete: false },
+    mohfezs: { view: true, add: false, edit: false, delete: false },
+    coordinators: { view: true, add: false, edit: false, delete: false },
+    students: { view: true, add: false, edit: false, delete: false },
+    reports: { view: true, add: true, edit: false, delete: false },
+    branches: { view: true, add: false, edit: false, delete: false },
+  },
+  branch_admin_coordinator: {
+    sessions: { view: true, add: true, edit: true, delete: false },
+    mohfezs: { view: true, add: false, edit: false, delete: false },
+    coordinators: { view: true, add: false, edit: false, delete: false },
+    students: { view: true, add: true, edit: true, delete: false },
+    reports: { view: true, add: true, edit: true, delete: false },
+    branches: { view: true, add: false, edit: false, delete: false },
+  },
+  branch_scientific_coordinator: {
+    sessions: { view: true, add: false, edit: false, delete: false },
+    mohfezs: { view: true, add: false, edit: false, delete: false },
+    coordinators: { view: true, add: false, edit: false, delete: false },
+    students: { view: true, add: false, edit: false, delete: false },
+    reports: { view: true, add: true, edit: false, delete: false },
+    branches: { view: true, add: false, edit: false, delete: false },
+  },
+  mohfez: {
+    sessions: { view: true, add: false, edit: false, delete: false },
+    mohfezs: { view: true, add: false, edit: false, delete: false },
+    coordinators: { view: true, add: false, edit: false, delete: false },
+    students: { view: true, add: false, edit: false, delete: false },
+    reports: { view: true, add: true, edit: false, delete: false },
+    branches: { view: true, add: false, edit: false, delete: false },
+  },
+  platform_supervisor: {
+    sessions: { view: true, add: true, edit: true, delete: false },
+    mohfezs: { view: true, add: true, edit: true, delete: false },
+    coordinators: { view: true, add: true, edit: true, delete: false },
+    students: { view: true, add: true, edit: true, delete: false },
+    reports: { view: true, add: true, edit: true, delete: true },
+    branches: { view: true, add: true, edit: true, delete: false },
+  },
+  platform_coordinator: {
+    sessions: { view: true, add: true, edit: true, delete: false },
+    mohfezs: { view: true, add: false, edit: false, delete: false },
+    coordinators: { view: true, add: false, edit: false, delete: false },
+    students: { view: true, add: true, edit: true, delete: false },
+    reports: { view: true, add: true, edit: true, delete: false },
+    branches: { view: true, add: false, edit: false, delete: false },
+  },
+  platform_mohfez: {
+    sessions: { view: true, add: false, edit: false, delete: false },
+    mohfezs: { view: true, add: false, edit: false, delete: false },
+    coordinators: { view: true, add: false, edit: false, delete: false },
+    students: { view: true, add: false, edit: false, delete: false },
+    reports: { view: true, add: true, edit: false, delete: false },
+    branches: { view: true, add: false, edit: false, delete: false },
+  },
+  student: {
+    sessions: { view: true, add: false, edit: false, delete: false },
+    mohfezs: { view: false, add: false, edit: false, delete: false },
+    coordinators: { view: false, add: false, edit: false, delete: false },
+    students: { view: true, add: false, edit: false, delete: false },
+    reports: { view: true, add: false, edit: false, delete: false },
+    branches: { view: false, add: false, edit: false, delete: false },
+  }
+};
+
+export function AppDataProvider({ children }) {
+  // Load data from localStorage or use default values
+  const [managers, setManagers] = useState(() => getFromLocalStorage('managers', []));
+  const [monthlyReports, setMonthlyReports] = useState(() => getFromLocalStorage('monthlyReports', []));
+  const [branches, setBranches] = useState(() => getFromLocalStorage('branches', []));
+  const [coordinators, setCoordinators] = useState(() => getFromLocalStorage('coordinators', []));
+  const [mohfezs, setMohfezs] = useState(() => getFromLocalStorage('mohfezs', []));
+  const [sessions, setSessions] = useState(() => getFromLocalStorage('sessions', []));
+  const [students, setStudents] = useState(() => getFromLocalStorage('students', []));
+  const [applicants, setApplicants] = useState(() => getFromLocalStorage('applicants', []));
+  const [rowaqs, setRowaqs] = useState(() => getFromLocalStorage('rowaqs', []));
+  
+  const [followUpReports, setFollowUpReports] = useState(() => {
+    const stored = getFromLocalStorage('followUpReports', []);
+    if (stored.length > 0) return stored;
+    
+    // Auto-seed mock reports for past dates if they exist in monthlyReports
+    const reports = [];
+    const monthlyList = getFromLocalStorage('monthlyReports', []);
+    
+    monthlyList.forEach(m => {
+      if (m.branches) {
+        m.branches.forEach(b => {
+          const seedDates = ['2026-05-09', '2026-05-10', '2026-05-11', '2026-05-12', '2026-05-13', '2026-05-18', '2026-05-19', '2026-05-20', '2026-05-21', '2026-05-23'];
+          if (seedDates.includes(b.date)) {
+            reports.push({
+              id: Date.now() + Math.random(),
+              monthlyReportId: m.id,
+              branchVisitId: b.id,
+              date: b.date,
+              admin: m.admin,
+              center: b.center,
+              branch: b.branch,
+              address: 'معهد بنين نصر الله - أبو حمص',
+              rwaqs: ['رواق القرآن الكريم (أطفال)'],
+              workDays: ['الأحد', 'الثلاثاء', 'الخميس'],
+              timeFrom: '14:00',
+              timeTo: '18:00',
+              followerName: m.member,
+              followerSpecialty: m.specialty,
+              scientificCommitment: 'نعم',
+              scientificShortcoming: '',
+              administrativeCommitment: 'نعم',
+              administrativeShortcoming: '',
+              absentCoordinators: 'لا يوجد',
+              absentMohfezs: 'لا يوجد',
+              exceedingHoursPercentage: '0%',
+              multiLevelSessionsCount: '2',
+              adultRwaqMohfezsCount: '3',
+              adultRwaqDirectSessionsCount: '2',
+              adultRwaqOnlineSessionsCount: '1',
+              adultRwaqStudentsCount: '45',
+              adultRwaqAttendanceCount: '40',
+              childRwaqMohfezsCount: '5',
+              childRwaqStudentsCount: '120',
+              childRwaqAttendanceCount: '110',
+              mohfezsCommitmentToCurriculum: 'الجميع ملتزم',
+              mohfezClassManagement: 'أداء ممتاز لكل المحفظين',
+              mohfezStudentBehavior: 'أداء ممتاز لكل المحفظين',
+              tajweedNotebookActivated: 'نعم',
+              teacherRecitationCommitment: 'كل المحفظين',
+              dressCodeCommitment: 'كل المحفظين',
+              monthlyTestsAndEvaluations: 'نعم',
+              topStudentsNames: 'أحمد محمد، محمود علي',
+              positives: 'التزام المحفظين والطلاب وحسن التعامل',
+              negatives: 'لا توجد سلبيات تذكر',
+              recommendations: 'الاستمرار على نفس المستوى المتميز',
+              generalComments: 'زيارة ناجحة ومثمرة',
+              isConfirmed: false,
+              confirmationFile: ''
+            });
+          }
+        });
+      }
+    });
+    return reports;
+  });
+  const [users, setUsers] = useState(() => {
+    const defaultUsers = [
+      { id: 1, username: 'admin', email: 'admin', national_id: 'admin', password: '123', record_number: '123', name: 'Admin', role: 'admin', created_at: new Date().toLocaleDateString('ar-EG') },
+    ];
+    const stored = getFromLocalStorage('users', defaultUsers);
+    // توحيد بيانات المستخدمين القديمة لضمان عمل تسجيل الدخول
+    return stored.map(u => ({
+      ...u,
+      // username = الرقم القومي أو email أو username
+      username: u.national_id || u.email || u.username || '',
+      // email = الرقم القومي إذا لم يكن بريدًا إلكترونيًا (تجنب الكتابة فوق البريد الإلكتروني الحقيقي)
+      email: u.email || u.national_id || '',
+      // password = رقم السجل أو password الموجود
+      password: u.password || u.record_number || '',
+      // record_number = رقم السجل
+      record_number: u.record_number || u.password || '',
+    }));
+  });
+  const [applicantBranches, setApplicantBranches] = useState(() => getFromLocalStorage('applicantBranches', []));
+  const [auditLogs, setAuditLogs] = useState(() => getFromLocalStorage('auditLogs', []));
+  const [attendances, setAttendances] = useState(() => getFromLocalStorage('attendances', []));
+  const [sessionReports, setSessionReports] = useState(() => getFromLocalStorage('sessionReports', []));
+
+  // Platform Dashboard States
+  const [platformTopManagement, setPlatformTopManagement] = useState(() => getFromLocalStorage('platformTopManagement', []));
+  const [platformSupervisors, setPlatformSupervisors] = useState(() => getFromLocalStorage('platformSupervisors', []));
+  const [platformCoordinators, setPlatformCoordinators] = useState(() => getFromLocalStorage('platformCoordinators', []));
+  const [platformMohfezs, setPlatformMohfezs] = useState(() => getFromLocalStorage('platformMohfezs', []));
+  const [platformSessions, setPlatformSessions] = useState(() => getFromLocalStorage('platformSessions', []));
+  const [platformStudents, setPlatformStudents] = useState(() => getFromLocalStorage('platformStudents', []));
+  const [platformApplicants, setPlatformApplicants] = useState(() => getFromLocalStorage('platformApplicants', []));
+  const [platformRowaqs, setPlatformRowaqs] = useState(() => getFromLocalStorage('platformRowaqs', []));
+  const [administrations, setAdministrations] = useState(() => {
+    const defaultAdmins = Object.keys(egyptCenters).map((gov, index) => ({
+      id: String(1000 + index),
+      name: gov,
+      manager: '-',
+      centers_count: egyptCenters[gov]?.length || 0,
+      created_at: new Date().toLocaleDateString('ar-EG')
+    }));
+    return getFromLocalStorage('administrations', defaultAdmins);
+  });
+
+  const [theme, setTheme] = useState(() => getFromLocalStorage('theme', 'dark'));
+  const [rolePermissions, setRolePermissions] = useState(() => {
+    const loaded = getFromLocalStorage('rolePermissions', defaultPermissions);
+    if (loaded && (!loaded.rowaq_manager || !loaded.rowaq_admin || !loaded.platform_admin)) {
+      return defaultPermissions;
+    }
+    return loaded;
+  });
+
+  // Save permissions to localStorage
+  useEffect(() => {
+    saveToLocalStorage('rolePermissions', rolePermissions);
+  }, [rolePermissions]);
+
+  // Save theme to localStorage
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    saveToLocalStorage('theme', theme);
+  }, [theme]);
+
+  // Database Persistent Synchronization
+  const [dbSynced, setDbSynced] = useState(false);
+
+  useEffect(() => {
+    const syncWithBackend = async () => {
+      try {
+        console.log('🔄 Syncing with backend database...');
+        
+        const syncCollection = async (api, state, setState, key) => {
+          const remoteData = await api.getAll().catch(() => null);
+          if (remoteData) {
+            if (remoteData.length > 0) {
+              setState(remoteData);
+              saveToLocalStorage(key, remoteData);
+              console.log(`✓ Fetched ${remoteData.length} items for ${key} from MongoDB`);
+            } else if (state && state.length > 0) {
+              console.log(`Upload ${state.length} local items for ${key} to MongoDB...`);
+              await api.bulkImport(state).catch(err => console.error(`Bulk import failed for ${key}:`, err));
+              console.log(`✓ Migrated ${key} to MongoDB`);
+            }
+          }
+        };
+
+        await syncCollection(managersAPI, managers, setManagers, 'managers');
+        await syncCollection(coordinatorsAPI, coordinators, setCoordinators, 'coordinators');
+        await syncCollection(mohfezsAPI, mohfezs, setMohfezs, 'mohfezs');
+        await syncCollection(studentsAPI, students, setStudents, 'students');
+        await syncCollection(branchesAPI, branches, setBranches, 'branches');
+        await syncCollection(sessionsAPI, sessions, setSessions, 'sessions');
+        await syncCollection(usersAPI, users, setUsers, 'users');
+        
+        await syncCollection(monthlyReportsAPI, monthlyReports, setMonthlyReports, 'monthlyReports');
+        await syncCollection(followUpReportsAPI, followUpReports, setFollowUpReports, 'followUpReports');
+        await syncCollection(applicantsAPI, applicants, setApplicants, 'applicants');
+        await syncCollection(rowaqsAPI, rowaqs, setRowaqs, 'rowaqs');
+        await syncCollection(applicantBranchesAPI, applicantBranches, setApplicantBranches, 'applicantBranches');
+        await syncCollection(sessionReportsAPI, sessionReports, setSessionReports, 'sessionReports');
+        
+        await syncCollection(platformTopManagementAPI, platformTopManagement, setPlatformTopManagement, 'platformTopManagement');
+        await syncCollection(platformSupervisorsAPI, platformSupervisors, setPlatformSupervisors, 'platformSupervisors');
+        await syncCollection(platformCoordinatorsAPI, platformCoordinators, setPlatformCoordinators, 'platformCoordinators');
+        await syncCollection(platformMohfezsAPI, platformMohfezs, setPlatformMohfezs, 'platformMohfezs');
+        await syncCollection(platformSessionsAPI, platformSessions, setPlatformSessions, 'platformSessions');
+        await syncCollection(platformStudentsAPI, platformStudents, setPlatformStudents, 'platformStudents');
+        await syncCollection(platformApplicantsAPI, platformApplicants, setPlatformApplicants, 'platformApplicants');
+        await syncCollection(platformRowaqsAPI, platformRowaqs, setPlatformRowaqs, 'platformRowaqs');
+        
+        await syncCollection(administrationsAPI, administrations, setAdministrations, 'administrations');
+        await syncCollection(rolePermissionsAPI, rolePermissions, setRolePermissions, 'rolePermissions');
+        
+        setDbSynced(true);
+        console.log('✓ Database synchronization complete!');
+      } catch (error) {
+        console.error('✗ Backend sync error:', error);
+      }
+    };
+    
+    syncWithBackend();
+  }, []);
+
+  // تطبيع بيانات المستخدمين + إنشاء حسابات تلقائية من المنسقين والمحفظين والمدراء
+  // يعمل كلما تغيرت بيانات المنسقين أو المحفظين أو المدراء
+  useEffect(() => {
+    setUsers(prev => {
+      // 1) تطبيع المستخدمين الحاليين
+      let normalized = prev.map(u => {
+        const nid = String(u.national_id || '').trim();
+        const em = String(u.email || '').trim();
+        const uname = String(u.username || '').trim();
+        const pw = String(u.password || '').trim();
+        const rec = String(u.record_number || '').trim();
+        const reg = String(u.registry_no || '').trim();
+        
+        return {
+          ...u,
+          username: nid || em || uname,
+          email: em || nid,
+          national_id: nid || em || uname,
+          password: pw || rec || reg,
+          record_number: rec || pw || reg,
+        };
+      });
+
+      // 2) إنشاء حسابات مستخدمين من البيانات الموجودة (منسقين، محفظين، مدراء)
+      const existingNationalIds = new Set(normalized.map(u => String(u.national_id || '').trim()).filter(Boolean));
+      let newUsersAdded = 0;
+
+      // من المنسقين (شئون الأروقة)
+      coordinators.forEach(c => {
+        const nid = String(c.national_id || '').trim();
+        const regNo = String(c.registry_no || '').trim();
+        if (nid && !existingNationalIds.has(nid)) {
+          const role = c.specialization === 'إداري' ? 'branch_admin_coordinator' : 'branch_scientific_coordinator';
+          normalized.push({
+            id: Date.now() + Math.random(),
+            name: c.name || '',
+            email: nid,
+            username: nid,
+            national_id: nid,
+            password: regNo,
+            record_number: regNo,
+            phone: c.phone || '',
+            role: role,
+            userAdmin: c.admin || '',
+            userCenter: c.center || '',
+            userBranch: c.branch || '',
+            created_at: new Date().toLocaleDateString('ar-EG')
+          });
+          existingNationalIds.add(nid);
+          newUsersAdded++;
+        }
+      });
+
+      // من المحفظين (شئون الأروقة)
+      mohfezs.forEach(m => {
+        const nid = String(m.national_id || '').trim();
+        const regNo = String(m.registry_no || '').trim();
+        if (nid && !existingNationalIds.has(nid)) {
+          normalized.push({
+            id: Date.now() + Math.random(),
+            name: m.name || '',
+            email: nid,
+            username: nid,
+            national_id: nid,
+            password: regNo,
+            record_number: regNo,
+            phone: m.phone || '',
+            role: 'mohfez',
+            userAdmin: m.admin || '',
+            userCenter: m.center || '',
+            userBranch: m.branch || '',
+            created_at: new Date().toLocaleDateString('ar-EG')
+          });
+          existingNationalIds.add(nid);
+          newUsersAdded++;
+        }
+      });
+
+      // من المدراء/أعضاء الإدارة (شئون الأروقة)
+      managers.forEach(mg => {
+        const nid = String(mg.national_id || '').trim();
+        const recNo = String(mg.record_no || '').trim();
+        if (nid && !existingNationalIds.has(nid)) {
+          let role = 'rowaq_member';
+          if (mg.specialty === 'مدير الإدارة') role = 'rowaq_manager';
+          else if (mg.specialty === 'العضو التقني') role = 'rowaq_tech';
+          normalized.push({
+            id: Date.now() + Math.random(),
+            name: mg.name || '',
+            email: nid,
+            username: nid,
+            national_id: nid,
+            password: recNo,
+            record_number: recNo,
+            phone: mg.phone || '',
+            role: role,
+            userAdmin: mg.admin || '',
+            created_at: new Date().toLocaleDateString('ar-EG')
+          });
+          existingNationalIds.add(nid);
+          newUsersAdded++;
+        }
+      });
+
+      // من المنصة: منسقين المنصة
+      platformCoordinators.forEach(c => {
+        const nid = String(c.national_id || '').trim();
+        const regNo = String(c.registry_no || '').trim();
+        if (nid && !existingNationalIds.has(nid)) {
+          normalized.push({
+            id: Date.now() + Math.random(),
+            name: c.name || '', email: nid, username: nid, national_id: nid,
+            password: regNo, record_number: regNo, phone: c.phone || '',
+            role: 'platform_coordinator',
+            created_at: new Date().toLocaleDateString('ar-EG')
+          });
+          existingNationalIds.add(nid);
+          newUsersAdded++;
+        }
+      });
+
+      // من المنصة: المشرفين
+      platformSupervisors.forEach(s => {
+        const nid = String(s.national_id || '').trim();
+        const regNo = String(s.registry_no || '').trim();
+        if (nid && !existingNationalIds.has(nid)) {
+          normalized.push({
+            id: Date.now() + Math.random(),
+            name: s.name || '', email: nid, username: nid, national_id: nid,
+            password: regNo, record_number: regNo, phone: s.phone || '',
+            role: 'platform_supervisor',
+            created_at: new Date().toLocaleDateString('ar-EG')
+          });
+          existingNationalIds.add(nid);
+          newUsersAdded++;
+        }
+      });
+
+      // من المنصة: المحفظين
+      platformMohfezs.forEach(m => {
+        const nid = String(m.national_id || '').trim();
+        const regNo = String(m.registry_no || '').trim();
+        if (nid && !existingNationalIds.has(nid)) {
+          normalized.push({
+            id: Date.now() + Math.random(),
+            name: m.name || '', email: nid, username: nid, national_id: nid,
+            password: regNo, record_number: regNo, phone: m.phone || '',
+            role: 'platform_mohfez',
+            created_at: new Date().toLocaleDateString('ar-EG')
+          });
+          existingNationalIds.add(nid);
+          newUsersAdded++;
+        }
+      });
+
+      // من المنصة: الإدارة العليا
+      platformTopManagement.forEach(t => {
+        const nid = String(t.national_id || '').trim();
+        const regNo = String(t.registry_no || t.record_no || '').trim();
+        if (nid && !existingNationalIds.has(nid)) {
+          normalized.push({
+            id: Date.now() + Math.random(),
+            name: t.name || '', email: nid, username: nid, national_id: nid,
+            password: regNo, record_number: regNo, phone: t.phone || '',
+            role: 'platform_admin',
+            created_at: new Date().toLocaleDateString('ar-EG')
+          });
+          existingNationalIds.add(nid);
+          newUsersAdded++;
+        }
+      });
+
+      // من المنصة: دارسين المنصة (يستخدم رقم جواز السفر كاسم مستخدم وكلمة مرور)
+      platformStudents.forEach(s => {
+        const passport = String(s.passport_no || s.national_id || '').trim();
+        if (passport && !existingNationalIds.has(passport)) {
+          normalized.push({
+            id: Date.now() + Math.random(),
+            name: s.name || '',
+            email: passport,
+            username: passport,
+            national_id: passport,
+            password: passport,
+            record_number: passport,
+            phone: s.phone || '',
+            role: 'student',
+            userSession: s.session_id || s.session_no || '',
+            created_at: new Date().toLocaleDateString('ar-EG')
+          });
+          existingNationalIds.add(passport);
+          newUsersAdded++;
+        }
+      });
+
+      console.log('🔄 تطبيع بيانات المستخدمين:', normalized.length, 'مستخدم (تم إنشاء', newUsersAdded, 'حساب جديد)');
+      normalized.forEach((u, i) => {
+        console.log(`  [${i}] ${u.name}: national_id=${u.national_id}, password=${u.password}, role=${u.role}`);
+      });
+      saveToLocalStorage('users', normalized);
+      return normalized;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Save all data to localStorage whenever it changes
+  useEffect(() => {
+    saveToLocalStorage('managers', managers);
+  }, [managers]);
+
+  useEffect(() => {
+    saveToLocalStorage('monthlyReports', monthlyReports);
+  }, [monthlyReports]);
+
+  useEffect(() => {
+    saveToLocalStorage('branches', branches);
+  }, [branches]);
+
+  useEffect(() => {
+    saveToLocalStorage('followUpReports', followUpReports);
+  }, [followUpReports]);
+
+  useEffect(() => {
+    saveToLocalStorage('coordinators', coordinators);
+  }, [coordinators]);
+
+  useEffect(() => {
+    saveToLocalStorage('mohfezs', mohfezs);
+  }, [mohfezs]);
+
+  useEffect(() => {
+    saveToLocalStorage('sessions', sessions);
+  }, [sessions]);
+
+  useEffect(() => {
+    saveToLocalStorage('students', students);
+  }, [students]);
+
+  useEffect(() => {
+    saveToLocalStorage('applicants', applicants);
+  }, [applicants]);
+
+  useEffect(() => {
+    saveToLocalStorage('rowaqs', rowaqs);
+  }, [rowaqs]);
+
+  useEffect(() => {
+    saveToLocalStorage('users', users);
+  }, [users]);
+
+  useEffect(() => {
+    saveToLocalStorage('applicantBranches', applicantBranches);
+  }, [applicantBranches]);
+
+  useEffect(() => {
+    saveToLocalStorage('auditLogs', auditLogs);
+  }, [auditLogs]);
+
+  useEffect(() => {
+    saveToLocalStorage('attendances', attendances);
+  }, [attendances]);
+
+  useEffect(() => {
+    saveToLocalStorage('sessionReports', sessionReports);
+  }, [sessionReports]);
+
+  useEffect(() => {
+    saveToLocalStorage('administrations', administrations);
+  }, [administrations]);
+
+  useEffect(() => {
+    setAdministrations(prev => {
+      let changed = false;
+      const next = prev.map(admin => {
+        const adminManager = managers.find(m => m.admin === admin.name && m.specialty === 'مدير الإدارة');
+        const managerName = adminManager ? adminManager.name : '-';
+        if (admin.manager !== managerName) {
+          changed = true;
+          return { ...admin, manager: managerName };
+        }
+        return admin;
+      });
+      return changed ? next : prev;
+    });
+  }, [managers]);
+  const addCenterToAdmin = (adminName, newCenter) => {
+    setAdministrations(prev => prev.map(a => a.name === adminName ? { ...a, centers_count: a.centers_count + 1 } : a));
+  };
+
+  const addManager = (manager) => {
+    const newManager = { ...manager, id: String(Date.now() + Math.random()) };
+    setManagers(prev => [...prev, newManager]);
+    managersAPI.create(newManager).catch(err => console.error(err));
+  };
+  const updateManager = (id, updatedManager) => {
+    setManagers(prev => prev.map(m => String(m.id) === String(id) ? { ...m, ...updatedManager } : m));
+    managersAPI.update(id, updatedManager).catch(err => console.error(err));
+  };
+  const deleteManager = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setManagers(prev => prev.filter(m => String(m.id) !== String(id)));
+      managersAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addMonthlyReport = (report) => {
+    const newReport = { ...report, id: String(Date.now() + Math.random()) };
+    setMonthlyReports(prev => [...prev, newReport]);
+    monthlyReportsAPI.create(newReport).catch(err => console.error(err));
+  };
+  const updateMonthlyReport = (id, updatedReport) => {
+    setMonthlyReports(prev => prev.map(r => String(r.id) === String(id) ? { ...r, ...updatedReport } : r));
+    monthlyReportsAPI.update(id, updatedReport).catch(err => console.error(err));
+  };
+  const deleteMonthlyReport = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setMonthlyReports(prev => prev.filter(r => String(r.id) !== String(id)));
+      monthlyReportsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addBranch = (branch) => {
+    const newBranch = { ...branch, id: String(Date.now() + Math.random()) };
+    setBranches(prev => [...prev, newBranch]);
+    branchesAPI.create(newBranch).catch(err => console.error(err));
+  };
+  const updateBranch = (id, updatedBranch) => {
+    setBranches(prev => prev.map(b => String(b.id) === String(id) ? { ...b, ...updatedBranch } : b));
+    branchesAPI.update(id, updatedBranch).catch(err => console.error(err));
+  };
+  const deleteBranch = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setBranches(prev => prev.filter(b => String(b.id) !== String(id)));
+      branchesAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addFollowUpReport = (report) => {
+    let finalReport = { ...report };
+    let isUpdate = false;
+    setFollowUpReports(prev => {
+      const existsIndex = prev.findIndex(r => String(r.monthlyReportId) === String(report.monthlyReportId) && String(r.branchVisitId) === String(report.branchVisitId));
+      if (existsIndex > -1) {
+        isUpdate = true;
+        finalReport.id = prev[existsIndex].id;
+        const next = [...prev];
+        next[existsIndex] = { ...next[existsIndex], ...report };
+        return next;
+      }
+      finalReport.id = String(Date.now() + Math.random());
+      return [...prev, finalReport];
+    });
+    if (isUpdate) followUpReportsAPI.update(finalReport.id, finalReport).catch(err => console.error(err));
+    else followUpReportsAPI.create(finalReport).catch(err => console.error(err));
+  };
+
+  const confirmFollowUpReport = (monthlyReportId, branchVisitId, fileName) => {
+    let updatedReport = null;
+    setFollowUpReports(prev => {
+      return prev.map(r => {
+        if (String(r.monthlyReportId) === String(monthlyReportId) && String(r.branchVisitId) === String(branchVisitId)) {
+          updatedReport = { ...r, isConfirmed: true, confirmationFile: fileName };
+          return updatedReport;
+        }
+        return r;
+      });
+    });
+    if (updatedReport) followUpReportsAPI.update(updatedReport.id, updatedReport).catch(err => console.error(err));
+  };
+
+  const addCoordinator = (coordinator) => {
+    const newCoordinator = { ...coordinator, id: String(Date.now() + Math.random()) };
+    setCoordinators(prev => [...prev, newCoordinator]);
+    coordinatorsAPI.create(newCoordinator).catch(err => console.error(err));
+  };
+  const updateCoordinator = (id, updatedCoordinator) => {
+    setCoordinators(prev => prev.map(c => String(c.id) === String(id) ? { ...c, ...updatedCoordinator } : c));
+    coordinatorsAPI.update(id, updatedCoordinator).catch(err => console.error(err));
+  };
+  const deleteCoordinator = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setCoordinators(prev => prev.filter(c => String(c.id) !== String(id)));
+      coordinatorsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addMohfez = (mohfez) => {
+    const newMohfez = { ...mohfez, id: String(Date.now() + Math.random()) };
+    setMohfezs(prev => [...prev, newMohfez]);
+    mohfezsAPI.create(newMohfez).catch(err => console.error(err));
+  };
+  const updateMohfez = (id, updatedMohfez) => {
+    setMohfezs(prev => prev.map(m => String(m.id) === String(id) ? { ...m, ...updatedMohfez } : m));
+    mohfezsAPI.update(id, updatedMohfez).catch(err => console.error(err));
+  };
+  const deleteMohfez = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setMohfezs(prev => prev.filter(m => String(m.id) !== String(id)));
+      mohfezsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addSession = (session) => {
+    const newSession = { ...session, id: String(Date.now() + Math.random()) };
+    setSessions(prev => [...prev, newSession]);
+    sessionsAPI.create(newSession).catch(err => console.error(err));
+  };
+  const updateSession = (id, updatedSession) => {
+    setSessions(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...updatedSession } : s));
+    sessionsAPI.update(id, updatedSession).catch(err => console.error(err));
+  };
+  const deleteSession = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setSessions(prev => prev.filter(s => String(s.id) !== String(id)));
+      sessionsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addStudent = (student) => {
+    const newStudent = { ...student, id: String(Date.now() + Math.random()) };
+    setStudents(prev => [...prev, newStudent]);
+    studentsAPI.create(newStudent).catch(err => console.error(err));
+  };
+  const updateStudent = (id, updatedStudent) => {
+    setStudents(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...updatedStudent } : s));
+    studentsAPI.update(id, updatedStudent).catch(err => console.error(err));
+  };
+  const deleteStudent = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setStudents(prev => prev.filter(s => String(s.id) !== String(id)));
+      studentsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addApplicant = (applicant) => {
+    const newApplicant = { ...applicant, id: String(Date.now() + Math.random()), register_date: new Date().toLocaleDateString('en-GB') };
+    setApplicants(prev => [...prev, newApplicant]);
+    applicantsAPI.create(newApplicant).catch(err => console.error(err));
+  };
+  const updateApplicant = (id, updatedApplicant) => {
+    setApplicants(prev => prev.map(a => String(a.id) === String(id) ? { ...a, ...updatedApplicant } : a));
+    applicantsAPI.update(id, updatedApplicant).catch(err => console.error(err));
+  };
+  const deleteApplicant = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setApplicants(prev => prev.filter(a => String(a.id) !== String(id)));
+      applicantsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addRowaq = (rowaq) => {
+    const newRowaq = { ...rowaq, id: String(Date.now() + Math.random()), levels: parseInt(rowaq.levels) || 0, created_at: new Date().toISOString().split('T')[0] };
+    setRowaqs(prev => [...prev, newRowaq]);
+    rowaqsAPI.create(newRowaq).catch(err => console.error(err));
+  };
+  const updateRowaq = (id, updatedRowaq) => {
+    setRowaqs(prev => prev.map(r => String(r.id) === String(id) ? { ...r, ...updatedRowaq, levels: parseInt(updatedRowaq.levels) || 0 } : r));
+    rowaqsAPI.update(id, updatedRowaq).catch(err => console.error(err));
+  };
+  const deleteRowaq = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setRowaqs(prev => prev.filter(r => String(r.id) !== String(id)));
+      rowaqsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const deleteUser = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setUsers(prev => {
+        const next = prev.filter(u => String(u.id) !== String(id));
+        saveToLocalStorage('users', next);
+        return next;
+      });
+      usersAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const normalizeUserFields = (user) => ({
+    ...user,
+    username: user.username || user.national_id || user.email || '',
+    email: user.email || user.national_id || '',
+    password: user.password || user.record_number || '',
+    record_number: user.record_number || user.password || '',
+  });
+
+  const addUser = (user) => {
+    const normalizedUser = {
+      ...normalizeUserFields(user),
+      id: String(Date.now()),
+      created_at: new Date().toLocaleDateString('ar-EG')
+    };
+    try {
+      const stored = JSON.parse(localStorage.getItem('users') || '[]');
+      const nid = String(normalizedUser.national_id || '').trim();
+      if (!nid || !stored.some(u => String(u.national_id || '').trim() === nid && nid !== '')) {
+        stored.push(normalizedUser);
+        localStorage.setItem('users', JSON.stringify(stored));
+      }
+    } catch (e) { console.error(e); }
+    setUsers(prev => {
+      const nid = String(normalizedUser.national_id || '').trim();
+      if (nid && prev.some(u => String(u.national_id || '').trim() === nid)) return prev;
+      return [...prev, normalizedUser];
+    });
+    usersAPI.create(normalizedUser).catch(err => console.error(err));
+  };
+
+  const updateUser = (id, updatedUser) => {
+    const mergeAndNormalize = (u) => {
+      const merged = { ...u, ...updatedUser };
+      return {
+        ...merged,
+        username: merged.national_id || merged.email || merged.username || '',
+        email: merged.email || merged.national_id || '',
+        password: merged.password || merged.record_number || '',
+        record_number: merged.record_number || merged.password || '',
+      };
+    };
+    let payload = null;
+    setUsers(prev => prev.map(u => {
+      if (String(u.id) === String(id)) {
+        payload = mergeAndNormalize(u);
+        return payload;
+      }
+      return u;
+    }));
+    try {
+      const stored = JSON.parse(localStorage.getItem('users') || '[]');
+      const updated = stored.map(u => String(u.id) === String(id) ? mergeAndNormalize(u) : u);
+      localStorage.setItem('users', JSON.stringify(updated));
+    } catch (e) { console.error(e); }
+    if (payload) usersAPI.update(id, payload).catch(err => console.error(err));
+  };
+
+  const addApplicantBranch = (item) => {
+    const newItem = { ...item, id: String(Date.now()) };
+    setApplicantBranches(prev => [...prev, newItem]);
+    applicantBranchesAPI.create(newItem).catch(err => console.error(err));
+  };
+  const updateApplicantBranch = (id, updatedItem) => {
+    setApplicantBranches(prev => prev.map(b => String(b.id) === String(id) ? { ...b, ...updatedItem } : b));
+    applicantBranchesAPI.update(id, updatedItem).catch(err => console.error(err));
+  };
+  const deleteApplicantBranch = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setApplicantBranches(prev => prev.filter(b => String(b.id) !== String(id)));
+      applicantBranchesAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addAttendance = (attendance) => {
+    const newAttendance = { ...attendance, id: String(Date.now()) };
+    setAttendances(prev => [...prev, newAttendance]);
+  };
+  const deleteAttendance = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setAttendances(prev => prev.filter(a => String(a.id) !== String(id)));
+    }
+  };
+
+  const addSessionReport = (report) => {
+    const newReport = { ...report, id: String(Date.now()) };
+    setSessionReports(prev => [...prev, newReport]);
+    sessionReportsAPI.create(newReport).catch(err => console.error(err));
+  };
+  const deleteSessionReport = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setSessionReports(prev => prev.filter(r => String(r.id) !== String(id)));
+      sessionReportsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addPlatformTopManagement = (item) => {
+    const newItem = { ...item, id: String(Date.now()) };
+    setPlatformTopManagement(prev => [...prev, newItem]);
+    platformTopManagementAPI.create(newItem).catch(err => console.error(err));
+  };
+  const updatePlatformTopManagement = (id, updatedItem) => {
+    setPlatformTopManagement(prev => prev.map(m => String(m.id) === String(id) ? { ...m, ...updatedItem } : m));
+    platformTopManagementAPI.update(id, updatedItem).catch(err => console.error(err));
+  };
+  const deletePlatformTopManagement = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setPlatformTopManagement(prev => prev.filter(m => String(m.id) !== String(id)));
+      platformTopManagementAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addPlatformSupervisor = (item) => {
+    const newItem = { ...item, id: String(Date.now()) };
+    setPlatformSupervisors(prev => [...prev, newItem]);
+    platformSupervisorsAPI.create(newItem).catch(err => console.error(err));
+  };
+  const updatePlatformSupervisor = (id, updatedItem) => {
+    setPlatformSupervisors(prev => prev.map(m => String(m.id) === String(id) ? { ...m, ...updatedItem } : m));
+    platformSupervisorsAPI.update(id, updatedItem).catch(err => console.error(err));
+  };
+  const deletePlatformSupervisor = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setPlatformSupervisors(prev => prev.filter(m => String(m.id) !== String(id)));
+      platformSupervisorsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addPlatformCoordinator = (item) => {
+    const newItem = { ...item, id: String(Date.now()) };
+    setPlatformCoordinators(prev => [...prev, newItem]);
+    platformCoordinatorsAPI.create(newItem).catch(err => console.error(err));
+  };
+  const updatePlatformCoordinator = (id, updatedItem) => {
+    setPlatformCoordinators(prev => prev.map(m => String(m.id) === String(id) ? { ...m, ...updatedItem } : m));
+    platformCoordinatorsAPI.update(id, updatedItem).catch(err => console.error(err));
+  };
+  const deletePlatformCoordinator = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setPlatformCoordinators(prev => prev.filter(m => String(m.id) !== String(id)));
+      platformCoordinatorsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addPlatformMohfez = (item) => {
+    const newItem = { ...item, id: String(Date.now()) };
+    setPlatformMohfezs(prev => [...prev, newItem]);
+    platformMohfezsAPI.create(newItem).catch(err => console.error(err));
+  };
+  const updatePlatformMohfez = (id, updatedItem) => {
+    setPlatformMohfezs(prev => prev.map(m => String(m.id) === String(id) ? { ...m, ...updatedItem } : m));
+    platformMohfezsAPI.update(id, updatedItem).catch(err => console.error(err));
+  };
+  const deletePlatformMohfez = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setPlatformMohfezs(prev => prev.filter(m => String(m.id) !== String(id)));
+      platformMohfezsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addPlatformSession = (item) => {
+    const newItem = { ...item, id: String(Date.now()) };
+    setPlatformSessions(prev => [...prev, newItem]);
+    platformSessionsAPI.create(newItem).catch(err => console.error(err));
+  };
+  const updatePlatformSession = (id, updatedItem) => {
+    setPlatformSessions(prev => prev.map(m => String(m.id) === String(id) ? { ...m, ...updatedItem } : m));
+    platformSessionsAPI.update(id, updatedItem).catch(err => console.error(err));
+  };
+  const deletePlatformSession = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setPlatformSessions(prev => prev.filter(m => String(m.id) !== String(id)));
+      platformSessionsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addPlatformStudent = (item) => {
+    const newItem = { ...item, id: String(Date.now()) };
+    setPlatformStudents(prev => [...prev, newItem]);
+    platformStudentsAPI.create(newItem).catch(err => console.error(err));
+  };
+  const updatePlatformStudent = (id, updatedItem) => {
+    setPlatformStudents(prev => prev.map(m => String(m.id) === String(id) ? { ...m, ...updatedItem } : m));
+    platformStudentsAPI.update(id, updatedItem).catch(err => console.error(err));
+  };
+  const deletePlatformStudent = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setPlatformStudents(prev => prev.filter(m => String(m.id) !== String(id)));
+      platformStudentsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addPlatformApplicant = (item) => {
+    const newItem = { ...item, id: String(Date.now()) };
+    setPlatformApplicants(prev => [...prev, newItem]);
+    platformApplicantsAPI.create(newItem).catch(err => console.error(err));
+  };
+  const updatePlatformApplicant = (id, updatedItem) => {
+    setPlatformApplicants(prev => prev.map(m => String(m.id) === String(id) ? { ...m, ...updatedItem } : m));
+    platformApplicantsAPI.update(id, updatedItem).catch(err => console.error(err));
+  };
+  const deletePlatformApplicant = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setPlatformApplicants(prev => prev.filter(m => String(m.id) !== String(id)));
+      platformApplicantsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addPlatformRowaq = (item) => {
+    const newItem = { ...item, id: String(Date.now()), levels: item.levels || 0, created_at: new Date().toISOString().split('T')[0] };
+    setPlatformRowaqs(prev => [...prev, newItem]);
+    platformRowaqsAPI.create(newItem).catch(err => console.error(err));
+  };
+  const updatePlatformRowaq = (id, updatedItem) => {
+    setPlatformRowaqs(prev => prev.map(m => String(m.id) === String(id) ? { ...m, ...updatedItem } : m));
+    platformRowaqsAPI.update(id, updatedItem).catch(err => console.error(err));
+  };
+  const deletePlatformRowaq = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setPlatformRowaqs(prev => prev.filter(m => String(m.id) !== String(id)));
+      platformRowaqsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+  const updateRolePermissions = (newPermissions) => {
+    setRolePermissions(newPermissions);
+  };
+
+  const hasPermission = (module, action) => {
+    try {
+      const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+      const role = currentUser ? currentUser.role : 'admin';
+      const rolePerms = rolePermissions[role] || defaultPermissions[role] || defaultPermissions.student;
+      return rolePerms && rolePerms[module] ? !!rolePerms[module][action] : false;
+    } catch {
+      return true;
+    }
+  };
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
+  return (
+    <AppDataContext.Provider value={{
+      managers, addManager, updateManager, deleteManager,
+      monthlyReports, addMonthlyReport, updateMonthlyReport, deleteMonthlyReport,
+      branches, addBranch, updateBranch, deleteBranch,
+      coordinators, addCoordinator, updateCoordinator, deleteCoordinator,
+      mohfezs, addMohfez, updateMohfez, deleteMohfez,
+      sessions, addSession, updateSession, deleteSession,
+      students, addStudent, updateStudent, deleteStudent,
+      followUpReports, addFollowUpReport, confirmFollowUpReport,
+      applicants, addApplicant, updateApplicant, deleteApplicant,
+      administrations, addCenterToAdmin,
+      rowaqs, addRowaq, updateRowaq, deleteRowaq,
+      users, deleteUser, addUser, updateUser,
+      applicantBranches, addApplicantBranch, updateApplicantBranch, deleteApplicantBranch,
+      auditLogs,
+      attendances, addAttendance, deleteAttendance,
+      sessionReports, addSessionReport, deleteSessionReport,
+      
+      platformTopManagement, addPlatformTopManagement, updatePlatformTopManagement, deletePlatformTopManagement,
+      platformSupervisors, addPlatformSupervisor, updatePlatformSupervisor, deletePlatformSupervisor,
+      platformCoordinators, addPlatformCoordinator, updatePlatformCoordinator, deletePlatformCoordinator,
+      platformMohfezs, addPlatformMohfez, updatePlatformMohfez, deletePlatformMohfez,
+      platformSessions, addPlatformSession, updatePlatformSession, deletePlatformSession,
+      platformStudents, addPlatformStudent, updatePlatformStudent, deletePlatformStudent,
+      platformApplicants, addPlatformApplicant, updatePlatformApplicant, deletePlatformApplicant,
+      platformRowaqs, addPlatformRowaq, updatePlatformRowaq, deletePlatformRowaq,
+
+      theme, toggleTheme,
+      rolePermissions, updateRolePermissions, hasPermission,
+    }}>
+      {children}
+    </AppDataContext.Provider>
+  );
+}
+
+export function useAppData() {
+  return useContext(AppDataContext);
+}

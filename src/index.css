@@ -1,0 +1,175 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@400;600;700&display=swap');
+
+:root {
+  --bg-main: #0B0E14; /* very dark blue/black background */
+  --bg-sidebar: #11141D; /* slightly lighter than main */
+  --bg-card: #1C202B; /* card backgrounds */
+  --bg-header: #11141D;
+  --text-primary: #FFFFFF;
+  --text-secondary: #A0A5AF;
+  --text-muted: #6B7280;
+  --accent-gold: #D4AF37; /* The azhar yellow/gold */
+  --accent-gold-dark: #A68A2E;
+  --border-subtle: #2A2F3D;
+  
+  /* Icon colors from stats */
+  --icon-blue: #3B82F6;
+  --icon-purple: #8B5CF6;
+  --icon-yellow: #F59E0B;
+  --icon-green: #10B981;
+
+  --bg-transparent-05: rgba(255, 255, 255, 0.05);
+  --bg-transparent-02: rgba(255, 255, 255, 0.02);
+  --bg-transparent-10: rgba(255, 255, 255, 0.1);
+
+  /* Public pages variables */
+  --pub-bg: #1a2e35;
+  --pub-bg-alt: #152429;
+  --pub-nav-bg: #1a2e35;
+  --pub-text: #ffffff;
+  --pub-text-soft: rgba(255,255,255,0.75);
+  --pub-text-muted: rgba(255,255,255,0.5);
+  --pub-card-bg: rgba(255,255,255,0.04);
+  --pub-card-border: rgba(255,255,255,0.08);
+  --pub-nav-border: rgba(255,255,255,0.08);
+  --pub-green: #22c55e;
+  --pub-circle-gold: rgba(212,175,55,0.08);
+  --pub-circle-gold-border: rgba(212,175,55,0.15);
+  --pub-circle-green: rgba(34,197,94,0.06);
+  --pub-circle-green-border: rgba(34,197,94,0.1);
+  --pub-overlay: linear-gradient(to left, rgba(26,46,53,0.6) 0%, rgba(26,46,53,0.1) 50%, transparent 100%);
+  --pub-img-opacity: 1;
+}
+
+[data-theme='light'] {
+  --bg-main: #F3F4F6;
+  --bg-sidebar: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-header: #FFFFFF;
+  --text-primary: #1F2937;
+  --text-secondary: #4B5563;
+  --text-muted: #9CA3AF;
+  --accent-gold: #D4AF37;
+  --accent-gold-dark: #A68A2E;
+  --border-subtle: #D1D5DB;
+  
+  --bg-transparent-05: rgba(0, 0, 0, 0.05);
+  --bg-transparent-02: rgba(0, 0, 0, 0.02);
+  --bg-transparent-10: rgba(0, 0, 0, 0.1);
+
+  /* Public pages variables - light */
+  --pub-bg: #f0f4f3;
+  --pub-bg-alt: #e8edec;
+  --pub-nav-bg: #1a2e35;
+  --pub-text: #1a2e35;
+  --pub-text-soft: #3a5a60;
+  --pub-text-muted: #5a7a80;
+  --pub-card-bg: #ffffff;
+  --pub-card-border: #d1dbd9;
+  --pub-nav-border: rgba(255,255,255,0.08);
+  --pub-green: #16a34a;
+  --pub-circle-gold: rgba(212,175,55,0.12);
+  --pub-circle-gold-border: rgba(212,175,55,0.25);
+  --pub-circle-green: rgba(34,197,94,0.1);
+  --pub-circle-green-border: rgba(34,197,94,0.2);
+  --pub-overlay: linear-gradient(to left, rgba(240,244,243,0.7) 0%, rgba(240,244,243,0.3) 50%, transparent 100%);
+  --pub-img-opacity: 0.9;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Cairo', sans-serif;
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  direction: rtl; /* Right-to-Left for Arabic */
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Typography styles */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  margin: 0;
+}
+
+.font-calligraphy {
+  font-family: 'Amiri', serif;
+}
+
+/* Utilities */
+.text-gold { color: var(--accent-gold); }
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+
+.bg-card { background-color: var(--bg-card); }
+.bg-sidebar { background-color: var(--bg-sidebar); }
+
+.border-subtle { border-color: var(--border-subtle); }
+
+/* Decorative floating animations */
+@keyframes float-slow-1 {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes float-slow-2 {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+.animate-float-1 {
+  animation: float-slow-1 6s ease-in-out infinite;
+}
+
+.animate-float-2 {
+  animation: float-slow-2 7s ease-in-out infinite;
+}
+
+@keyframes pulse-emerald {
+  0%, 100% {
+    transform: scale(0.85);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.8);
+  }
+}
+
+.pulse-indicator {
+  animation: pulse-emerald 2s ease-in-out infinite;
+}

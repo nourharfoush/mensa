@@ -1,0 +1,8 @@
+/* App specific overrides if any */
+.main-content {
+  background-color: var(--bg-main);
+}
+
+.content-scroll-area {
+  padding-bottom: 50px;
+}
