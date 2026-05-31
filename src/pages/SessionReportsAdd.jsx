@@ -54,7 +54,7 @@ function SessionReportsAdd() {
   const navigate = useNavigate();
   const location = useLocation();
   const isPlatform = location.pathname.startsWith('/platform-sessions');
-  const { sessions, platformSessions, addSessionReport } = useAppData();
+  const { sessions, platformSessions, sessionReports, addSessionReport } = useAppData();
   
   const sessionId = id;
   const session = isPlatform
@@ -85,6 +85,33 @@ function SessionReportsAdd() {
   const handleSave = () => {
     if (!date) {
       alert('يرجى اختيار التاريخ');
+      return;
+    }
+
+    // 1. Prevent duplicate reports on the same day
+    const isDuplicate = (sessionReports || []).some(r => 
+      String(r.sessionId) === String(sessionId) && 
+      r.date === date &&
+      !!r.isPlatform === !!isPlatform
+    );
+    if (isDuplicate) {
+      alert('تم تسجيل تقرير لهذه الحلقة في هذا اليوم بالفعل!');
+      return;
+    }
+
+    // 2. Validate session working days
+    const getArabicDayName = (dateString) => {
+      if (!dateString) return '';
+      const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+      const dayIndex = new Date(dateString).getDay();
+      return days[dayIndex];
+    };
+
+    const selectedDayName = getArabicDayName(date);
+    const sessionWorkDays = session?.workDays || [];
+
+    if (sessionWorkDays.length > 0 && !sessionWorkDays.includes(selectedDayName)) {
+      alert(`تاريخ التقرير لا يوافق أيام عمل الحلقة. أيام عمل الحلقة هي: ${sessionWorkDays.join('، ')} (اليوم المختار: ${selectedDayName})`);
       return;
     }
     
