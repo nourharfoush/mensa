@@ -61,7 +61,16 @@ function SessionReportsAdd() {
     ? platformSessions.find(s => String(s.id) === String(id))
     : sessions.find(s => String(s.id) === String(id));
 
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0].replace(/-/g, '/'));
+  const getLocalDateString = (offsetHours = 0) => {
+    const d = new Date();
+    d.setHours(d.getHours() + offsetHours);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const [date, setDate] = useState(getLocalDateString(0));
   const [sessionNum, setSessionNum] = useState('');
 
   // Sections State
@@ -186,11 +195,12 @@ function SessionReportsAdd() {
           <div style={{ flex: '1', display: 'flex', gap: '20px' }}>
             <div className="form-group" style={{ flex: '1' }}>
               <input 
-                type="text" 
+                type="date" 
                 className="form-input" 
                 value={date} 
+                min={getLocalDateString(-48)}
+                max={getLocalDateString(0)}
                 onChange={(e) => setDate(e.target.value)} 
-                placeholder="YYYY/MM/DD"
               />
             </div>
             <div className="form-group" style={{ flex: '1', display: 'flex', alignItems: 'center', gap: '15px' }}>
