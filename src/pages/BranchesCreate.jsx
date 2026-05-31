@@ -40,7 +40,7 @@ function BranchesCreate() {
   // Load branch data for editing
   useEffect(() => {
     if (isEditing && branchId) {
-      const branchToEdit = branches.find(b => b.id === Number(branchId));
+      const branchToEdit = branches.find(b => String(b.id) === String(branchId));
       if (branchToEdit) {
         setForm({
           admin: branchToEdit.admin || '',
@@ -64,7 +64,7 @@ function BranchesCreate() {
     }
     
     if (isEditing) {
-      updateBranch(Number(branchId), form);
+      updateBranch(String(branchId), form);
       alert('تم تحديث الفرع بنجاح');
     } else {
       addBranch(form);

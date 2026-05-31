@@ -15,8 +15,8 @@ function FollowUpReportCreate() {
     followUpReports
   } = useAppData();
 
-  const monthlyReport = monthlyReports.find(r => r.id === Number(reportId));
-  const branchVisit = monthlyReport?.branches?.find(b => b.id === Number(branchId));
+  const monthlyReport = monthlyReports.find(r => String(r.id) === String(reportId));
+  const branchVisit = monthlyReport?.branches?.find(b => String(b.id) === String(branchId));
   
   // Find full branch details from database
   const branchDetails = appBranches.find(

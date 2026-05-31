@@ -77,7 +77,7 @@ function ManagementCreate() {
     const existingUser = users.find(u => u.national_id === form.national_id || u.email === form.national_id);
     
     if (isEditing) {
-      updateManager(Number(managerId), finalForm);
+      updateManager(String(managerId), finalForm);
       if (existingUser) {
         updateUser(existingUser.id, {
           name: form.name,

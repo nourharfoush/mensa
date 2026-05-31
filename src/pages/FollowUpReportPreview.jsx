@@ -7,9 +7,9 @@ function FollowUpReportPreview() {
   const { reportId, branchId } = useParams();
   const { monthlyReports, followUpReports } = useAppData();
 
-  const monthlyReport = monthlyReports.find(r => r.id === Number(reportId));
+  const monthlyReport = monthlyReports.find(r => String(r.id) === String(reportId));
   const report = followUpReports.find(
-    r => r.monthlyReportId === Number(reportId) && r.branchVisitId === Number(branchId)
+    r => String(r.monthlyReportId) === String(reportId) && String(r.branchVisitId) === String(branchId)
   );
 
   if (!monthlyReport || !report) {

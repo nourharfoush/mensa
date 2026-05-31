@@ -30,7 +30,7 @@ function MohfezCreate() {
   // Load mohfez data for editing
   useEffect(() => {
     if (isEditing && mohfezId) {
-      const mohfezToEdit = mohfezs.find(m => m.id === Number(mohfezId));
+      const mohfezToEdit = mohfezs.find(m => String(m.id) === String(mohfezId));
       if (mohfezToEdit) {
         setForm({
           name: mohfezToEdit.name || '',
@@ -71,7 +71,7 @@ function MohfezCreate() {
     const existingUser = users.find(u => u.national_id === form.national_id || u.email === form.national_id);
     
     if (isEditing) {
-      updateMohfez(Number(mohfezId), finalForm);
+      updateMohfez(String(mohfezId), finalForm);
       if (existingUser) {
         updateUser(existingUser.id, {
           name: form.name,

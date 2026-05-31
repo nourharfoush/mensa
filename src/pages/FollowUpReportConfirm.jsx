@@ -8,9 +8,9 @@ function FollowUpReportConfirm() {
   const navigate = useNavigate();
   const { monthlyReports, followUpReports, confirmFollowUpReport } = useAppData();
 
-  const monthlyReport = monthlyReports.find(r => r.id === Number(reportId));
+  const monthlyReport = monthlyReports.find(r => String(r.id) === String(reportId));
   const report = followUpReports.find(
-    r => r.monthlyReportId === Number(reportId) && r.branchVisitId === Number(branchId)
+    r => String(r.monthlyReportId) === String(reportId) && String(r.branchVisitId) === String(branchId)
   );
 
   const [file, setFile] = useState(null);

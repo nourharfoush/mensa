@@ -33,7 +33,7 @@ function CoordinatorsCreate() {
   // Load coordinator data for editing
   useEffect(() => {
     if (isEditing && coordinatorId) {
-      const coordinatorToEdit = coordinators.find(c => c.id === Number(coordinatorId));
+      const coordinatorToEdit = coordinators.find(c => String(c.id) === String(coordinatorId));
       if (coordinatorToEdit) {
         setForm({
           name: coordinatorToEdit.name || '',
@@ -74,7 +74,7 @@ function CoordinatorsCreate() {
     const existingUser = users.find(u => u.national_id === form.national_id || u.email === form.national_id);
     
     if (isEditing) {
-      updateCoordinator(Number(coordinatorId), finalForm);
+      updateCoordinator(String(coordinatorId), finalForm);
       if (existingUser) {
         updateUser(existingUser.id, {
           name: form.name,
