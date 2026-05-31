@@ -49,6 +49,14 @@ const getCurriculumData = (rowaq, level) => {
   return null;
 };
 
+const getArabicDayName = (dateString) => {
+  if (!dateString) return '';
+  const [year, month, day] = dateString.split('-').map(Number);
+  const d = new Date(year, month - 1, day);
+  const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+  return days[d.getDay()];
+};
+
 function SessionReportsAdd() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -82,6 +90,10 @@ function SessionReportsAdd() {
   const isLevelOneChild = session?.rowaq === 'رواق القرآن الكريم (أطفال)' && (session?.level === 'الأول' || session?.level?.includes('الأول'));
   const curriculumData = getCurriculumData(session?.rowaq, session?.level);
 
+  const selectedDayName = getArabicDayName(date);
+  const sessionWorkDays = session?.workDays || [];
+  const isInvalidDay = date && sessionWorkDays.length > 0 && !sessionWorkDays.includes(selectedDayName);
+
   const handleSave = () => {
     if (!date) {
       alert('يرجى اختيار التاريخ');
@@ -100,17 +112,7 @@ function SessionReportsAdd() {
     }
 
     // 2. Validate session working days
-    const getArabicDayName = (dateString) => {
-      if (!dateString) return '';
-      const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-      const dayIndex = new Date(dateString).getDay();
-      return days[dayIndex];
-    };
-
-    const selectedDayName = getArabicDayName(date);
-    const sessionWorkDays = session?.workDays || [];
-
-    if (sessionWorkDays.length > 0 && !sessionWorkDays.includes(selectedDayName)) {
+    if (isInvalidDay) {
       alert(`تاريخ التقرير لا يوافق أيام عمل الحلقة. أيام عمل الحلقة هي: ${sessionWorkDays.join('، ')} (اليوم المختار: ${selectedDayName})`);
       return;
     }
@@ -228,7 +230,13 @@ function SessionReportsAdd() {
                 min={getLocalDateString(-48)}
                 max={getLocalDateString(0)}
                 onChange={(e) => setDate(e.target.value)} 
+                style={isInvalidDay ? { borderColor: '#ef4444' } : {}}
               />
+              {isInvalidDay && (
+                <div style={{ color: '#ef4444', fontSize: '13px', marginTop: '6px', fontWeight: 'bold' }}>
+                  تنبيه: هذا اليوم ({selectedDayName}) لا يوافق أيام عمل الحلقة ({sessionWorkDays.join('، ')}).
+                </div>
+              )}
             </div>
             <div className="form-group" style={{ flex: '1', display: 'flex', alignItems: 'center', gap: '15px' }}>
               <label style={{ margin: 0, fontWeight: 'bold', whiteSpace: 'nowrap' }}>رقم الجلسة</label>
