@@ -56,10 +56,10 @@ function SessionReportsAdd() {
   const isPlatform = location.pathname.startsWith('/platform-sessions');
   const { sessions, platformSessions, addSessionReport } = useAppData();
   
-  const sessionId = parseInt(id);
+  const sessionId = id;
   const session = isPlatform
-    ? platformSessions.find(s => s.id === sessionId)
-    : sessions.find(s => s.id === sessionId);
+    ? platformSessions.find(s => String(s.id) === String(id))
+    : sessions.find(s => String(s.id) === String(id));
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0].replace(/-/g, '/'));
   const [sessionNum, setSessionNum] = useState('');

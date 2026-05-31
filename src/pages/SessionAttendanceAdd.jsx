@@ -10,10 +10,10 @@ function SessionAttendanceAdd() {
   const isPlatform = location.pathname.startsWith('/platform-sessions');
   const { sessions, platformSessions, students, platformStudents, addAttendance } = useAppData();
   
-  const sessionId = parseInt(id);
+  const sessionId = id;
   const session = isPlatform
-    ? platformSessions.find(s => s.id === sessionId)
-    : sessions.find(s => s.id === sessionId);
+    ? platformSessions.find(s => String(s.id) === String(id))
+    : sessions.find(s => String(s.id) === String(id));
   
   // Find students in this session. Assuming student.session_id matches session.session_no
   const sessionStudents = isPlatform
@@ -63,7 +63,7 @@ function SessionAttendanceAdd() {
     });
     
     addAttendance({
-      sessionId,
+      sessionId: String(sessionId),
       isPlatform,
       date,
       presentCount,

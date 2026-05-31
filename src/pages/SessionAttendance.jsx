@@ -11,11 +11,11 @@ function SessionAttendance() {
   const isPlatform = location.pathname.startsWith('/platform-sessions');
   const { sessions, platformSessions, attendances, deleteAttendance } = useAppData();
   
-  const sessionId = parseInt(id);
+  const sessionId = id;
   const session = isPlatform
-    ? platformSessions.find(s => s.id === sessionId)
-    : sessions.find(s => s.id === sessionId);
-  const sessionAttendances = attendances.filter(a => a.sessionId === sessionId && !!a.isPlatform === isPlatform);
+    ? platformSessions.find(s => String(s.id) === String(id))
+    : sessions.find(s => String(s.id) === String(id));
+  const sessionAttendances = attendances.filter(a => String(a.sessionId) === String(sessionId) && !!a.isPlatform === isPlatform);
 
 
   const handleExport = () => {

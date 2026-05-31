@@ -10,10 +10,10 @@ function SessionReports() {
   const isPlatform = location.pathname.startsWith('/platform-sessions');
   const { sessions, platformSessions, sessionReports, deleteSessionReport, hasPermission } = useAppData();
   
-  const sessionId = parseInt(id);
+  const sessionId = id;
   const session = isPlatform
-    ? platformSessions.find(s => s.id === sessionId)
-    : sessions.find(s => s.id === sessionId);
+    ? platformSessions.find(s => String(s.id) === String(id))
+    : sessions.find(s => String(s.id) === String(id));
   
   // Get current user and role
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
@@ -56,7 +56,7 @@ function SessionReports() {
 
   // Filter reports by session ID and optional date range
   const filteredReports = sessionReports.filter(r => {
-    if (r.sessionId !== sessionId) return false;
+    if (String(r.sessionId) !== String(sessionId)) return false;
     if (!!r.isPlatform !== isPlatform) return false;
     if (dateFrom && r.date < dateFrom) return false;
     if (dateTo && r.date > dateTo) return false;
