@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema(
     userSession: String,
     created_at: { type: Date, default: Date.now },
   },
-  { timestamps: true }
+  { strict: false, timestamps: true }
 );
 
 export default mongoose.model('User', userSchema);

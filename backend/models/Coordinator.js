@@ -13,7 +13,7 @@ const coordinatorSchema = new mongoose.Schema(
     phone: String,
     email: String,
   },
-  { timestamps: true }
+  { strict: false, timestamps: true }
 );
 
 export default mongoose.model('Coordinator', coordinatorSchema);

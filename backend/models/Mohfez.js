@@ -15,7 +15,7 @@ const mohfezSchema = new mongoose.Schema(
     phone: String,
     registry_no: String,
   },
-  { timestamps: true }
+  { strict: false, timestamps: true }
 );
 
 export default mongoose.model('Mohfez', mohfezSchema);

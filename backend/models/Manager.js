@@ -18,7 +18,7 @@ const managerSchema = new mongoose.Schema(
     username: String,
     password: String,
   },
-  { timestamps: true }
+  { strict: false, timestamps: true }
 );
 
 export default mongoose.model('Manager', managerSchema);

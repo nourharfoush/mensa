@@ -18,7 +18,7 @@ const studentSchema = new mongoose.Schema(
     guardian_name: String,
     guardian_phone: String,
   },
-  { timestamps: true }
+  { strict: false, timestamps: true }
 );
 
 export default mongoose.model('Student', studentSchema);

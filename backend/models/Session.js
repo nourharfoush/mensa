@@ -16,7 +16,7 @@ const sessionSchema = new mongoose.Schema(
     status: { type: String, default: 'active' },
     branchName: String,
   },
-  { timestamps: true }
+  { strict: false, timestamps: true }
 );
 
 export default mongoose.model('Session', sessionSchema);
