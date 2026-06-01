@@ -125,8 +125,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
       const allowed = [
         '/platform-dashboard',
         '/platform-sessions',
-        '/platform-students',
-        '/profile'
+        '/platform-students'
       ];
       return allowed.includes(path);
     }
@@ -174,7 +173,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
     if (userRole === 'branch_admin_coordinator') {
       const allowed = [
         '/dashboard',
-        '/monthlyreport',
         '/branches',
         '/sessions',
         '/students',
@@ -188,7 +186,6 @@ function Sidebar({ isOpen, toggleSidebar }) {
     if (userRole === 'branch_scientific_coordinator') {
       const allowed = [
         '/dashboard',
-        '/monthlyreport',
         '/sessions',
         '/students',
         '/profile'
@@ -200,9 +197,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
     if (userRole === 'mohfez') {
       const allowed = [
         '/dashboard',
-        '/monthlyreport',
-        '/sessions',
-        '/profile'
+        '/sessions'
       ];
       return allowed.includes(path);
     }
