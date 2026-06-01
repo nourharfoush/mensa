@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { User, Sun, Moon, Bell, Settings } from 'lucide-react';
+import { User, Sun, Moon } from 'lucide-react';
 import { useAppData } from '../context/AppDataContext';
 
 function PublicNavbar({ activePage }) {
@@ -74,14 +74,6 @@ function PublicNavbar({ activePage }) {
           تسجيل دخول
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginRight: '8px' }}>
-            <span style={{ color: '#ffffff', fontSize: '14px', cursor: 'pointer', fontWeight: 'bold' }}>AR ˅</span>
-            <button style={{ background: 'transparent', border: 'none', color: '#ffffff', cursor: 'pointer', position: 'relative', padding: '4px' }}>
-              <Bell size={18} />
-              <span style={{ position: 'absolute', top: '-2px', right: '-2px', background: '#ef4444', color: 'white', borderRadius: '50%', padding: '1px 4px', fontSize: '9px' }}>15</span>
-            </button>
-            <button style={{ background: 'transparent', border: 'none', color: '#ffffff', cursor: 'pointer', padding: '4px' }}>
-              <Settings size={18} />
-            </button>
             <button onClick={toggleTheme} style={{ background: 'transparent', border: 'none', color: '#ffffff', cursor: 'pointer', padding: '4px' }}>
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
             </button>
