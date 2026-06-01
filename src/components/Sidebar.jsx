@@ -45,7 +45,6 @@ const menuGroups = [
       { name: 'فروع طلبات التقديم', icon: FilePlus, path: '/applicant-branches', isRowaqOnly: true },
       { name: 'برج المراقبة', icon: Settings, path: '/towers', isRowaqOnly: true },
       { name: 'الاعدادات', icon: Settings, path: '/settings', isSettingsStaff: true },
-      { name: 'الملف الشخصي', icon: User, path: '/profile' },
     ]
   },
   {
@@ -87,6 +86,11 @@ function Sidebar({ isOpen, toggleSidebar }) {
     // Super Admin can access everything
     if (userRole === 'admin') return true;
 
+    // Restrict Administrations, Rowaqs, and Applicant Branches to Admin/Rowaq Admin only
+    if (['/administrations', '/riwaqs', '/applicant-branches'].includes(path)) {
+      return userRole === 'rowaq_admin';
+    }
+
     // 1. platform_admin / platform_supervisor
     if (['platform_admin', 'platform_supervisor'].includes(userRole)) {
       const allowed = [
@@ -100,8 +104,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
         '/platform-applicants',
         '/users',
         '/permissions',
-        '/settings',
-        '/profile'
+        '/settings'
       ];
       return allowed.includes(path);
     }
@@ -114,8 +117,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
         '/platform-mohfez',
         '/platform-sessions',
         '/platform-students',
-        '/platform-applicants',
-        '/profile'
+        '/platform-applicants'
       ];
       return allowed.includes(path);
     }
@@ -132,7 +134,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
 
     // 4. student
     if (userRole === 'student') {
-      return ['/platform-dashboard', '/profile'].includes(path);
+      return ['/platform-dashboard'].includes(path);
     }
 
     // 5. rowaq_admin / rowaq_manager
@@ -176,8 +178,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
         '/branches',
         '/sessions',
         '/students',
-        '/applicants',
-        '/profile'
+        '/applicants'
       ];
       return allowed.includes(path);
     }
@@ -187,8 +188,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
       const allowed = [
         '/dashboard',
         '/sessions',
-        '/students',
-        '/profile'
+        '/students'
       ];
       return allowed.includes(path);
     }
