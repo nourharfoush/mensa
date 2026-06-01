@@ -10,20 +10,77 @@ const governorates = Object.keys(egyptCenters);
 function ApplicantBranchesList() {
   const { applicantBranches, deleteApplicantBranch, branches, rowaqs } = useAppData();
   
-  const [filterAdmin, setFilterAdmin] = useState('');
-  const [filterCenter, setFilterCenter] = useState('');
-  const [filterBranch, setFilterBranch] = useState('');
+  // Get current user and role
+  const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+  const role = currentUser ? currentUser.role : 'admin';
+  const userAdmin = currentUser ? currentUser.userAdmin : '';
+  const userCenter = currentUser ? currentUser.userCenter : '';
+  const userBranch = currentUser ? currentUser.userBranch : '';
+
+  const isSuperAdmin = role === 'admin';
+  const isRowaqAdmin = role === 'rowaq_admin';
+  const isRowaqStaff = ['rowaq_manager', 'rowaq_tech', 'rowaq_member'].includes(role);
+  const isBranchCoordinator = ['branch_admin_coordinator', 'branch_scientific_coordinator'].includes(role);
+  const isMohfez = role === 'mohfez';
+
+  const [filterAdmin, setFilterAdmin] = useState(isRowaqStaff || isBranchCoordinator || isMohfez ? userAdmin : '');
+  const [filterCenter, setFilterCenter] = useState(isBranchCoordinator || isMohfez ? userCenter : '');
+  const [filterBranch, setFilterBranch] = useState(isBranchCoordinator || isMohfez ? userBranch : '');
   const [filterRowaq, setFilterRowaq] = useState('');
+
+  // Sync filters with user profile if role is restricted
+  React.useEffect(() => {
+    if ((isRowaqStaff || isMohfez) && userAdmin) {
+      setFilterAdmin(userAdmin);
+    }
+    if (isBranchCoordinator || isMohfez) {
+      if (userAdmin) setFilterAdmin(userAdmin);
+      if (userCenter) setFilterCenter(userCenter);
+      if (userBranch) setFilterBranch(userBranch);
+    }
+  }, [currentUser]);
 
   const availableCenters = filterAdmin ? (egyptCenters[filterAdmin] || []) : [];
   const availableBranches = branches.filter(b => b.admin === filterAdmin && b.center === filterCenter);
 
-  const filtered = applicantBranches.filter(b =>
-    (filterAdmin ? b.admin === filterAdmin : true) &&
-    (filterCenter ? b.center === filterCenter : true) &&
-    (filterBranch ? b.branch === filterBranch : true) &&
-    (filterRowaq ? b.rowaq === filterRowaq : true)
-  );
+  const normalizeArabic = (str) => {
+    if (!str) return '';
+    return str
+      .toString()
+      .trim()
+      .normalize('NFKD')
+      .normalize('NFC')
+      .replace(/ً/g, '')
+      .replace(/ٌ/g, '')
+      .replace(/ٍ/g, '')
+      .replace(/َ/g, '')
+      .replace(/ُ/g, '')
+      .replace(/ِ/g, '')
+      .replace(/ّ/g, '')
+      .replace(/ْ/g, '')
+      .replace(/[أإآا]/g, 'ا')
+      .replace(/[ىي]/g, 'ي')
+      .replace(/[ة]/g, 'ه')
+      .replace(/[ـ]/g, '')
+      .replace(/\s+/g, ' ')
+      .toLowerCase()
+      .trim();
+  };
+
+  const filtered = applicantBranches.filter(b => {
+    // 1. Geographic role restrictions
+    if (isRowaqStaff && userAdmin && normalizeArabic(b.admin) !== normalizeArabic(userAdmin)) return false;
+    if (isBranchCoordinator && userBranch && normalizeArabic(b.branch) !== normalizeArabic(userBranch)) return false;
+    if (isMohfez && userBranch && normalizeArabic(b.branch) !== normalizeArabic(userBranch)) return false;
+
+    // 2. Normal filters
+    return (
+      (filterAdmin ? normalizeArabic(b.admin) === normalizeArabic(filterAdmin) : true) &&
+      (filterCenter ? normalizeArabic(b.center) === normalizeArabic(filterCenter) : true) &&
+      (filterBranch ? normalizeArabic(b.branch) === normalizeArabic(filterBranch) : true) &&
+      (filterRowaq ? normalizeArabic(b.rowaq) === normalizeArabic(filterRowaq) : true)
+    );
+  });
 
   return (
     <div className="management-page">
@@ -39,21 +96,21 @@ function ApplicantBranchesList() {
         <div className="form-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '15px' }}>
           <div className="form-group">
             <label>الإدارة</label>
-            <select className="form-select" value={filterAdmin} onChange={e => { setFilterAdmin(e.target.value); setFilterCenter(''); setFilterBranch(''); }}>
+            <select className="form-select" value={filterAdmin} onChange={e => { setFilterAdmin(e.target.value); setFilterCenter(''); setFilterBranch(''); }} disabled={isRowaqStaff || isBranchCoordinator || isMohfez}>
               <option value="">--- اختار الإدارة ---</option>
               {governorates.map((g, i) => <option key={i} value={g}>{g}</option>)}
             </select>
           </div>
           <div className="form-group">
             <label>المركز</label>
-            <select className="form-select" value={filterCenter} onChange={e => { setFilterCenter(e.target.value); setFilterBranch(''); }} disabled={!filterAdmin}>
+            <select className="form-select" value={filterCenter} onChange={e => { setFilterCenter(e.target.value); setFilterBranch(''); }} disabled={!filterAdmin || isBranchCoordinator || isMohfez}>
               <option value="">{filterAdmin ? '--- اختار المركز ---' : 'اختار الإدارة أولاً'}</option>
               {availableCenters.map((c, i) => <option key={i} value={c}>{c}</option>)}
             </select>
           </div>
           <div className="form-group">
             <label>الفرع</label>
-            <select className="form-select" value={filterBranch} onChange={e => setFilterBranch(e.target.value)} disabled={!filterCenter}>
+            <select className="form-select" value={filterBranch} onChange={e => setFilterBranch(e.target.value)} disabled={!filterCenter || isBranchCoordinator || isMohfez}>
               <option value="">{filterCenter ? '--- اختار الفرع ---' : 'اختار المركز أولاً'}</option>
               {availableBranches.map((b, i) => <option key={i} value={b.name}>{b.name}</option>)}
             </select>
@@ -68,7 +125,10 @@ function ApplicantBranchesList() {
         </div>
         <div className="search-actions" style={{ justifyContent: 'flex-start' }}>
           <button className="btn btn-outline" onClick={() => { 
-            setFilterAdmin(''); setFilterCenter(''); setFilterBranch(''); setFilterRowaq(''); 
+            if (!isRowaqStaff && !isBranchCoordinator && !isMohfez) setFilterAdmin(''); 
+            if (!isBranchCoordinator && !isMohfez) setFilterCenter(''); 
+            if (!isBranchCoordinator && !isMohfez) setFilterBranch(''); 
+            setFilterRowaq(''); 
           }}>إعادة تعيين</button>
           <button className="btn btn-primary" style={{ marginRight: '10px' }}><Search size={16} /> بحث</button>
         </div>

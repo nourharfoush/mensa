@@ -29,17 +29,17 @@ function MohfezList() {
   const [filterNationalId, setFilterNationalId] = useState('');
   const [filterEmail, setFilterEmail] = useState('');
   const [filterSpecialization, setFilterSpecialization] = useState('');
-  const [filterAdmin, setFilterAdmin] = useState(isRowaqStaff || isBranchCoordinator ? userAdmin : '');
-  const [filterCenter, setFilterCenter] = useState(isBranchCoordinator ? userCenter : '');
-  const [filterBranch, setFilterBranch] = useState(isBranchCoordinator ? userBranch : '');
+  const [filterAdmin, setFilterAdmin] = useState(isRowaqStaff || isBranchCoordinator || isMohfez ? userAdmin : '');
+  const [filterCenter, setFilterCenter] = useState(isBranchCoordinator || isMohfez ? userCenter : '');
+  const [filterBranch, setFilterBranch] = useState(isBranchCoordinator || isMohfez ? userBranch : '');
   const [filterStatus, setFilterStatus] = useState('');
 
   // Sync filters with user profile if role is restricted
   React.useEffect(() => {
-    if (isRowaqStaff && userAdmin) {
+    if ((isRowaqStaff || isMohfez) && userAdmin) {
       setFilterAdmin(userAdmin);
     }
-    if (isBranchCoordinator) {
+    if (isBranchCoordinator || isMohfez) {
       if (userAdmin) setFilterAdmin(userAdmin);
       if (userCenter) setFilterCenter(userCenter);
       if (userBranch) setFilterBranch(userBranch);
@@ -180,21 +180,21 @@ function MohfezList() {
           
           <div className="form-group">
             <label>المحافظة</label>
-            <select className="form-select" value={filterAdmin} onChange={e => { setFilterAdmin(e.target.value); setFilterCenter(''); setFilterBranch(''); }} disabled={isRowaqStaff || isBranchCoordinator}>
+            <select className="form-select" value={filterAdmin} onChange={e => { setFilterAdmin(e.target.value); setFilterCenter(''); setFilterBranch(''); }} disabled={isRowaqStaff || isBranchCoordinator || isMohfez}>
               <option value="">--- اختار المحافظة ---</option>
               {governorates.map((g, i) => <option key={i} value={g}>{g}</option>)}
             </select>
           </div>
           <div className="form-group">
             <label>المركز</label>
-            <select className="form-select" value={filterCenter} onChange={e => { setFilterCenter(e.target.value); setFilterBranch(''); }} disabled={!filterAdmin || isBranchCoordinator}>
+            <select className="form-select" value={filterCenter} onChange={e => { setFilterCenter(e.target.value); setFilterBranch(''); }} disabled={!filterAdmin || isBranchCoordinator || isMohfez}>
               <option value="">{filterAdmin ? '--- اختار المركز ---' : 'اختار المحافظة أولاً'}</option>
               {availableCenters.map((c, i) => <option key={i} value={c}>{c}</option>)}
             </select>
           </div>
           <div className="form-group">
             <label>الفرع</label>
-            <select className="form-select" value={filterBranch} onChange={e => setFilterBranch(e.target.value)} disabled={!filterCenter || isBranchCoordinator}>
+            <select className="form-select" value={filterBranch} onChange={e => setFilterBranch(e.target.value)} disabled={!filterCenter || isBranchCoordinator || isMohfez}>
               <option value="">{filterCenter ? '--- اختار الفرع ---' : 'اختار المركز أولاً'}</option>
               {availableBranches.map((b, i) => <option key={i} value={b.name}>{b.name}</option>)}
             </select>
@@ -211,9 +211,9 @@ function MohfezList() {
         <div className="search-actions" style={{ justifyContent: 'flex-start' }}>
           <button className="btn btn-outline" onClick={() => { 
             setFilterName(''); setFilterNationalId(''); setFilterEmail(''); setFilterSpecialization(''); 
-            if (!isRowaqStaff && !isBranchCoordinator) setFilterAdmin(''); 
-            if (!isBranchCoordinator) setFilterCenter(''); 
-            if (!isBranchCoordinator) setFilterBranch(''); 
+            if (!isRowaqStaff && !isBranchCoordinator && !isMohfez) setFilterAdmin(''); 
+            if (!isBranchCoordinator && !isMohfez) setFilterCenter(''); 
+            if (!isBranchCoordinator && !isMohfez) setFilterBranch(''); 
             setFilterStatus(''); 
           }}>إعادة تعيين</button>
           <button className="btn btn-primary" style={{ marginRight: '10px' }}><Search size={16} /> بحث</button>

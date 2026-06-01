@@ -29,18 +29,17 @@ function StudentsList() {
   const [filterName, setFilterName] = useState('');
   const [filterNationalId, setFilterNationalId] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  const [filterAdmin, setFilterAdmin] = useState(isRowaqStaff || isBranchCoordinator ? userAdmin : '');
-  const [filterCenter, setFilterCenter] = useState(isBranchCoordinator ? userCenter : '');
-  const [filterBranch, setFilterBranch] = useState(isBranchCoordinator ? userBranch : '');
+  const [filterAdmin, setFilterAdmin] = useState(isRowaqStaff || isBranchCoordinator || isMohfez ? userAdmin : '');
+  const [filterCenter, setFilterCenter] = useState(isBranchCoordinator || isMohfez ? userCenter : '');
+  const [filterBranch, setFilterBranch] = useState(isBranchCoordinator || isMohfez ? userBranch : '');
   const [filterRowaq, setFilterRowaq] = useState('');
   const [filterSession, setFilterSession] = useState(isMohfez ? userSession : '');
 
-  // Sync filters with user profile if role is restricted
   React.useEffect(() => {
-    if (isRowaqStaff && userAdmin) {
+    if ((isRowaqStaff || isMohfez) && userAdmin) {
       setFilterAdmin(userAdmin);
     }
-    if (isBranchCoordinator) {
+    if (isBranchCoordinator || isMohfez) {
       if (userAdmin) setFilterAdmin(userAdmin);
       if (userCenter) setFilterCenter(userCenter);
       if (userBranch) setFilterBranch(userBranch);
@@ -186,7 +185,7 @@ function StudentsList() {
           </div>
           <div className="form-group">
             <label>المحافظة</label>
-            <select className="form-select" value={filterAdmin} onChange={e => { setFilterAdmin(e.target.value); setFilterCenter(''); setFilterBranch(''); setFilterSession(''); }} disabled={isRowaqStaff || isBranchCoordinator}>
+            <select className="form-select" value={filterAdmin} onChange={e => { setFilterAdmin(e.target.value); setFilterCenter(''); setFilterBranch(''); setFilterSession(''); }} disabled={isRowaqStaff || isBranchCoordinator || isMohfez}>
               <option value="">--- اختار المحافظة ---</option>
               {governorates.map((g, i) => <option key={i} value={g}>{g}</option>)}
             </select>
@@ -194,21 +193,21 @@ function StudentsList() {
           
           <div className="form-group">
             <label>المركز</label>
-            <select className="form-select" value={filterCenter} onChange={e => { setFilterCenter(e.target.value); setFilterBranch(''); setFilterSession(''); }} disabled={!filterAdmin || isBranchCoordinator}>
+            <select className="form-select" value={filterCenter} onChange={e => { setFilterCenter(e.target.value); setFilterBranch(''); setFilterSession(''); }} disabled={!filterAdmin || isBranchCoordinator || isMohfez}>
               <option value="">{filterAdmin ? '--- اختار المركز ---' : 'اختار المحافظة أولاً'}</option>
               {availableCenters.map((c, i) => <option key={i} value={c}>{c}</option>)}
             </select>
           </div>
           <div className="form-group">
             <label>الفرع</label>
-            <select className="form-select" value={filterBranch} onChange={e => { setFilterBranch(e.target.value); setFilterSession(''); }} disabled={!filterCenter || isBranchCoordinator}>
+            <select className="form-select" value={filterBranch} onChange={e => { setFilterBranch(e.target.value); setFilterSession(''); }} disabled={!filterCenter || isBranchCoordinator || isMohfez}>
               <option value="">{filterCenter ? '--- اختار الفرع ---' : 'اختار المركز أولاً'}</option>
               {availableBranches.map((b, i) => <option key={i} value={b.name}>{b.name}</option>)}
             </select>
           </div>
           <div className="form-group">
             <label>الحلقة</label>
-            <select className="form-select" value={filterSession} onChange={e => setFilterSession(e.target.value)} disabled={!filterBranch || isMohfez}>
+            <select className="form-select" value={filterSession} onChange={e => setFilterSession(e.target.value)} disabled={!filterBranch || (isMohfez && !!userSession)}>
               <option value="">{filterBranch ? '--- اختار الحلقة ---' : 'اختار الفرع أولاً'}</option>
               {availableSessions.map((s, i) => <option key={i} value={s.session_no}>حلقة {s.session_no}</option>)}
             </select>
@@ -227,11 +226,11 @@ function StudentsList() {
         <div className="search-actions" style={{ justifyContent: 'flex-start' }}>
           <button className="btn btn-outline" onClick={() => { 
             setFilterName(''); setFilterNationalId(''); setFilterStatus(''); 
-            if (!isRowaqStaff && !isBranchCoordinator) setFilterAdmin(''); 
-            if (!isBranchCoordinator) setFilterCenter(''); 
-            if (!isBranchCoordinator) setFilterBranch(''); 
+            if (!isRowaqStaff && !isBranchCoordinator && !isMohfez) setFilterAdmin(''); 
+            if (!isBranchCoordinator && !isMohfez) setFilterCenter(''); 
+            if (!isBranchCoordinator && !isMohfez) setFilterBranch(''); 
             setFilterRowaq(''); 
-            if (!isMohfez) setFilterSession(''); 
+            if (!isMohfez || !userSession) setFilterSession(''); 
           }}>إعادة تعيين</button>
           <button className="btn btn-primary" style={{ marginRight: '10px' }}><Search size={16} /> بحث</button>
         </div>

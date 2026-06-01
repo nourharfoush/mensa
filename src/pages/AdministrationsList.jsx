@@ -5,18 +5,33 @@ import { useAppData } from '../context/AppDataContext';
 
 function AdministrationsList() {
   const { administrations, addCenterToAdmin } = useAppData();
-  
+
+  // Get current user and role
+  const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+  const role = currentUser ? currentUser.role : 'admin';
+  const userAdmin = currentUser ? currentUser.userAdmin : '';
+
+  const isRowaqStaff = ['rowaq_manager', 'rowaq_tech', 'rowaq_member'].includes(role);
+
   const [filterAdminName, setFilterAdminName] = useState('');
   const [filterManager, setFilterManager] = useState('');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalAdmin, setModalAdmin] = useState('');
+  const [modalAdmin, setModalAdmin] = useState(isRowaqStaff && userAdmin ? userAdmin : '');
   const [modalCenterName, setModalCenterName] = useState('');
 
-  const filtered = administrations.filter(a =>
-    (filterAdminName ? a.name?.includes(filterAdminName) : true) &&
-    (filterManager ? a.manager?.includes(filterManager) : true)
-  );
+  const filtered = administrations.filter(a => {
+    if (isRowaqStaff && userAdmin && a.name !== userAdmin) return false;
+    return (
+      (filterAdminName ? a.name?.includes(filterAdminName) : true) &&
+      (filterManager ? a.manager?.includes(filterManager) : true)
+    );
+  });
+
+  const availableAdmins = administrations.filter(a => {
+    if (isRowaqStaff && userAdmin) return a.name === userAdmin;
+    return true;
+  });
 
   const handleAddCenter = () => {
     if (!modalAdmin || !modalCenterName) {
@@ -25,7 +40,7 @@ function AdministrationsList() {
     }
     addCenterToAdmin(modalAdmin, modalCenterName);
     setIsModalOpen(false);
-    setModalAdmin('');
+    if (!isRowaqStaff || !userAdmin) setModalAdmin('');
     setModalCenterName('');
     alert('تمت إضافة المركز بنجاح');
   };
@@ -114,7 +129,7 @@ function AdministrationsList() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>إضافة مركز</h3>
               <button 
-                onClick={() => setIsModalOpen(false)} 
+                onClick={() => { setIsModalOpen(false); if (!isRowaqStaff || !userAdmin) setModalAdmin(''); setModalCenterName(''); }} 
                 style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '20px', cursor: 'pointer' }}
               >
                 &times;
@@ -123,9 +138,9 @@ function AdministrationsList() {
             
             <div className="form-group" style={{ marginBottom: '15px' }}>
               <label>الإدارة</label>
-              <select className="form-select" value={modalAdmin} onChange={e => setModalAdmin(e.target.value)}>
+              <select className="form-select" value={modalAdmin} onChange={e => setModalAdmin(e.target.value)} disabled={isRowaqStaff && !!userAdmin}>
                 <option value="">اختار الإدارة</option>
-                {administrations.map(a => (
+                {availableAdmins.map(a => (
                   <option key={a.id} value={a.name}>{a.name}</option>
                 ))}
               </select>
@@ -136,7 +151,7 @@ function AdministrationsList() {
             </div>
             
             <div style={{ display: 'flex', gap: '10px', flexDirection: 'row-reverse' }}>
-              <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setIsModalOpen(false)}>إلغاء</button>
+              <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => { setIsModalOpen(false); if (!isRowaqStaff || !userAdmin) setModalAdmin(''); setModalCenterName(''); }}>إلغاء</button>
               <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleAddCenter}>إضافة المركز</button>
             </div>
           </div>

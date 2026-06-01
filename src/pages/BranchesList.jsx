@@ -28,16 +28,16 @@ function BranchesList() {
   const isMohfez = role === 'mohfez';
 
   const [filterName, setFilterName] = useState('');
-  const [filterAdmin, setFilterAdmin] = useState(isRowaqStaff ? userAdmin : '');
-  const [filterCenter, setFilterCenter] = useState(isBranchCoordinator ? userCenter : '');
+  const [filterAdmin, setFilterAdmin] = useState(isRowaqStaff || isBranchCoordinator || isMohfez ? userAdmin : '');
+  const [filterCenter, setFilterCenter] = useState(isBranchCoordinator || isMohfez ? userCenter : '');
   const [filterWorkDay, setFilterWorkDay] = useState('');
 
   // Sync filters with user profile if role is restricted
   React.useEffect(() => {
-    if (isRowaqStaff && userAdmin) {
+    if ((isRowaqStaff || isMohfez) && userAdmin) {
       setFilterAdmin(userAdmin);
     }
-    if (isBranchCoordinator) {
+    if (isBranchCoordinator || isMohfez) {
       if (userAdmin) setFilterAdmin(userAdmin);
       if (userCenter) setFilterCenter(userCenter);
     }
@@ -154,14 +154,14 @@ function BranchesList() {
           </div>
           <div className="form-group">
             <label>الإدارة</label>
-            <select className="form-select" value={filterAdmin} onChange={e => { setFilterAdmin(e.target.value); setFilterCenter(''); }} disabled={isRowaqStaff || isBranchCoordinator}>
+            <select className="form-select" value={filterAdmin} onChange={e => { setFilterAdmin(e.target.value); setFilterCenter(''); }} disabled={isRowaqStaff || isBranchCoordinator || isMohfez}>
               <option value="">--- اختار المحافظة ---</option>
               {governorates.map((g, i) => <option key={i} value={g}>{g}</option>)}
             </select>
           </div>
           <div className="form-group">
             <label>المركز <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>*</span></label>
-            <select className="form-select" value={filterCenter} onChange={e => setFilterCenter(e.target.value)} disabled={!filterAdmin || isBranchCoordinator}>
+            <select className="form-select" value={filterCenter} onChange={e => setFilterCenter(e.target.value)} disabled={!filterAdmin || isBranchCoordinator || isMohfez}>
               <option value="">{filterAdmin ? 'اختار المركز' : 'اختار الإدارة أولاً'}</option>
               {availableCenters.map((c, i) => <option key={i} value={c}>{c}</option>)}
             </select>
@@ -178,8 +178,8 @@ function BranchesList() {
           <button className="btn btn-primary"><Search size={16} /> بحث</button>
           <button className="btn btn-outline" onClick={() => { 
             setFilterName(''); 
-            if (!isRowaqStaff && !isBranchCoordinator) setFilterAdmin(''); 
-            if (!isBranchCoordinator) setFilterCenter(''); 
+            if (!isRowaqStaff && !isBranchCoordinator && !isMohfez) setFilterAdmin(''); 
+            if (!isBranchCoordinator && !isMohfez) setFilterCenter(''); 
             setFilterWorkDay(''); 
           }}>إعادة تعيين</button>
         </div>
