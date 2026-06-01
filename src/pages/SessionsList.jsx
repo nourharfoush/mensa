@@ -55,8 +55,8 @@ function SessionsList() {
     if (isMohfez) {
       if (userSession) {
         if (String(s.id) !== String(userSession) && s.session_name !== userSession && s.session_no !== userSession) return false;
-      } else if (currentUser && currentUser.name) {
-        if (s.mohfez !== currentUser.name) return false;
+      } else if (userBranch) {
+        if (s.branch !== userBranch) return false;
       }
     }
 
