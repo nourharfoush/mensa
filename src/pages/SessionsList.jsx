@@ -26,19 +26,19 @@ function SessionsList() {
   const isBranchCoordinator = ['branch_admin_coordinator', 'branch_scientific_coordinator'].includes(role);
   const isMohfez = role === 'mohfez';
 
-  const [filterAdmin, setFilterAdmin] = useState(isRowaqStaff || isBranchCoordinator ? userAdmin : '');
-  const [filterCenter, setFilterCenter] = useState(isBranchCoordinator ? userCenter : '');
-  const [filterBranch, setFilterBranch] = useState(isBranchCoordinator ? userBranch : '');
+  const [filterAdmin, setFilterAdmin] = useState(isRowaqStaff || isBranchCoordinator || isMohfez ? userAdmin : '');
+  const [filterCenter, setFilterCenter] = useState(isBranchCoordinator || isMohfez ? userCenter : '');
+  const [filterBranch, setFilterBranch] = useState(isBranchCoordinator || isMohfez ? userBranch : '');
   const [filterRowaq, setFilterRowaq] = useState('');
   const [filterStudentType, setFilterStudentType] = useState('');
   const [filterAttendance, setFilterAttendance] = useState('');
 
   // Sync filters with user profile if role is restricted
   React.useEffect(() => {
-    if (isRowaqStaff && userAdmin) {
+    if ((isRowaqStaff || isMohfez) && userAdmin) {
       setFilterAdmin(userAdmin);
     }
-    if (isBranchCoordinator) {
+    if (isBranchCoordinator || isMohfez) {
       if (userAdmin) setFilterAdmin(userAdmin);
       if (userCenter) setFilterCenter(userCenter);
       if (userBranch) setFilterBranch(userBranch);
@@ -52,8 +52,12 @@ function SessionsList() {
     // 1. Geographic role restrictions
     if (isRowaqStaff && userAdmin && s.admin !== userAdmin) return false;
     if (isBranchCoordinator && userBranch && s.branch !== userBranch) return false;
-    if (isMohfez && userSession) {
-      if (String(s.id) !== String(userSession) && s.session_name !== userSession && s.session_no !== userSession) return false;
+    if (isMohfez) {
+      if (userSession) {
+        if (String(s.id) !== String(userSession) && s.session_name !== userSession && s.session_no !== userSession) return false;
+      } else if (currentUser && currentUser.name) {
+        if (s.mohfez !== currentUser.name) return false;
+      }
     }
 
     // 2. Normal filters
@@ -130,21 +134,21 @@ function SessionsList() {
         <div className="form-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '15px' }}>
           <div className="form-group">
             <label>الإدارة</label>
-            <select className="form-select" value={filterAdmin} onChange={e => { setFilterAdmin(e.target.value); setFilterCenter(''); setFilterBranch(''); }} disabled={isRowaqStaff || isBranchCoordinator}>
+            <select className="form-select" value={filterAdmin} onChange={e => { setFilterAdmin(e.target.value); setFilterCenter(''); setFilterBranch(''); }} disabled={isRowaqStaff || isBranchCoordinator || isMohfez}>
               <option value="">--- اختار الإدارة ---</option>
               {governorates.map((g, i) => <option key={i} value={g}>{g}</option>)}
             </select>
           </div>
           <div className="form-group">
             <label>المركز</label>
-            <select className="form-select" value={filterCenter} onChange={e => { setFilterCenter(e.target.value); setFilterBranch(''); }} disabled={!filterAdmin || isBranchCoordinator}>
+            <select className="form-select" value={filterCenter} onChange={e => { setFilterCenter(e.target.value); setFilterBranch(''); }} disabled={!filterAdmin || isBranchCoordinator || isMohfez}>
               <option value="">{filterAdmin ? '--- اختار المركز ---' : 'اختار الإدارة أولاً'}</option>
               {availableCenters.map((c, i) => <option key={i} value={c}>{c}</option>)}
             </select>
           </div>
           <div className="form-group">
             <label>الفرع</label>
-            <select className="form-select" value={filterBranch} onChange={e => setFilterBranch(e.target.value)} disabled={!filterCenter || isBranchCoordinator}>
+            <select className="form-select" value={filterBranch} onChange={e => setFilterBranch(e.target.value)} disabled={!filterCenter || isBranchCoordinator || isMohfez}>
               <option value="">{filterCenter ? '--- اختار الفرع ---' : 'اختار المركز أولاً'}</option>
               {availableBranches.map((b, i) => <option key={i} value={b.name}>{b.name}</option>)}
             </select>
@@ -180,9 +184,9 @@ function SessionsList() {
         </div>
         <div className="search-actions" style={{ justifyContent: 'flex-start' }}>
           <button className="btn btn-outline" onClick={() => { 
-            if (!isRowaqStaff && !isBranchCoordinator) setFilterAdmin(''); 
-            if (!isBranchCoordinator) setFilterCenter(''); 
-            if (!isBranchCoordinator) setFilterBranch(''); 
+            if (!isRowaqStaff && !isBranchCoordinator && !isMohfez) setFilterAdmin(''); 
+            if (!isBranchCoordinator && !isMohfez) setFilterCenter(''); 
+            if (!isBranchCoordinator && !isMohfez) setFilterBranch(''); 
             setFilterRowaq(''); 
             setFilterStudentType(''); 
             setFilterAttendance(''); 
