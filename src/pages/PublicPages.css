@@ -1,0 +1,161 @@
+/* Public Pages Responsive Styling */
+
+.pub-hero-section {
+  display: flex;
+  min-height: 85vh;
+  position: relative;
+}
+
+.pub-hero-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 80px;
+  text-align: right;
+  position: relative;
+  z-index: 2;
+}
+
+.pub-hero-content h1 {
+  font-size: 60px;
+  font-weight: bold;
+  margin: 0 0 20px 0;
+  line-height: 1.3;
+  color: var(--pub-text);
+}
+
+.pub-hero-content p {
+  font-size: 18px;
+  color: var(--pub-text-soft);
+  margin-bottom: 40px;
+  line-height: 1.8;
+  max-width: 420px;
+  margin-left: auto;
+}
+
+.pub-hero-image-side {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.pub-hero-image {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: var(--pub-img-opacity);
+  clip-path: polygon(0 0, 100% 0, 82% 100%, 0% 100%);
+}
+
+.pub-hero-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--pub-overlay);
+  clip-path: polygon(0 0, 100% 0, 82% 100%, 0% 100%);
+}
+
+.pub-steps-container {
+  display: flex;
+  justify-content: center;
+  gap: 80px;
+  align-items: center;
+}
+
+/* Tablet & Mobile responsive styles */
+@media (max-width: 992px) {
+  .pub-hero-content {
+    padding: 0 40px;
+  }
+  .pub-hero-content h1 {
+    font-size: 44px;
+  }
+  .pub-steps-container {
+    gap: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Hero stack vertically */
+  .pub-hero-section {
+    flex-direction: column-reverse;
+    min-height: auto;
+    padding-bottom: 40px;
+  }
+
+  .pub-hero-content {
+    padding: 40px 20px 0 20px;
+    text-align: center;
+    align-items: center;
+  }
+
+  .pub-hero-content h1 {
+    font-size: 32px;
+    text-align: center;
+  }
+
+  .pub-hero-content p {
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+  }
+
+  .pub-hero-content .divider-bar {
+    margin: 0 auto 30px auto !important;
+  }
+
+  .pub-hero-content .btn-container {
+    justify-content: center !important;
+  }
+
+  .pub-hero-image-side {
+    height: 300px;
+    width: 100%;
+    flex: none;
+  }
+
+  .pub-hero-image, .pub-hero-overlay {
+    clip-path: none !important; /* Remove clip path on mobile for clean full image view */
+  }
+
+  /* Steps section stack */
+  .pub-steps-container {
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  /* Quran / Studies responsive mobile */
+  .pub-main-area {
+    padding: 30px 15px !important;
+  }
+  .pub-main-area h1 {
+    font-size: 26px !important;
+  }
+  .pub-main-area h2 {
+    font-size: 20px !important;
+  }
+  .pub-cards-row {
+    gap: 15px !important;
+    margin-bottom: 30px !important;
+  }
+}
+
+/* Base layout for Quran and Islamic studies */
+.pub-main-area {
+  position: relative;
+  z-index: 2;
+  padding: 50px 30px;
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.pub-cards-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 60px;
+}
+

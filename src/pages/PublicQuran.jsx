@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import PublicNavbar from '../components/PublicNavbar';
+import './PublicPages.css';
 
 function PublicQuran() {
   return (
@@ -16,7 +17,7 @@ function PublicQuran() {
       <PublicNavbar activePage="quran" />
 
       {/* Main Content Area */}
-      <div style={{ position: 'relative', zIndex: 2, padding: '50px 50px 50px 50px', maxWidth: '1000px', margin: '0 auto', textAlign: 'center' }}>
+      <div className="pub-main-area">
         
         {/* Breadcrumb */}
         <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '8px', marginBottom: '40px', fontSize: '14px', flexDirection: 'row-reverse' }}>
@@ -36,7 +37,7 @@ function PublicQuran() {
         {/* Section 2 */}
         <h2 style={{ color: 'var(--pub-green)', fontSize: '28px', fontWeight: 'bold', marginBottom: '40px' }}>رسالة الأزهر في رواق القرآن الكريم</h2>
 
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap', marginBottom: '60px' }}>
+        <div className="pub-cards-row">
           
           {/* Card 1 */}
           <div style={{ background: 'var(--pub-card-bg)', border: '1px solid var(--pub-card-border)', borderRadius: '12px', padding: '30px', width: '300px', textAlign: 'center' }}>

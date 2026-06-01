@@ -77,3 +77,32 @@
   font-weight: 600;
   text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
+
+/* Responsive configurations for Dashboard HeroBanner */
+@media (max-width: 768px) {
+  .hero-banner {
+    height: auto;
+    padding: 40px 20px;
+  }
+
+  .welcome-tag {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    margin: 0 auto 20px auto !important;
+    width: fit-content;
+  }
+
+  .main-title {
+    margin-top: 0 !important;
+  }
+
+  .main-title h1 {
+    font-size: 32px !important;
+  }
+
+  .main-title h2 {
+    font-size: 18px !important;
+  }
+}
+

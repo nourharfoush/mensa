@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { GraduationCap, Clock, Video, User, FileText, CheckCircle, Video as VideoIcon } from 'lucide-react';
 import PublicNavbar from '../components/PublicNavbar';
 import azharImage from '../assets/azhar.jpeg';
+import './PublicPages.css';
 
 function PublicHome() {
   return (
@@ -11,7 +12,7 @@ function PublicHome() {
     <PublicNavbar activePage="home" />
 
     {/* Hero Section */}
-    <div style={{ display: 'flex', minHeight: '85vh', position: 'relative' }}>
+    <div className="pub-hero-section">
       
       {/* Floating Decorative Circles */}
       <div className="animate-float-1" style={{
@@ -30,17 +31,17 @@ function PublicHome() {
       }} />
 
       {/* Right Content Side (Rendered on Right due to RTL direction) */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 80px', textAlign: 'right', position: 'relative', zIndex: 2 }}>
-        <h1 style={{ fontSize: '60px', fontWeight: 'bold', margin: '0 0 20px 0', lineHeight: '1.3', color: 'var(--pub-text)' }}>
+      <div className="pub-hero-content">
+        <h1>
           <span style={{ color: 'var(--pub-green)' }}>أهلاً بكم</span> في منصة<br />الجامع الأزهر
         </h1>
-        <div style={{ width: '80px', height: '3px', background: 'linear-gradient(90deg, var(--accent-gold), transparent)', margin: '0 0 30px auto' }} />
+        <div className="divider-bar" style={{ width: '80px', height: '3px', background: 'linear-gradient(90deg, var(--accent-gold), transparent)', margin: '0 0 30px auto' }} />
 
-        <p style={{ fontSize: '18px', color: 'var(--pub-text-soft)', marginBottom: '40px', lineHeight: '1.8', maxWidth: '420px', marginLeft: 'auto' }}>
+        <p>
           المنصة الرائدة لتحفيظ القرآن الكريم<br />ودراسة العلوم الشرعية و العربية
         </p>
 
-        <div style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end' }}>
+        <div className="btn-container" style={{ display: 'flex', gap: '15px', justifyContent: 'flex-end', width: '100%' }}>
           <Link to="/login" className="btn" style={{
             background: 'var(--pub-green)', color: '#fff', padding: '12px 30px',
             fontSize: '15px', border: 'none', textDecoration: 'none',
@@ -53,26 +54,16 @@ function PublicHome() {
       </div>
 
       {/* Left Image Side (Rendered on Left due to RTL direction) */}
-      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundImage: `url(${azharImage})`,
-          backgroundSize: 'cover', backgroundPosition: 'center',
-          opacity: 'var(--pub-img-opacity)',
-          clipPath: 'polygon(0 0, 100% 0, 82% 100%, 0% 100%)'
-        }} />
+      <div className="pub-hero-image-side">
+        <div className="pub-hero-image" style={{ backgroundImage: `url(${azharImage})` }} />
         {/* Overlay gradient on image */}
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'var(--pub-overlay)',
-          clipPath: 'polygon(0 0, 100% 0, 82% 100%, 0% 100%)'
-        }} />
+        <div className="pub-hero-overlay" />
       </div>
 
     </div>
 
     {/* Features Section */}
-    <div style={{ padding: '80px 50px', textAlign: 'center', position: 'relative', zIndex: 2, background: 'var(--pub-bg-alt)' }}>
+    <div className="pub-features-section" style={{ padding: '80px 50px', textAlign: 'center', position: 'relative', zIndex: 2, background: 'var(--pub-bg-alt)' }}>
       <h2 style={{ fontSize: '32px', marginBottom: '50px', fontWeight: 'bold', color: 'var(--pub-text)' }}>لماذا تختار منصة الجامع الأزهر؟</h2>
 
       <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', flexWrap: 'wrap' }}>
@@ -135,10 +126,10 @@ function PublicHome() {
     </div>
 
     {/* Steps Section */}
-    <div style={{ padding: '80px 50px', textAlign: 'center', background: 'var(--pub-bg)' }}>
+    <div className="pub-steps-section" style={{ padding: '80px 50px', textAlign: 'center', background: 'var(--pub-bg)' }}>
       <h2 style={{ fontSize: '32px', marginBottom: '60px', fontWeight: 'bold', color: 'var(--pub-text)' }}>كيفية التسجيل معنا</h2>
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '80px', alignItems: 'center' }}>
+      <div className="pub-steps-container">
 
         {/* Illustration Left */}
         <div style={{

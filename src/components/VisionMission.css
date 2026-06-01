@@ -33,3 +33,11 @@
   line-height: 1.8;
   font-size: 15px;
 }
+
+@media (max-width: 768px) {
+  .cards-wrapper {
+    flex-direction: column !important;
+    gap: 15px !important;
+  }
+}
+

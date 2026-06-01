@@ -63,8 +63,14 @@ const menuGroups = [
   }
 ];
 
-function Sidebar({ isOpen }) {
+function Sidebar({ isOpen, toggleSidebar }) {
   const location = useLocation();
+
+  const handleLinkClick = () => {
+    if (window.innerWidth < 992 && toggleSidebar) {
+      toggleSidebar();
+    }
+  };
   
   // Get current user and role
   let role = 'admin';
@@ -212,48 +218,57 @@ function Sidebar({ isOpen }) {
   }).filter(Boolean);
 
   return (
-    <aside className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
-      <div className="sidebar-header">
-        <img src="/logo.png" alt="Logo" className="logo" />
-        <div className="header-titles">
-          <h3>لوحة التحكم</h3>
-          <p>إدارة النظام</p>
-        </div>
-      </div>
-      
-      <div className="sidebar-menu">
-        {filteredGroups.map((group, idx, arr) => (
-          <div key={idx} className="menu-group">
-            {group.title && <div className="menu-group-title">{group.title}</div>}
-            {group.items.map((item, idy) => {
-              const Icon = item.icon;
-              return (
-                <NavLink 
-                  to={item.path} 
-                  key={idy} 
-                  className={({ isActive }) => `menu-item ${isActive && item.path !== '#' ? 'active' : ''}`}
-                >
-                  <Icon size={18} className="menu-icon" />
-                  <span>{item.name}</span>
-                </NavLink>
-              );
-            })}
-            {idx < arr.length - 1 && <hr className="menu-divider" />}
+    <>
+      {isOpen && (
+        <div 
+          className="sidebar-backdrop" 
+          onClick={toggleSidebar}
+        />
+      )}
+      <aside className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
+        <div className="sidebar-header">
+          <img src="/logo.png" alt="Logo" className="logo" />
+          <div className="header-titles">
+            <h3>لوحة التحكم</h3>
+            <p>إدارة النظام</p>
           </div>
-        ))}
-        
-        <div className="menu-group logout-group">
-           <hr className="menu-divider" />
-           <NavLink to="#" className="menu-item logout-btn" onClick={() => {
-             sessionStorage.removeItem('currentUser');
-             window.location.href = '/login';
-           }}>
-              <LogOut size={18} className="menu-icon" />
-              <span>تسجيل الخروج</span>
-           </NavLink>
         </div>
-      </div>
-    </aside>
+        
+        <div className="sidebar-menu">
+          {filteredGroups.map((group, idx, arr) => (
+            <div key={idx} className="menu-group">
+              {group.title && <div className="menu-group-title">{group.title}</div>}
+              {group.items.map((item, idy) => {
+                const Icon = item.icon;
+                return (
+                  <NavLink 
+                    to={item.path} 
+                    key={idy} 
+                    className={({ isActive }) => `menu-item ${isActive && item.path !== '#' ? 'active' : ''}`}
+                    onClick={handleLinkClick}
+                  >
+                    <Icon size={18} className="menu-icon" />
+                    <span>{item.name}</span>
+                  </NavLink>
+                );
+              })}
+              {idx < arr.length - 1 && <hr className="menu-divider" />}
+            </div>
+          ))}
+          
+          <div className="menu-group logout-group">
+             <hr className="menu-divider" />
+             <NavLink to="#" className="menu-item logout-btn" onClick={() => {
+               sessionStorage.removeItem('currentUser');
+               window.location.href = '/login';
+             }}>
+                <LogOut size={18} className="menu-icon" />
+                <span>تسجيل الخروج</span>
+             </NavLink>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }
 
