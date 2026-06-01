@@ -73,7 +73,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
   };
   
   // Get current user and role
-  let role = 'admin';
+  let role = '';
   try {
     const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
     if (currentUser && currentUser.role) {
