@@ -229,7 +229,7 @@ function Login() {
           });
         });
 
-        setError(`اسم المستخدم أو كلمة المرور غير صحيحة (مستخدمين: ${users.length} | منسقين: ${coordinators.length} | محفظين: ${mohfezs.length} | مدراء: ${managers.length})`);
+        setError('اسم المستخدم أو كلمة المرور غير صحيحة');
         setLoading(false);
       }
     }, 500);
