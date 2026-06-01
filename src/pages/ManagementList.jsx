@@ -20,10 +20,24 @@ const governorates = Object.keys(egyptCenters);
 
 function ManagementList() {
   const { managers, deleteManager, addManager, addUser } = useAppData();
-  const [filterAdmin, setFilterAdmin] = useState('');
+
+  // Get current user and role
+  const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+  const role = currentUser ? currentUser.role : 'admin';
+  const userAdmin = currentUser ? currentUser.userAdmin : '';
+
+  const isRowaqStaff = ['rowaq_manager', 'rowaq_tech', 'rowaq_member'].includes(role);
+
+  const [filterAdmin, setFilterAdmin] = useState(isRowaqStaff && userAdmin ? userAdmin : '');
   const [filterSpecialty, setFilterSpecialty] = useState('');
   const [searchName, setSearchName] = useState('');
   const importRef = useRef(null);
+
+  React.useEffect(() => {
+    if (isRowaqStaff && userAdmin) {
+      setFilterAdmin(userAdmin);
+    }
+  }, [currentUser]);
 
   const normalizeArabic = (str) => {
     if (!str) return '';
@@ -69,6 +83,8 @@ function ManagementList() {
     
     const mAdminNormalized = isSwapped ? normalizedDecision : normalizedAdmin;
     
+    if (isRowaqStaff && userAdmin && mAdminNormalized !== normalizeArabic(userAdmin)) return false;
+
     // Important: filterAdmin comes directly from governorates list, so we normalize it too
     const filterAdminNormalized = normalizeArabic(filterAdmin);
 
@@ -177,6 +193,7 @@ function ManagementList() {
               value={filterAdmin}
               onChange={e => setFilterAdmin(e.target.value)}
               style={{ width: '100%' }}
+              disabled={isRowaqStaff && !!userAdmin}
             >
               <option value="">--- اختر الادارة ---</option>
               {governorates.map((g, i) => <option key={i} value={g}>{g}</option>)}
@@ -213,7 +230,7 @@ function ManagementList() {
             <button
               className="btn btn-outline"
               onClick={() => {
-                setFilterAdmin('');
+                if (!isRowaqStaff || !userAdmin) setFilterAdmin('');
                 setFilterSpecialty('');
                 setSearchName('');
               }}

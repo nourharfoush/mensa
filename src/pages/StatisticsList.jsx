@@ -7,9 +7,23 @@ import egyptCenters from '../data/egyptCenters';
 
 function StatisticsList() {
   const { managers, monthlyReports, followUpReports } = useAppData();
-  const [filterAdmin, setFilterAdmin] = useState('');
+
+  // Get current user and role
+  const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+  const role = currentUser ? currentUser.role : 'admin';
+  const userAdmin = currentUser ? currentUser.userAdmin : '';
+
+  const isRowaqStaff = ['rowaq_manager', 'rowaq_tech', 'rowaq_member'].includes(role);
+
+  const [filterAdmin, setFilterAdmin] = useState(isRowaqStaff && userAdmin ? userAdmin : '');
   const [filterYear, setFilterYear] = useState('');
   const [filterMonth, setFilterMonth] = useState('');
+
+  React.useEffect(() => {
+    if (isRowaqStaff && userAdmin) {
+      setFilterAdmin(userAdmin);
+    }
+  }, [currentUser]);
 
   const governorates = Object.keys(egyptCenters);
 
@@ -19,9 +33,34 @@ function StatisticsList() {
     {v:'9',l:'سبتمبر'},{v:'10',l:'أكتوبر'},{v:'11',l:'نوفمبر'},{v:'12',l:'ديسمبر'}
   ];
 
-  const filtered = managers.filter(m =>
-    filterAdmin ? m.admin === filterAdmin : true
-  );
+  const normalizeArabic = (str) => {
+    if (!str) return '';
+    return str
+      .toString()
+      .trim()
+      .normalize('NFKD')
+      .normalize('NFC')
+      .replace(/ً/g, '')
+      .replace(/ٌ/g, '')
+      .replace(/ٍ/g, '')
+      .replace(/َ/g, '')
+      .replace(/ُ/g, '')
+      .replace(/ِ/g, '')
+      .replace(/ّ/g, '')
+      .replace(/ْ/g, '')
+      .replace(/[أإآا]/g, 'ا')
+      .replace(/[ىي]/g, 'ي')
+      .replace(/[ة]/g, 'ه')
+      .replace(/[ـ]/g, '')
+      .replace(/\s+/g, ' ')
+      .toLowerCase()
+      .trim();
+  };
+
+  const filtered = managers.filter(m => {
+    if (isRowaqStaff && userAdmin && normalizeArabic(m.admin) !== normalizeArabic(userAdmin)) return false;
+    return filterAdmin ? normalizeArabic(m.admin) === normalizeArabic(filterAdmin) : true;
+  });
 
   // Helper to dynamically calculate stats for a manager under active filters
   const getManagerStats = (managerName) => {
@@ -83,7 +122,7 @@ function StatisticsList() {
         <div className="form-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '20px' }}>
           <div className="form-group">
             <label>الإدارة</label>
-            <select className="form-select" value={filterAdmin} onChange={e => setFilterAdmin(e.target.value)}>
+            <select className="form-select" value={filterAdmin} onChange={e => setFilterAdmin(e.target.value)} disabled={isRowaqStaff && !!userAdmin}>
               <option value="">--- اختار المحافظة ---</option>
               {governorates.map((g,i) => <option key={i} value={g}>{g}</option>)}
             </select>
@@ -105,7 +144,11 @@ function StatisticsList() {
         </div>
         <div className="search-actions" style={{ justifyContent: 'flex-end', flexDirection: 'row-reverse' }}>
           <button className="btn btn-primary"><Search size={16} /> بحث</button>
-          <button className="btn btn-outline" onClick={() => { setFilterAdmin(''); setFilterYear(''); setFilterMonth(''); }}>إعادة تعيين</button>
+          <button className="btn btn-outline" onClick={() => { 
+            if (!isRowaqStaff || !userAdmin) setFilterAdmin(''); 
+            setFilterYear(''); 
+            setFilterMonth(''); 
+          }}>إعادة تعيين</button>
         </div>
       </div>
 

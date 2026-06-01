@@ -12,7 +12,9 @@ function MonthlyReportList() {
 
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
   const role = currentUser ? currentUser.role : 'admin';
+  const userAdmin = currentUser ? currentUser.userAdmin : '';
   const canAddOrEdit = ['admin', 'rowaq_admin', 'rowaq_manager', 'rowaq_tech'].includes(role);
+  const isRowaqStaff = ['rowaq_manager', 'rowaq_tech', 'rowaq_member'].includes(role);
 
   const isEditAllowed = (report) => {
     if (['admin', 'rowaq_admin'].includes(role)) return true;
@@ -22,12 +24,18 @@ function MonthlyReportList() {
     const limitDate = new Date(parseInt(report.year, 10), parseInt(report.month, 10) - 1, 3, 23, 59, 59);
     return today <= limitDate;
   };
-  const [filterAdmin, setFilterAdmin] = useState('');
+  const [filterAdmin, setFilterAdmin] = useState(isRowaqStaff && userAdmin ? userAdmin : '');
   const [filterMember, setFilterMember] = useState('');
   const [filterYear, setFilterYear] = useState('');
   const [filterMonth, setFilterMonth] = useState('');
   const [selectedReportId, setSelectedReportId] = useState(null);
   const importRef = useRef(null);
+
+  React.useEffect(() => {
+    if (isRowaqStaff && userAdmin) {
+      setFilterAdmin(userAdmin);
+    }
+  }, [currentUser]);
 
   const governorates = Object.keys(egyptCenters);
 
@@ -39,12 +47,39 @@ function MonthlyReportList() {
 
   const adminManagers = filterAdmin ? managers.filter(m => m.admin === filterAdmin) : managers;
 
-  const filtered = monthlyReports.filter(r =>
-    (filterAdmin ? r.admin === filterAdmin : true) &&
-    (filterMember ? r.member === filterMember : true) &&
-    (filterYear ? r.year === filterYear : true) &&
-    (filterMonth ? r.month === filterMonth : true)
-  );
+  const normalizeArabic = (str) => {
+    if (!str) return '';
+    return str
+      .toString()
+      .trim()
+      .normalize('NFKD')
+      .normalize('NFC')
+      .replace(/ً/g, '')
+      .replace(/ٌ/g, '')
+      .replace(/ٍ/g, '')
+      .replace(/َ/g, '')
+      .replace(/ُ/g, '')
+      .replace(/ِ/g, '')
+      .replace(/ّ/g, '')
+      .replace(/ْ/g, '')
+      .replace(/[أإآا]/g, 'ا')
+      .replace(/[ىي]/g, 'ي')
+      .replace(/[ة]/g, 'ه')
+      .replace(/[ـ]/g, '')
+      .replace(/\s+/g, ' ')
+      .toLowerCase()
+      .trim();
+  };
+
+  const filtered = monthlyReports.filter(r => {
+    if (isRowaqStaff && userAdmin && normalizeArabic(r.admin) !== normalizeArabic(userAdmin)) return false;
+    return (
+      (filterAdmin ? normalizeArabic(r.admin) === normalizeArabic(filterAdmin) : true) &&
+      (filterMember ? r.member === filterMember : true) &&
+      (filterYear ? r.year === filterYear : true) &&
+      (filterMonth ? r.month === filterMonth : true)
+    );
+  });
 
   const selectedReport = monthlyReports.find(r => r.id === selectedReportId);
 
@@ -119,7 +154,7 @@ function MonthlyReportList() {
         <div className="form-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '20px' }}>
           <div className="form-group">
             <label>الإدارة</label>
-            <select className="form-select" value={filterAdmin} onChange={e => { setFilterAdmin(e.target.value); setFilterMember(''); }}>
+            <select className="form-select" value={filterAdmin} onChange={e => { setFilterAdmin(e.target.value); setFilterMember(''); }} disabled={isRowaqStaff && !!userAdmin}>
               <option value="">--- اختار الإدارة ---</option>
               {governorates.map((g,i) => <option key={i} value={g}>{g}</option>)}
             </select>
@@ -150,7 +185,13 @@ function MonthlyReportList() {
           <button className="btn btn-primary" onClick={() => {}}>
             <Search size={16} /> بحث
           </button>
-          <button className="btn btn-outline" onClick={() => { setFilterAdmin(''); setFilterMember(''); setFilterYear(''); setFilterMonth(''); setSelectedReportId(null); }}>
+          <button className="btn btn-outline" onClick={() => { 
+            if (!isRowaqStaff || !userAdmin) setFilterAdmin(''); 
+            setFilterMember(''); 
+            setFilterYear(''); 
+            setFilterMonth(''); 
+            setSelectedReportId(null); 
+          }}>
             إعادة تعيين
           </button>
         </div>
