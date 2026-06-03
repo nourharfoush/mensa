@@ -23,31 +23,41 @@ import { seniorsFourYearsNasCurriculum } from '../data/seniors_four_years_nas';
 import { seniorsFiveYearsFatihahCurriculum } from '../data/seniors_five_years_fatihah';
 import { seniorsFiveYearsNasCurriculum } from '../data/seniors_five_years_nas';
 
+// Normalize Arabic text: remove hamza variants so الاول === الأول
+const normalizeArabic = (str) => (str || '').trim().replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه');
+
 const getCurriculumData = (rowaq, level) => {
   if (!rowaq || !level) return null;
+  const lvl = normalizeArabic(level);
   
-  if (rowaq.includes('أطفال')) {
-    if (level === 'الأول') return children1Curriculum;
-    if (level === 'الثاني') return children2Curriculum;
-    if (level === 'الثالث') return children3Curriculum;
-    if (level === 'الرابع') return children4Curriculum;
-    if (level === 'الخامس') return children5Curriculum;
-    if (level === 'السادس') return children6Curriculum;
-    if (level === 'السابع') return children7Curriculum;
-    if (level === 'الثامن') return children8Curriculum;
-    if (level === 'التاسع') return children9Curriculum;
-    if (level === 'العاشر') return children10Curriculum;
+  if (rowaq.includes('اطفال') || rowaq.includes('أطفال')) {
+    if (lvl === 'الاول') return children1Curriculum;
+    if (lvl === 'الثاني') return children2Curriculum;
+    if (lvl === 'الثالث') return children3Curriculum;
+    if (lvl === 'الرابع') return children4Curriculum;
+    if (lvl === 'الخامس') return children5Curriculum;
+    if (lvl === 'السادس') return children6Curriculum;
+    if (lvl === 'السابع') return children7Curriculum;
+    if (lvl === 'الثامن') return children8Curriculum;
+    if (lvl === 'التاسع') return children9Curriculum;
+    if (lvl === 'العاشر') return children10Curriculum;
   } else if (rowaq.includes('كبار')) {
-    if (level === 'السنة الواحدة') return seniorsOneYearCurriculum;
-    if (level === 'السنتين') return seniorsTwoYearsCurriculum;
-    if (level === 'ثلاث سنوات') return seniorsThreeYearsCurriculum;
-    if (level === 'أربع سنوات من البقرة') return seniorsFourYearsFatihahCurriculum;
-    if (level === 'أربع سنوات من الناس') return seniorsFourYearsNasCurriculum;
-    if (level === 'خمس سنوات من البقرة') return seniorsFiveYearsFatihahCurriculum;
-    if (level === 'خمس سنوات من الناس') return seniorsFiveYearsNasCurriculum;
+    // نظام السنة الواحدة
+    if (lvl === normalizeArabic('نظام السنة الواحدة') || lvl === normalizeArabic('السنة الواحدة')) return seniorsOneYearCurriculum;
+    // نظام الثلاث سنوات
+    if (lvl === normalizeArabic('نظام الثلاث سنوات') || lvl === 'ثلاث سنوات') return seniorsThreeYearsCurriculum;
+    // نظام الاربع سنوات من البقرة
+    if (lvl === normalizeArabic('نظام الاربع سنوات ( من سورة البقرة )') || lvl === normalizeArabic('أربع سنوات من البقرة')) return seniorsFourYearsFatihahCurriculum;
+    // نظام الاربع سنوات من الناس
+    if (lvl === normalizeArabic('نظام الاربع سنوات ( من سورة الناس )') || lvl === normalizeArabic('أربع سنوات من الناس')) return seniorsFourYearsNasCurriculum;
+    // نظام الخمس سنوات من البقرة
+    if (lvl === normalizeArabic('نظام الخمس سنوات ( من سورة البقرة )') || lvl === normalizeArabic('خمس سنوات من البقرة') || lvl === normalizeArabic('القرآن الكريم كبار ( نظام الخمس سنوات - من سورة البقرة )')) return seniorsFiveYearsFatihahCurriculum;
+    // نظام الخمس سنوات من الناس
+    if (lvl === normalizeArabic('نظام الخمس سنوات ( من سورة الناس )') || lvl === normalizeArabic('خمس سنوات من الناس')) return seniorsFiveYearsNasCurriculum;
   }
   return null;
 };
+
 
 const getArabicDayName = (dateString) => {
   if (!dateString) return '';
@@ -87,7 +97,7 @@ function SessionReportsAdd() {
   const [recentReview, setRecentReview] = useState({ fromSurah: '', fromAyah: '', toSurah: '', toAyah: '' });
   const [distantReview, setDistantReview] = useState({ fromSurah: '', fromAyah: '', toSurah: '', toAyah: '' });
 
-  const isLevelOneChild = session?.rowaq === 'رواق القرآن الكريم (أطفال)' && (session?.level === 'الأول' || session?.level?.includes('الأول'));
+  const isLevelOneChild = (session?.rowaq?.includes('اطفال') || session?.rowaq?.includes('أطفال')) && (normalizeArabic(session?.level) === 'الاول');
   const curriculumData = getCurriculumData(session?.rowaq, session?.level);
 
   const selectedDayName = getArabicDayName(date);

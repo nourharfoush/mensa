@@ -214,22 +214,20 @@ export function AppDataProvider({ children }) {
     return reports;
   });
   const [users, setUsers] = useState(() => {
-    const defaultUsers = [
-      { id: 1, username: 'admin', email: 'admin', national_id: 'admin', password: '123', record_number: '123', name: 'Admin', role: 'admin', created_at: new Date().toLocaleDateString('ar-EG') },
-    ];
+    const defaultAdmin = { id: 1, username: 'admin', email: 'admin', national_id: 'admin', password: '123', record_number: '123', name: 'Admin', role: 'admin', created_at: new Date().toLocaleDateString('ar-EG') };
+    const defaultUsers = [defaultAdmin];
     const stored = getFromLocalStorage('users', defaultUsers);
     // توحيد بيانات المستخدمين القديمة لضمان عمل تسجيل الدخول
-    return stored.map(u => ({
+    const normalized = stored.map(u => ({
       ...u,
-      // username = الرقم القومي أو email أو username
       username: u.national_id || u.email || u.username || '',
-      // email = الرقم القومي إذا لم يكن بريدًا إلكترونيًا (تجنب الكتابة فوق البريد الإلكتروني الحقيقي)
       email: u.email || u.national_id || '',
-      // password = رقم السجل أو password الموجود
       password: u.password || u.record_number || '',
-      // record_number = رقم السجل
       record_number: u.record_number || u.password || '',
     }));
+    // ضمان وجود مستخدم الأدمن دائماً
+    const hasAdmin = normalized.some(u => u.national_id === 'admin' || u.username === 'admin');
+    return hasAdmin ? normalized : [defaultAdmin, ...normalized];
   });
   const [applicantBranches, setApplicantBranches] = useState(() => getFromLocalStorage('applicantBranches', []));
   const [auditLogs, setAuditLogs] = useState(() => getFromLocalStorage('auditLogs', []));
@@ -307,7 +305,17 @@ export function AppDataProvider({ children }) {
         await syncCollection(studentsAPI, students, setStudents, 'students');
         await syncCollection(branchesAPI, branches, setBranches, 'branches');
         await syncCollection(sessionsAPI, sessions, setSessions, 'sessions');
-        await syncCollection(usersAPI, users, setUsers, 'users');
+        // Sync users but always keep the default admin account
+        const remoteUsers = await usersAPI.getAll().catch(() => null);
+        if (remoteUsers) {
+          const normalizedRemote = remoteUsers.map(item => ({ ...item, id: item.id || item._id }));
+          const defaultAdmin = { id: 1, username: 'admin', email: 'admin', national_id: 'admin', password: '123', record_number: '123', name: 'Admin', role: 'admin' };
+          const hasAdmin = normalizedRemote.some(u => u.national_id === 'admin' || u.username === 'admin');
+          const finalUsers = hasAdmin ? normalizedRemote : [defaultAdmin, ...normalizedRemote];
+          setUsers(finalUsers);
+          saveToLocalStorage('users', finalUsers);
+          console.log(`✓ Fetched ${finalUsers.length} users from MongoDB (admin protected)`);
+        }
 
         await syncCollection(monthlyReportsAPI, monthlyReports, setMonthlyReports, 'monthlyReports');
         await syncCollection(followUpReportsAPI, followUpReports, setFollowUpReports, 'followUpReports');
