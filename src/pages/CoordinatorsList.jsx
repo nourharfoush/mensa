@@ -105,17 +105,42 @@ function CoordinatorsList() {
   });
 
   const handleExport = () => {
-    const exportData = filtered.map(c => ({
-      'الاسم': c.name,
-      'الإدارة': c.admin,
-      'المركز': c.center,
-      'الفرع': c.branch,
-      'رقم القرار': c.decision_no,
-      'التخصص': c.specialization,
-      'رقم السجل': c.registry_no,
-      'الرقم القومي': c.national_id,
-      'الهاتف': c.phone,
+    let exportData = filtered.map(c => ({
+      'الاسم': c.name || '',
+      'التخصص': c.specialization || '',
+      'إدارة': c.admin || '',
+      'المركز': c.center || '',
+      'الفرع': c.branch || '',
+      'رقم السجل': c.registry_no || '',
+      'الرقم القومي': c.national_id || '',
+      'الوظيفة': c.job || '',
+      'جهة العمل': c.workplace || '',
+      'الدرجة الوظيفية': c.job_grade || '',
+      'المؤهل': c.qualification || '',
+      'رقم القرار': c.decision_no || '',
+      'العنوان': c.address || '',
+      'الهاتف': c.phone || '',
     }));
+
+    if (exportData.length === 0) {
+      exportData = [{
+        'الاسم': '',
+        'التخصص': '',
+        'إدارة': '',
+        'المركز': '',
+        'الفرع': '',
+        'رقم السجل': '',
+        'الرقم القومي': '',
+        'الوظيفة': '',
+        'جهة العمل': '',
+        'الدرجة الوظيفية': '',
+        'المؤهل': '',
+        'رقم القرار': '',
+        'العنوان': '',
+        'الهاتف': ''
+      }];
+    }
+
     exportToXLSX(exportData, 'المنسقين', 'إدارة المنسقين');
   };
 
@@ -124,21 +149,36 @@ function CoordinatorsList() {
     if (!file) return;
     try {
       const rows = await importFromXLSX(file);
-      rows.forEach(row => {
+      
+      const validRows = rows.filter(row => row['الاسم'] && row['الاسم'].toString().trim() !== '');
+
+      if (validRows.length === 0) {
+        alert('الملف فارغ أو يحتوي على صفوف فارغة فقط');
+        e.target.value = '';
+        return;
+      }
+
+      validRows.forEach(row => {
         addCoordinator({
           name: row['الاسم'] || '',
-          admin: row['الإدارة'] || '',
+          specialization: row['التخصص'] || '',
+          admin: row['إدارة'] || row['الإدارة'] || '',
           center: row['المركز'] || '',
           branch: row['الفرع'] || '',
-          decision_no: row['رقم القرار'] || '',
-          specialization: row['التخصص'] || '',
           registry_no: row['رقم السجل'] || '',
           national_id: row['الرقم القومي'] || '',
+          job: row['الوظيفة'] || '',
+          workplace: row['جهة العمل'] || '',
+          job_grade: row['الدرجة الوظيفية'] || '',
+          qualification: row['المؤهل'] || '',
+          decision_no: row['رقم القرار'] || '',
+          address: row['العنوان'] || '',
           phone: row['الهاتف'] || '',
         });
       });
       alert('تم استيراد البيانات بنجاح');
-    } catch {
+    } catch (err) {
+      console.error(err);
       alert('حدث خطأ في استيراد الملف');
     }
     e.target.value = '';
