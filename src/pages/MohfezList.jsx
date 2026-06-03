@@ -83,7 +83,6 @@ function MohfezList() {
   const [filterName, setFilterName] = useState('');
   const [filterNationalId, setFilterNationalId] = useState('');
   const [filterEmail, setFilterEmail] = useState('');
-  const [filterSpecialization, setFilterSpecialization] = useState('');
   const [filterAdmin, setFilterAdmin] = useState(isRowaqStaff || isBranchCoordinator || isMohfez ? userAdmin : '');
   const [filterCenter, setFilterCenter] = useState(isBranchCoordinator || isMohfez ? userCenter : '');
   const [filterBranch, setFilterBranch] = useState(isBranchCoordinator || isMohfez ? userBranch : '');
@@ -139,7 +138,6 @@ function MohfezList() {
       (filterName ? normalizeArabic(m.name).includes(normalizeArabic(filterName)) : true) &&
       (filterNationalId ? normalizeArabic(m.national_id).includes(normalizeArabic(filterNationalId)) : true) &&
       (filterEmail ? normalizeArabic(m.email).includes(normalizeArabic(filterEmail)) : true) &&
-      (filterSpecialization ? normalizeArabic(m.specialization) === normalizeArabic(filterSpecialization) : true) &&
       (filterAdmin ? normalizeArabic(m.admin) === normalizeArabic(filterAdmin) : true) &&
       (filterCenter ? normalizeArabic(m.center) === normalizeArabic(filterCenter) : true) &&
       (filterBranch ? normalizeArabic(m.branch) === normalizeArabic(filterBranch) : true) &&
@@ -296,14 +294,6 @@ function MohfezList() {
             <label>البريد الإلكتروني</label>
             <input type="text" className="form-input" placeholder="البحث بالبريد الإلكتروني" value={filterEmail} onChange={e => setFilterEmail(e.target.value)} />
           </div>
-          <div className="form-group">
-            <label>التخصص</label>
-            <select className="form-select" value={filterSpecialization} onChange={e => setFilterSpecialization(e.target.value)}>
-              <option value="">--- اختار التخصص ---</option>
-              <option value="إداري">إداري</option>
-              <option value="علمي">علمي</option>
-            </select>
-          </div>
           
           <div className="form-group">
             <label>المحافظة</label>
@@ -342,7 +332,7 @@ function MohfezList() {
         </div>
         <div className="search-actions" style={{ justifyContent: 'flex-start' }}>
           <button className="btn btn-outline" onClick={() => { 
-            setFilterName(''); setFilterNationalId(''); setFilterEmail(''); setFilterSpecialization(''); 
+            setFilterName(''); setFilterNationalId(''); setFilterEmail(''); 
             if (!isRowaqStaff && !isBranchCoordinator && !isMohfez) setFilterAdmin(''); 
             if (!isBranchCoordinator && !isMohfez) setFilterCenter(''); 
             if (!isBranchCoordinator && !isMohfez) setFilterBranch(''); 
