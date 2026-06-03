@@ -10,7 +10,7 @@ const governorates = Object.keys(egyptCenters);
 const workDaysList = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
 
 function BranchesList() {
-  const { branches, deleteBranch, addBranch, hasPermission, sessions } = useAppData();
+  const { branches, deleteBranch, addBranch, hasPermission, sessions, coordinators, mohfezs, students } = useAppData();
   const importRef = useRef(null);
 
   // Get current user and role
@@ -90,14 +90,36 @@ function BranchesList() {
 
   const handleExport = () => {
     const exportData = filtered.map(b => ({
-      'اسم الفرع': b.name,
-      'الإدارة': b.admin,
-      'المركز': b.center,
-      'رقم القرار': b.decision_no,
-      'المنسقين': b.coordinators || 'لا يوجد منسقين',
-      'أيام العمل': (b.workDays || []).join('، '),
-      'من': b.timeFrom,
-      'إلى': b.timeTo,
+      'الكود': b.id,
+      'فرع': b.name,
+      'العنوان': b.address || '',
+      'الهاتف': b.phone || '',
+      'رقم القرار': b.decision_no || '',
+      'ايام العمل': (b.workDays || []).join('، '),
+      'الوقت من': b.timeFrom || '',
+      'الوقت الي': b.timeTo || '',
+      'الإدارة': b.admin || '',
+      'المركز': b.center || '',
+      'المحفّظين': mohfezs.filter(m => 
+        normalizeArabic(m.branch) === normalizeArabic(b.name) && 
+        normalizeArabic(m.admin) === normalizeArabic(b.admin) && 
+        normalizeArabic(m.center) === normalizeArabic(b.center)
+      ).length,
+      'المنسّقين': coordinators.filter(c => 
+        normalizeArabic(c.branch) === normalizeArabic(b.name) && 
+        normalizeArabic(c.admin) === normalizeArabic(b.admin) && 
+        normalizeArabic(c.center) === normalizeArabic(b.center)
+      ).length,
+      'الحلقات': sessions.filter(s => 
+        normalizeArabic(s.branch) === normalizeArabic(b.name) && 
+        normalizeArabic(s.admin) === normalizeArabic(b.admin) && 
+        normalizeArabic(s.center) === normalizeArabic(b.center)
+      ).length,
+      'الدارسين': students.filter(s => 
+        normalizeArabic(s.branch) === normalizeArabic(b.name) && 
+        normalizeArabic(s.admin) === normalizeArabic(b.admin) && 
+        normalizeArabic(s.center) === normalizeArabic(b.center)
+      ).length,
     }));
     exportToXLSX(exportData, 'الفروع', 'إدارة الفروع');
   };
