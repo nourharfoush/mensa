@@ -147,15 +147,15 @@ export function AppDataProvider({ children }) {
   const [students, setStudents] = useState(() => getFromLocalStorage('students', []));
   const [applicants, setApplicants] = useState(() => getFromLocalStorage('applicants', []));
   const [rowaqs, setRowaqs] = useState(() => getFromLocalStorage('rowaqs', []));
-  
+
   const [followUpReports, setFollowUpReports] = useState(() => {
     const stored = getFromLocalStorage('followUpReports', []);
     if (stored.length > 0) return stored;
-    
+
     // Auto-seed mock reports for past dates if they exist in monthlyReports
     const reports = [];
     const monthlyList = getFromLocalStorage('monthlyReports', []);
-    
+
     monthlyList.forEach(m => {
       if (m.branches) {
         m.branches.forEach(b => {
@@ -283,7 +283,7 @@ export function AppDataProvider({ children }) {
     const syncWithBackend = async () => {
       try {
         console.log('🔄 Syncing with backend database...');
-        
+
         const syncCollection = async (api, state, setState, key) => {
           const remoteData = await api.getAll().catch(() => null);
           if (remoteData) {
@@ -310,14 +310,14 @@ export function AppDataProvider({ children }) {
         await syncCollection(branchesAPI, branches, setBranches, 'branches');
         await syncCollection(sessionsAPI, sessions, setSessions, 'sessions');
         await syncCollection(usersAPI, users, setUsers, 'users');
-        
+
         await syncCollection(monthlyReportsAPI, monthlyReports, setMonthlyReports, 'monthlyReports');
         await syncCollection(followUpReportsAPI, followUpReports, setFollowUpReports, 'followUpReports');
         await syncCollection(applicantsAPI, applicants, setApplicants, 'applicants');
         await syncCollection(rowaqsAPI, rowaqs, setRowaqs, 'rowaqs');
         await syncCollection(applicantBranchesAPI, applicantBranches, setApplicantBranches, 'applicantBranches');
         await syncCollection(sessionReportsAPI, sessionReports, setSessionReports, 'sessionReports');
-        
+
         await syncCollection(platformTopManagementAPI, platformTopManagement, setPlatformTopManagement, 'platformTopManagement');
         await syncCollection(platformSupervisorsAPI, platformSupervisors, setPlatformSupervisors, 'platformSupervisors');
         await syncCollection(platformCoordinatorsAPI, platformCoordinators, setPlatformCoordinators, 'platformCoordinators');
@@ -326,17 +326,17 @@ export function AppDataProvider({ children }) {
         await syncCollection(platformStudentsAPI, platformStudents, setPlatformStudents, 'platformStudents');
         await syncCollection(platformApplicantsAPI, platformApplicants, setPlatformApplicants, 'platformApplicants');
         await syncCollection(platformRowaqsAPI, platformRowaqs, setPlatformRowaqs, 'platformRowaqs');
-        
+
         await syncCollection(administrationsAPI, administrations, setAdministrations, 'administrations');
         await syncCollection(rolePermissionsAPI, rolePermissions, setRolePermissions, 'rolePermissions');
-        
+
         setDbSynced(true);
         console.log('✓ Database synchronization complete!');
       } catch (error) {
         console.error('✗ Backend sync error:', error);
       }
     };
-    
+
     syncWithBackend();
   }, []);
 
@@ -352,7 +352,7 @@ export function AppDataProvider({ children }) {
         const pw = String(u.password || '').trim();
         const rec = String(u.record_number || '').trim();
         const reg = String(u.registry_no || '').trim();
-        
+
         return {
           ...u,
           username: nid || em || uname,
@@ -541,7 +541,7 @@ export function AppDataProvider({ children }) {
       saveToLocalStorage('users', normalized);
       return normalized;
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Save all data to localStorage whenever it changes
@@ -1028,16 +1028,105 @@ export function AppDataProvider({ children }) {
     setPlatformRowaqs(prev => [...prev, newItem]);
     platformRowaqsAPI.create(newItem).catch(err => console.error(err));
   };
-  const updatePlatformRowaq = (id, updatedItem) => {
-    setPlatformRowaqs(prev => prev.map(m => String(m.id) === String(id) ? { ...m, ...updatedItem } : m));
-    platformRowaqsAPI.update(id, updatedItem).catch(err => console.error(err));
-  };
-  const deletePlatformRowaq = (id) => {
-    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
-      setPlatformRowaqs(prev => prev.filter(m => String(m.id) !== String(id)));
-      platformRowaqsAPI.delete(id).catch(err => console.error(err));
+
+  const deleteAllStudents = () => {
+    if (window.confirm('هل أنت متأكد من حذف جميع الطلاب؟ هذه العملية لا يمكن التراجع عنها.')) {
+      setStudents([]);
+      studentsAPI.deleteAll().catch(err => console.error(err));
     }
   };
+
+  const deleteAllMohfezs = () => {
+    if (window.confirm('هل أنت متأكد من حذف جميع المحفظين؟ هذه العملية لا يمكن التراجع عنها.')) {
+      setMohfezs([]);
+      mohfezsAPI.deleteAll().catch(err => console.error(err));
+    }
+  };
+
+  const deleteAllCoordinators = () => {
+    if (window.confirm('هل أنت متأكد من حذف جميع المنسقين؟ هذه العملية لا يمكن التراجع عنها.')) {
+      setCoordinators([]);
+      coordinatorsAPI.deleteAll().catch(err => console.error(err));
+    }
+  };
+
+  const deleteAllBranches = () => {
+    if (window.confirm('هل أنت متأكد من حذف جميع الفروع؟ هذه العملية لا يمكن التراجع عنها.')) {
+      setBranches([]);
+      branchesAPI.deleteAll().catch(err => console.error(err));
+    }
+  };
+
+  const deleteAllSessions = () => {
+    if (window.confirm('هل أنت متأكد من حذف جميع الحلقات؟ هذه العملية لا يمكن التراجع عنها.')) {
+      setSessions([]);
+      sessionsAPI.deleteAll().catch(err => console.error(err));
+    }
+  };
+
+  const deleteAllManagers = () => {
+    if (window.confirm('هل أنت متأكد من حذف جميع المشرفين والمدراء؟ هذه العملية لا يمكن التراجع عنها.')) {
+      setManagers([]);
+      managersAPI.deleteAll().catch(err => console.error(err));
+    }
+  };
+
+  const deleteAllApplicants = () => {
+    if (window.confirm('هل أنت متأكد من حذف جميع طلبات التقديم؟ هذه العملية لا يمكن التراجع عنها.')) {
+      setApplicants([]);
+      applicantsAPI.deleteAll().catch(err => console.error(err));
+    }
+  };
+
+  const deleteAllPlatformTopManagement = () => {
+    if (window.confirm('هل أنت متأكد من حذف جميع أعضاء الإدارة العليا للمنصة؟ هذه العملية لا يمكن التراجع عنها.')) {
+      setPlatformTopManagement([]);
+      platformTopManagementAPI.deleteAll().catch(err => console.error(err));
+    }
+  };
+
+  const deleteAllPlatformSupervisors = () => {
+    if (window.confirm('هل أنت متأكد من حذف جميع مشرفي المنصة؟ هذه العملية لا يمكن التراجع عنها.')) {
+      setPlatformSupervisors([]);
+      platformSupervisorsAPI.deleteAll().catch(err => console.error(err));
+    }
+  };
+
+  const deleteAllPlatformCoordinators = () => {
+    if (window.confirm('هل أنت متأكد من حذف جميع منسقي المنصة؟ هذه العملية لا يمكن التراجع عنها.')) {
+      setPlatformCoordinators([]);
+      platformCoordinatorsAPI.deleteAll().catch(err => console.error(err));
+    }
+  };
+
+  const deleteAllPlatformMohfezs = () => {
+    if (window.confirm('هل أنت متأكد من حذف جميع محفظي المنصة؟ هذه العملية لا يمكن التراجع عنها.')) {
+      setPlatformMohfezs([]);
+      platformMohfezsAPI.deleteAll().catch(err => console.error(err));
+    }
+  };
+
+  const deleteAllPlatformSessions = () => {
+    if (window.confirm('هل أنت متأكد من حذف جميع حلقات المنصة؟ هذه العملية لا يمكن التراجع عنها.')) {
+      setPlatformSessions([]);
+      platformSessionsAPI.deleteAll().catch(err => console.error(err));
+    }
+  };
+
+  const deleteAllPlatformStudents = () => {
+    if (window.confirm('هل أنت متأكد من حذف جميع دارسي المنصة؟ هذه العملية لا يمكن التراجع عنها.')) {
+      setPlatformStudents([]);
+      platformStudentsAPI.deleteAll().catch(err => console.error(err));
+    }
+  };
+
+  const deleteAllPlatformApplicants = () => {
+    if (window.confirm('هل أنت متأكد من حذف جميع طلبات تقديم المنصة؟ هذه العملية لا يمكن التراجع عنها.')) {
+      setPlatformApplicants([]);
+      platformApplicantsAPI.deleteAll().catch(err => console.error(err));
+    }
+  };
+
   const updateRolePermissions = (newPermissions) => {
     setRolePermissions(newPermissions);
   };
@@ -1058,15 +1147,15 @@ export function AppDataProvider({ children }) {
 
   return (
     <AppDataContext.Provider value={{
-      managers, addManager, updateManager, deleteManager,
+      managers, addManager, updateManager, deleteManager, deleteAllManagers,
       monthlyReports, addMonthlyReport, updateMonthlyReport, deleteMonthlyReport,
-      branches, addBranch, updateBranch, deleteBranch,
-      coordinators, addCoordinator, updateCoordinator, deleteCoordinator,
-      mohfezs, addMohfez, updateMohfez, deleteMohfez,
-      sessions, addSession, updateSession, deleteSession,
-      students, addStudent, updateStudent, deleteStudent,
+      branches, addBranch, updateBranch, deleteBranch, deleteAllBranches,
+      coordinators, addCoordinator, updateCoordinator, deleteCoordinator, deleteAllCoordinators,
+      mohfezs, addMohfez, updateMohfez, deleteMohfez, deleteAllMohfezs,
+      sessions, addSession, updateSession, deleteSession, deleteAllSessions,
+      students, addStudent, updateStudent, deleteStudent, deleteAllStudents,
       followUpReports, addFollowUpReport, confirmFollowUpReport,
-      applicants, addApplicant, updateApplicant, deleteApplicant,
+      applicants, addApplicant, updateApplicant, deleteApplicant, deleteAllApplicants,
       administrations, addCenterToAdmin,
       rowaqs, addRowaq, updateRowaq, deleteRowaq,
       users, deleteUser, addUser, updateUser,
@@ -1074,14 +1163,14 @@ export function AppDataProvider({ children }) {
       auditLogs,
       attendances, addAttendance, deleteAttendance,
       sessionReports, addSessionReport, deleteSessionReport,
-      
-      platformTopManagement, addPlatformTopManagement, updatePlatformTopManagement, deletePlatformTopManagement,
-      platformSupervisors, addPlatformSupervisor, updatePlatformSupervisor, deletePlatformSupervisor,
-      platformCoordinators, addPlatformCoordinator, updatePlatformCoordinator, deletePlatformCoordinator,
-      platformMohfezs, addPlatformMohfez, updatePlatformMohfez, deletePlatformMohfez,
-      platformSessions, addPlatformSession, updatePlatformSession, deletePlatformSession,
-      platformStudents, addPlatformStudent, updatePlatformStudent, deletePlatformStudent,
-      platformApplicants, addPlatformApplicant, updatePlatformApplicant, deletePlatformApplicant,
+
+      platformTopManagement, addPlatformTopManagement, updatePlatformTopManagement, deletePlatformTopManagement, deleteAllPlatformTopManagement,
+      platformSupervisors, addPlatformSupervisor, updatePlatformSupervisor, deletePlatformSupervisor, deleteAllPlatformSupervisors,
+      platformCoordinators, addPlatformCoordinator, updatePlatformCoordinator, deletePlatformCoordinator, deleteAllPlatformCoordinators,
+      platformMohfezs, addPlatformMohfez, updatePlatformMohfez, deletePlatformMohfez, deleteAllPlatformMohfezs,
+      platformSessions, addPlatformSession, updatePlatformSession, deletePlatformSession, deleteAllPlatformSessions,
+      platformStudents, addPlatformStudent, updatePlatformStudent, deletePlatformStudent, deleteAllPlatformStudents,
+      platformApplicants, addPlatformApplicant, updatePlatformApplicant, deletePlatformApplicant, deleteAllPlatformApplicants,
       platformRowaqs, addPlatformRowaq, updatePlatformRowaq, deletePlatformRowaq,
 
       theme, toggleTheme,

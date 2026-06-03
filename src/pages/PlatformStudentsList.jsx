@@ -7,7 +7,7 @@ import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
 import { countriesList } from '../data/countries';
 
 function PlatformStudentsList() {
-  const { platformStudents, deletePlatformStudent, addPlatformStudent, platformSessions, rowaqs, hasPermission, users, addUser, updateUser } = useAppData();
+  const { platformStudents, deletePlatformStudent, addPlatformStudent, platformSessions, rowaqs, hasPermission, users, addUser, updateUser, deleteAllPlatformStudents } = useAppData();
   const importRef = useRef(null);
   
   // Get current user and role
@@ -202,6 +202,11 @@ function PlatformStudentsList() {
               </button>
               <input ref={importRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImport} />
             </>
+          )}
+          {hasPermission('students', 'delete') && platformStudents.length > 0 && (
+            <button className="btn btn-danger" onClick={deleteAllPlatformStudents}>
+              حذف الجميع
+            </button>
           )}
           <button className="btn btn-outline" onClick={handleExport}>
             <Download size={16} /> تصدير

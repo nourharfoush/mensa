@@ -6,7 +6,7 @@ import { useAppData } from '../context/AppDataContext';
 import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
 
 function PlatformMohfezsList() {
-  const { platformMohfezs, deletePlatformMohfez, addPlatformMohfez, hasPermission, platformSessions } = useAppData();
+  const { platformMohfezs, deletePlatformMohfez, addPlatformMohfez, hasPermission, platformSessions, deleteAllPlatformMohfezs } = useAppData();
   const importRef = useRef(null);
 
   const getStatusStyle = (status) => {
@@ -203,6 +203,11 @@ function PlatformMohfezsList() {
               </button>
               <input ref={importRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImport} />
             </>
+          )}
+          {hasPermission('mohfezs', 'delete') && platformMohfezs.length > 0 && (
+            <button className="btn btn-danger" onClick={deleteAllPlatformMohfezs}>
+              حذف الجميع
+            </button>
           )}
           <button className="btn btn-outline" onClick={handleExport}>
             <Download size={16} /> تصدير

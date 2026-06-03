@@ -7,7 +7,7 @@ import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
 import { countriesList } from '../data/countries';
 
 function PlatformSessionsList() {
-  const { platformSessions, deletePlatformSession, addPlatformSession, rowaqs, hasPermission } = useAppData();
+  const { platformSessions, deletePlatformSession, addPlatformSession, rowaqs, hasPermission, deleteAllPlatformSessions } = useAppData();
   const importRef = useRef(null);
   const [searchParams] = useSearchParams();
   
@@ -182,6 +182,11 @@ function PlatformSessionsList() {
               </button>
               <input ref={importRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImport} />
             </>
+          )}
+          {hasPermission('sessions', 'delete') && platformSessions.length > 0 && (
+            <button className="btn btn-danger" onClick={deleteAllPlatformSessions}>
+              حذف الجميع
+            </button>
           )}
           <button className="btn btn-outline" onClick={handleExport}>
             <Download size={16} /> تصدير

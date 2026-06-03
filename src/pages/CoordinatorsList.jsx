@@ -9,7 +9,7 @@ import egyptCenters from '../data/egyptCenters';
 const governorates = Object.keys(egyptCenters);
 
 function CoordinatorsList() {
-  const { coordinators, deleteCoordinator, addCoordinator, branches, hasPermission } = useAppData();
+  const { coordinators, deleteCoordinator, addCoordinator, branches, hasPermission, deleteAllCoordinators } = useAppData();
   const importRef = useRef(null);
   
   // Get current user and role
@@ -266,6 +266,11 @@ function CoordinatorsList() {
               </button>
               <input ref={importRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImport} />
             </>
+          )}
+          {hasPermission('coordinators', 'delete') && coordinators.length > 0 && (
+            <button className="btn btn-danger" onClick={deleteAllCoordinators}>
+              حذف الجميع
+            </button>
           )}
           <button className="btn btn-outline" onClick={handleExport}>
             <Download size={16} /> تصدير

@@ -294,3 +294,14 @@
   }
 }
 
+.btn-danger {
+  background-color: #ef4444;
+  color: #fff;
+  border: 1px solid #ef4444;
+}
+
+.btn-danger:hover {
+  background-color: #dc2626;
+  border-color: #dc2626;
+}
+

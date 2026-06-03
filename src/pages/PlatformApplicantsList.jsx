@@ -6,7 +6,7 @@ import { useAppData } from '../context/AppDataContext';
 import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
 
 function PlatformApplicantsList() {
-  const { platformApplicants, deletePlatformApplicant, addPlatformApplicant } = useAppData();
+  const { platformApplicants, deletePlatformApplicant, addPlatformApplicant, deleteAllPlatformApplicants } = useAppData();
   const importRef = useRef(null);
   
   const [filterName, setFilterName] = useState('');
@@ -100,6 +100,11 @@ function PlatformApplicantsList() {
             <Upload size={16} /> استيراد
           </button>
           <input ref={importRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImport} />
+          {platformApplicants.length > 0 && (
+            <button className="btn btn-danger" onClick={deleteAllPlatformApplicants}>
+              حذف الجميع
+            </button>
+          )}
           <button className="btn btn-outline" onClick={handleExport}>
             <Download size={16} /> تصدير
           </button>

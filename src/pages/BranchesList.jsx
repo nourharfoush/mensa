@@ -10,7 +10,7 @@ const governorates = Object.keys(egyptCenters);
 const workDaysList = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
 
 function BranchesList() {
-  const { branches, deleteBranch, addBranch, hasPermission, sessions, coordinators, mohfezs, students } = useAppData();
+  const { branches, deleteBranch, addBranch, hasPermission, sessions, coordinators, mohfezs, students, deleteAllBranches } = useAppData();
   const importRef = useRef(null);
 
   // Get current user and role
@@ -270,6 +270,11 @@ function BranchesList() {
               </button>
               <input ref={importRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImport} />
             </>
+          )}
+          {hasPermission('branches', 'delete') && branches.length > 0 && (
+            <button className="btn btn-danger" onClick={deleteAllBranches}>
+              حذف الجميع
+            </button>
           )}
           <button className="btn btn-outline" onClick={handleExport}>
             <Download size={16} /> تصدير

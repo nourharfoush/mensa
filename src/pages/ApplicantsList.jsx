@@ -9,7 +9,7 @@ import egyptCenters from '../data/egyptCenters';
 const governorates = Object.keys(egyptCenters);
 
 function ApplicantsList() {
-  const { applicants, deleteApplicant, branches, addApplicant } = useAppData();
+  const { applicants, deleteApplicant, branches, addApplicant, deleteAllApplicants } = useAppData();
   const importRef = useRef(null);
   
   // Get current user and role
@@ -203,6 +203,11 @@ function ApplicantsList() {
             <Upload size={16} /> استيراد
           </button>
           <input ref={importRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImport} />
+          {applicants.length > 0 && (
+            <button className="btn btn-danger" onClick={deleteAllApplicants}>
+              حذف الجميع
+            </button>
+          )}
           <button className="btn btn-outline" onClick={handleExport}>
             <Download size={16} /> تصدير
           </button>

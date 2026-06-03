@@ -6,7 +6,7 @@ import { useAppData } from '../context/AppDataContext';
 import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
 
 function PlatformTopManagementList() {
-  const { platformTopManagement, deletePlatformTopManagement, addPlatformTopManagement } = useAppData();
+  const { platformTopManagement, deletePlatformTopManagement, addPlatformTopManagement, deleteAllPlatformTopManagement } = useAppData();
   const importRef = useRef(null);
   
   const [filterName, setFilterName] = useState('');
@@ -86,6 +86,11 @@ function PlatformTopManagementList() {
             <Upload size={16} /> استيراد
           </button>
           <input ref={importRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImport} />
+          {platformTopManagement.length > 0 && (
+            <button className="btn btn-danger" onClick={deleteAllPlatformTopManagement}>
+              حذف الجميع
+            </button>
+          )}
           <button className="btn btn-outline" onClick={handleExport}>
             <Download size={16} /> تصدير
           </button>

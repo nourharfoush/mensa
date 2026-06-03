@@ -6,7 +6,7 @@ import { useAppData } from '../context/AppDataContext';
 import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
 
 function PlatformSupervisorsList() {
-  const { platformSupervisors, deletePlatformSupervisor, addPlatformSupervisor } = useAppData();
+  const { platformSupervisors, deletePlatformSupervisor, addPlatformSupervisor, deleteAllPlatformSupervisors } = useAppData();
   const importRef = useRef(null);
   
   const [filterName, setFilterName] = useState('');
@@ -88,6 +88,11 @@ function PlatformSupervisorsList() {
             <Upload size={16} /> استيراد
           </button>
           <input ref={importRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImport} />
+          {platformSupervisors.length > 0 && (
+            <button className="btn btn-danger" onClick={deleteAllPlatformSupervisors}>
+              حذف الجميع
+            </button>
+          )}
           <button className="btn btn-outline" onClick={handleExport}>
             <Download size={16} /> تصدير
           </button>

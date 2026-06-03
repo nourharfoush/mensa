@@ -51,6 +51,7 @@ export const managersAPI = {
   create: (data) => apiCall('/managers', { method: 'POST', body: data }),
   update: (id, data) => apiCall(`/managers/${id}`, { method: 'PUT', body: data }),
   delete: (id) => apiCall(`/managers/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/managers/all', { method: 'DELETE' }),
   bulkImport: (managers) => apiCall('/managers/bulk-import', { method: 'POST', body: { managers } })
 };
 
@@ -60,6 +61,7 @@ export const coordinatorsAPI = {
   create: (data) => apiCall('/coordinators', { method: 'POST', body: data }),
   update: (id, data) => apiCall(`/coordinators/${id}`, { method: 'PUT', body: data }),
   delete: (id) => apiCall(`/coordinators/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/coordinators/all', { method: 'DELETE' }),
   bulkImport: (coordinators) => apiCall('/coordinators/bulk-import', { method: 'POST', body: { coordinators } })
 };
 
@@ -69,6 +71,7 @@ export const mohfezsAPI = {
   create: (data) => apiCall('/mohfezs', { method: 'POST', body: data }),
   update: (id, data) => apiCall(`/mohfezs/${id}`, { method: 'PUT', body: data }),
   delete: (id) => apiCall(`/mohfezs/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/mohfezs/all', { method: 'DELETE' }),
   bulkImport: (mohfezs) => apiCall('/mohfezs/bulk-import', { method: 'POST', body: { mohfezs } })
 };
 
@@ -78,6 +81,7 @@ export const studentsAPI = {
   create: (data) => apiCall('/students', { method: 'POST', body: data }),
   update: (id, data) => apiCall(`/students/${id}`, { method: 'PUT', body: data }),
   delete: (id) => apiCall(`/students/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/students/all', { method: 'DELETE' }),
   bulkImport: (students) => apiCall('/students/bulk-import', { method: 'POST', body: { students } })
 };
 
@@ -87,6 +91,7 @@ export const branchesAPI = {
   create: (data) => apiCall('/branches', { method: 'POST', body: data }),
   update: (id, data) => apiCall(`/branches/${id}`, { method: 'PUT', body: data }),
   delete: (id) => apiCall(`/branches/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/branches/all', { method: 'DELETE' }),
   bulkImport: (branches) => apiCall('/branches/bulk-import', { method: 'POST', body: { branches } })
 };
 
@@ -96,6 +101,7 @@ export const sessionsAPI = {
   create: (data) => apiCall('/sessions', { method: 'POST', body: data }),
   update: (id, data) => apiCall(`/sessions/${id}`, { method: 'PUT', body: data }),
   delete: (id) => apiCall(`/sessions/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/sessions/all', { method: 'DELETE' }),
   bulkImport: (sessions) => apiCall('/sessions/bulk-import', { method: 'POST', body: { sessions } })
 };
 
@@ -133,6 +139,7 @@ export const applicantsAPI = {
   create: (data) => apiCall('/applicants', { method: 'POST', body: data }),
   update: (id, data) => apiCall(`/applicants/${id}`, { method: 'PUT', body: data }),
   delete: (id) => apiCall(`/applicants/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/applicants/all', { method: 'DELETE' }),
   bulkImport: (items) => apiCall('/applicants/bulk-import', { method: 'POST', body: { items } })
 };
 
@@ -169,6 +176,7 @@ export const platformTopManagementAPI = {
   create: (data) => apiCall('/platformtopmanagement', { method: 'POST', body: data }),
   update: (id, data) => apiCall(`/platformtopmanagement/${id}`, { method: 'PUT', body: data }),
   delete: (id) => apiCall(`/platformtopmanagement/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/platformtopmanagement/all', { method: 'DELETE' }),
   bulkImport: (items) => apiCall('/platformtopmanagement/bulk-import', { method: 'POST', body: { items } })
 };
 
@@ -178,6 +186,7 @@ export const platformSupervisorsAPI = {
   create: (data) => apiCall('/platformsupervisors', { method: 'POST', body: data }),
   update: (id, data) => apiCall(`/platformsupervisors/${id}`, { method: 'PUT', body: data }),
   delete: (id) => apiCall(`/platformsupervisors/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/platformsupervisors/all', { method: 'DELETE' }),
   bulkImport: (items) => apiCall('/platformsupervisors/bulk-import', { method: 'POST', body: { items } })
 };
 
@@ -187,6 +196,7 @@ export const platformCoordinatorsAPI = {
   create: (data) => apiCall('/platformcoordinators', { method: 'POST', body: data }),
   update: (id, data) => apiCall(`/platformcoordinators/${id}`, { method: 'PUT', body: data }),
   delete: (id) => apiCall(`/platformcoordinators/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/platformcoordinators/all', { method: 'DELETE' }),
   bulkImport: (items) => apiCall('/platformcoordinators/bulk-import', { method: 'POST', body: { items } })
 };
 
@@ -196,6 +206,7 @@ export const platformMohfezsAPI = {
   create: (data) => apiCall('/platformmohfezs', { method: 'POST', body: data }),
   update: (id, data) => apiCall(`/platformmohfezs/${id}`, { method: 'PUT', body: data }),
   delete: (id) => apiCall(`/platformmohfezs/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/platformmohfezs/all', { method: 'DELETE' }),
   bulkImport: (items) => apiCall('/platformmohfezs/bulk-import', { method: 'POST', body: { items } })
 };
 
@@ -205,6 +216,7 @@ export const platformSessionsAPI = {
   create: (data) => apiCall('/platformsessions', { method: 'POST', body: data }),
   update: (id, data) => apiCall(`/platformsessions/${id}`, { method: 'PUT', body: data }),
   delete: (id) => apiCall(`/platformsessions/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/platformsessions/all', { method: 'DELETE' }),
   bulkImport: (items) => apiCall('/platformsessions/bulk-import', { method: 'POST', body: { items } })
 };
 
@@ -214,6 +226,7 @@ export const platformStudentsAPI = {
   create: (data) => apiCall('/platformstudents', { method: 'POST', body: data }),
   update: (id, data) => apiCall(`/platformstudents/${id}`, { method: 'PUT', body: data }),
   delete: (id) => apiCall(`/platformstudents/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/platformstudents/all', { method: 'DELETE' }),
   bulkImport: (items) => apiCall('/platformstudents/bulk-import', { method: 'POST', body: { items } })
 };
 
@@ -223,6 +236,7 @@ export const platformApplicantsAPI = {
   create: (data) => apiCall('/platformapplicants', { method: 'POST', body: data }),
   update: (id, data) => apiCall(`/platformapplicants/${id}`, { method: 'PUT', body: data }),
   delete: (id) => apiCall(`/platformapplicants/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/platformapplicants/all', { method: 'DELETE' }),
   bulkImport: (items) => apiCall('/platformapplicants/bulk-import', { method: 'POST', body: { items } })
 };
 

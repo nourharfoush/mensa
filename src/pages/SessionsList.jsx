@@ -9,7 +9,7 @@ import egyptCenters from '../data/egyptCenters';
 const governorates = Object.keys(egyptCenters);
 
 function SessionsList() {
-  const { sessions, deleteSession, addSession, branches, hasPermission, students } = useAppData();
+  const { sessions, deleteSession, addSession, branches, hasPermission, students, deleteAllSessions } = useAppData();
   const importRef = useRef(null);
   
   // Get current user and role
@@ -307,6 +307,11 @@ function SessionsList() {
               </button>
               <input ref={importRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImport} />
             </>
+          )}
+          {hasPermission('sessions', 'delete') && sessions.length > 0 && (
+            <button className="btn btn-danger" onClick={deleteAllSessions}>
+              حذف الجميع
+            </button>
           )}
           <button className="btn btn-outline" onClick={handleExport}>
             <Download size={16} /> تصدير

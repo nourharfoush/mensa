@@ -6,7 +6,7 @@ import { useAppData } from '../context/AppDataContext';
 import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
 
 function PlatformCoordinatorsList() {
-  const { platformCoordinators, deletePlatformCoordinator, addPlatformCoordinator, hasPermission } = useAppData();
+  const { platformCoordinators, deletePlatformCoordinator, addPlatformCoordinator, hasPermission, deleteAllPlatformCoordinators } = useAppData();
   const importRef = useRef(null);
   
   const [filterName, setFilterName] = useState('');
@@ -88,6 +88,11 @@ function PlatformCoordinatorsList() {
               <button className="btn btn-gold-outline" onClick={() => importRef.current.click()}><Upload size={16} /> استيراد</button>
               <input ref={importRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImport} />
             </>
+          )}
+          {hasPermission('coordinators', 'delete') && platformCoordinators.length > 0 && (
+            <button className="btn btn-danger" onClick={deleteAllPlatformCoordinators}>
+              حذف الجميع
+            </button>
           )}
           <button className="btn btn-outline" onClick={handleExport}><Download size={16} /> تصدير</button>
         </div>

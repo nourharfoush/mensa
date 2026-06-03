@@ -94,6 +94,47 @@ app.use('/api/platformrowaqs', platformRowaqRoutes);
 app.use('/api/administrations', administrationRoutes);
 app.use('/api/rolepermissions', rolePermissionRoutes);
 
+// Generic Delete All endpoint
+app.delete('/api/:collection/all', async (req, res) => {
+  const { collection } = req.params;
+  try {
+    let modelName = '';
+    switch (collection.toLowerCase()) {
+      case 'managers': modelName = 'Manager'; break;
+      case 'coordinators': modelName = 'Coordinator'; break;
+      case 'mohfezs': modelName = 'Mohfez'; break;
+      case 'students': modelName = 'Student'; break;
+      case 'branches': modelName = 'Branch'; break;
+      case 'sessions': modelName = 'Session'; break;
+      case 'users': modelName = 'User'; break;
+      case 'monthlyreports': modelName = 'MonthlyReport'; break;
+      case 'followupreports': modelName = 'FollowUpReport'; break;
+      case 'applicants': modelName = 'Applicant'; break;
+      case 'rowaqs': modelName = 'Rowaq'; break;
+      case 'applicantbranches': modelName = 'ApplicantBranch'; break;
+      case 'sessionreports': modelName = 'SessionReport'; break;
+      case 'platformtopmanagement': modelName = 'PlatformTopManagement'; break;
+      case 'platformsupervisors': modelName = 'PlatformSupervisor'; break;
+      case 'platformcoordinators': modelName = 'PlatformCoordinator'; break;
+      case 'platformmohfezs': modelName = 'PlatformMohfez'; break;
+      case 'platformsessions': modelName = 'PlatformSession'; break;
+      case 'platformstudents': modelName = 'PlatformStudent'; break;
+      case 'platformapplicants': modelName = 'PlatformApplicant'; break;
+      case 'platformrowaqs': modelName = 'PlatformRowaq'; break;
+      case 'administrations': modelName = 'Administration'; break;
+      case 'rolepermissions': modelName = 'RolePermission'; break;
+      default:
+        return res.status(400).json({ message: 'Invalid collection name' });
+    }
+    
+    const Model = mongoose.model(modelName);
+    await Model.deleteMany({});
+    res.json({ message: `All items in ${collection} deleted successfully` });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });

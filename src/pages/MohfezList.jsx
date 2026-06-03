@@ -9,7 +9,7 @@ import egyptCenters from '../data/egyptCenters';
 const governorates = Object.keys(egyptCenters);
 
 function MohfezList() {
-  const { mohfezs, deleteMohfez, addMohfez, branches, hasPermission, sessions, updateSession } = useAppData();
+  const { mohfezs, deleteMohfez, addMohfez, branches, hasPermission, sessions, updateSession, deleteAllMohfezs } = useAppData();
   const importRef = useRef(null);
 
   const getStatusStyle = (status) => {
@@ -355,6 +355,11 @@ function MohfezList() {
               </button>
               <input ref={importRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImport} />
             </>
+          )}
+          {hasPermission('mohfezs', 'delete') && mohfezs.length > 0 && (
+            <button className="btn btn-danger" onClick={deleteAllMohfezs}>
+              حذف الجميع
+            </button>
           )}
           <button className="btn btn-outline" onClick={handleExport}>
             <Download size={16} /> تصدير

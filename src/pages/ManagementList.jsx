@@ -19,7 +19,7 @@ const specialties = [
 const governorates = Object.keys(egyptCenters);
 
 function ManagementList() {
-  const { managers, deleteManager, addManager, addUser } = useAppData();
+  const { managers, deleteManager, addManager, addUser, deleteAllManagers } = useAppData();
 
   // Get current user and role
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
@@ -252,6 +252,11 @@ function ManagementList() {
             <Upload size={16} /> استيراد
           </button>
           <input ref={importRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImport} />
+          {managers.length > 0 && (
+            <button className="btn btn-danger" onClick={deleteAllManagers}>
+              حذف الجميع
+            </button>
+          )}
           <button className="btn btn-outline" onClick={handleExport}><Download size={16} /> تصدير</button>
         </div>
       </div>
