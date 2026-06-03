@@ -9,7 +9,7 @@ import egyptCenters from '../data/egyptCenters';
 const governorates = Object.keys(egyptCenters);
 
 function SessionsList() {
-  const { sessions, deleteSession, addSession, branches, hasPermission } = useAppData();
+  const { sessions, deleteSession, addSession, branches, hasPermission, students } = useAppData();
   const importRef = useRef(null);
   
   // Get current user and role
@@ -71,17 +71,97 @@ function SessionsList() {
     );
   });
 
+  const formatTimeTo12Hour = (timeStr) => {
+    if (!timeStr) return '';
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return timeStr;
+    let hours = parseInt(parts[0], 10);
+    const minutes = parts[1];
+    if (isNaN(hours)) return timeStr;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const hourFormatted = String(hours).padStart(2, '0');
+    return `${hourFormatted}:${minutes} ${ampm}`;
+  };
+
+  const parseTimeTo24Hour = (timeStr) => {
+    if (!timeStr) return '';
+    timeStr = timeStr.toString().trim();
+    const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (match) {
+      let hours = parseInt(match[1], 10);
+      const minutes = match[2];
+      const ampm = match[3].toUpperCase();
+      if (ampm === 'PM' && hours < 12) {
+        hours += 12;
+      } else if (ampm === 'AM' && hours === 12) {
+        hours = 0;
+      }
+      return `${String(hours).padStart(2, '0')}:${minutes}`;
+    }
+    return timeStr;
+  };
+
+  const formatWorkDays = (workDaysArr) => {
+    if (!workDaysArr || workDaysArr.length === 0) return '';
+    return workDaysArr.map(d => {
+      if (d === 'الأحد') return 'الاحد';
+      if (d === 'الأربعاء') return 'الاربعاء';
+      return d;
+    }).join(',');
+  };
+
+  const parseWorkDays = (daysStr) => {
+    if (!daysStr) return [];
+    return daysStr.toString().split(/[，,،]/).map(d => {
+      const clean = d.trim();
+      if (clean === 'الاحد') return 'الأحد';
+      if (clean === 'الاربعاء') return 'الأربعاء';
+      return clean;
+    }).filter(Boolean);
+  };
+
   const handleExport = () => {
-    const exportData = filtered.map(s => ({
-      'رقم الحلقة': s.session_no,
-      'المحفظ': s.mohfez || '',
-      'الإدارة': s.admin,
-      'المركز': s.center,
-      'الفرع': s.branch,
-      'الرواق': s.rowaq,
-      'المستوى': s.level,
-      'الدارسين': s.student_type,
-    }));
+    let exportData = filtered.map(s => {
+      const studentCount = (students || []).filter(stud => String(stud.session_id) === String(s.session_no)).length;
+      return {
+        'رقم الحلقة': s.session_no || '',
+        'إدارة': s.admin || '',
+        'المركز': s.center || '',
+        'الفرع': s.branch || '',
+        'الرواق': s.rowaq || '',
+        'المستوى': s.level || '',
+        'نوع المحفظ': s.mohfez_type || '',
+        'المحفّظ': s.mohfez || '',
+        'نوع الدارسين': s.student_type || '',
+        'نوع الحضور': s.attendance_type || '',
+        'ايام العمل': formatWorkDays(s.workDays),
+        'الوقت من': formatTimeTo12Hour(s.time_start),
+        'الوقت الي': formatTimeTo12Hour(s.time_end),
+        'الدارسين': studentCount
+      };
+    });
+
+    if (exportData.length === 0) {
+      exportData = [{
+        'رقم الحلقة': '',
+        'إدارة': '',
+        'المركز': '',
+        'الفرع': '',
+        'الرواق': '',
+        'المستوى': '',
+        'نوع المحفظ': '',
+        'المحفّظ': '',
+        'نوع الدارسين': '',
+        'نوع الحضور': '',
+        'ايام العمل': '',
+        'الوقت من': '',
+        'الوقت الي': '',
+        'الدارسين': ''
+      }];
+    }
+
     exportToXLSX(exportData, 'الحلقات', 'إدارة الحلقات');
   };
 
@@ -90,20 +170,39 @@ function SessionsList() {
     if (!file) return;
     try {
       const rows = await importFromXLSX(file);
-      rows.forEach(row => {
+      
+      const validRows = rows.filter(row => row['رقم الحلقة'] && row['رقم الحلقة'].toString().trim() !== '');
+
+      if (validRows.length === 0) {
+        alert('الملف فارغ أو يحتوي على صفوف فارغة فقط');
+        e.target.value = '';
+        return;
+      }
+
+      validRows.forEach(row => {
+        const rawStudentType = row['نوع الدارسين'] || '';
+        const rawOldStudentType = row['الدارسين'] && isNaN(Number(row['الدارسين'])) ? row['الدارسين'] : '';
+        const studentType = rawStudentType || rawOldStudentType || '';
+
         addSession({
           session_no: row['رقم الحلقة'] || Date.now().toString().slice(-8),
-          mohfez: row['المحفظ'] || '',
-          admin: row['الإدارة'] || '',
+          admin: row['إدارة'] || row['الإدارة'] || '',
           center: row['المركز'] || '',
           branch: row['الفرع'] || '',
           rowaq: row['الرواق'] || '',
           level: row['المستوى'] || '',
-          student_type: row['الدارسين'] || '',
+          mohfez_type: row['نوع المحفظ'] || '',
+          mohfez: row['المحفّظ'] || row['المحفظ'] || '',
+          student_type: studentType,
+          attendance_type: row['نوع الحضور'] || '',
+          workDays: parseWorkDays(row['ايام العمل'] || row['أيام العمل'] || ''),
+          time_start: parseTimeTo24Hour(row['الوقت من'] || ''),
+          time_end: parseTimeTo24Hour(row['الوقت الي'] || ''),
         });
       });
       alert('تم استيراد البيانات بنجاح');
-    } catch {
+    } catch (err) {
+      console.error(err);
       alert('حدث خطأ في استيراد الملف');
     }
     e.target.value = '';
