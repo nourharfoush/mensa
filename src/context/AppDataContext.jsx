@@ -287,18 +287,16 @@ export function AppDataProvider({ children }) {
         const syncCollection = async (api, state, setState, key) => {
           const remoteData = await api.getAll().catch(() => null);
           if (remoteData) {
+            const normalizedData = remoteData.map(item => ({
+              ...item,
+              id: item.id || item._id
+            }));
+            setState(normalizedData);
+            saveToLocalStorage(key, normalizedData);
             if (remoteData.length > 0) {
-              const normalizedData = remoteData.map(item => ({
-                ...item,
-                id: item.id || item._id
-              }));
-              setState(normalizedData);
-              saveToLocalStorage(key, normalizedData);
               console.log(`✓ Fetched ${normalizedData.length} items for ${key} from MongoDB`);
-            } else if (state && state.length > 0) {
-              console.log(`Upload ${state.length} local items for ${key} to MongoDB...`);
-              await api.bulkImport(state).catch(err => console.error(`Bulk import failed for ${key}:`, err));
-              console.log(`✓ Migrated ${key} to MongoDB`);
+            } else {
+              console.log(`✓ Collection ${key} is empty in MongoDB; synced local state to empty.`);
             }
           }
         };
