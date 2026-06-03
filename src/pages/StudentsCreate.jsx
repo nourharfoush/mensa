@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import '../components/Management.css';
 import { useAppData } from '../context/AppDataContext';
 import egyptCenters from '../data/egyptCenters';
+import { calculateBirthDateFromNationalId } from '../utils/nationalIdHelper';
 
 const governorates = Object.keys(egyptCenters);
 
@@ -66,9 +67,16 @@ function StudentsCreate() {
       return;
     }
     
+    const computedBirthDate = calculateBirthDateFromNationalId(form.national_id);
+    if (!computedBirthDate) {
+      alert('الرقم القومي غير صحيح. يرجى إدخال رقم قومي مكون من 14 رقماً صحيحاً.');
+      return;
+    }
+
     const selectedSession = sessions.find(s => s.session_no === form.session_id);
     const finalForm = {
       ...form,
+      birth_date: computedBirthDate,
       username: form.national_id,
       password: form.national_id // Student has no record number, use national_id
     };
@@ -163,10 +171,7 @@ function StudentsCreate() {
             <input name="national_id" type="text" className="form-input" placeholder="أدخل الرقم القومي" value={form.national_id} onChange={handleChange} />
           </div>
 
-          <div className="form-group">
-            <label>اختر التاريخ <span className="req">*</span></label>
-            <input name="birth_date" type="date" className="form-input" value={form.birth_date} onChange={handleChange} />
-          </div>
+
           <div className="form-group">
             <label>رقم الهاتف <span className="req">*</span></label>
             <div style={{ display: 'flex' }}>

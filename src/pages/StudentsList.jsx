@@ -5,6 +5,7 @@ import '../components/Management.css';
 import { useAppData } from '../context/AppDataContext';
 import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
 import egyptCenters from '../data/egyptCenters';
+import { calculateBirthDateFromNationalId } from '../utils/nationalIdHelper';
 
 const governorates = Object.keys(egyptCenters);
 
@@ -128,7 +129,6 @@ function StudentsList() {
       'الحلقة': '',
       'النوع': '',
       'الرقم القومى': '',
-      'تاريخ الميلاد': '',
       'رقم التليفون': '',
       'العنوان': '',
       'المؤهل': '',
@@ -163,18 +163,7 @@ function StudentsList() {
         const genderVal = row['النوع'] || row['الجنس'] || matchedSession?.student_type || '';
         const natId = (row['الرقم القومى'] || row['الرقم القومي'] || '').toString().trim();
         
-        const rawBirthDate = row['تاريخ الميلاد'];
-        let birthDateStr = '';
-        if (rawBirthDate) {
-          if (rawBirthDate instanceof Date) {
-            birthDateStr = rawBirthDate.toISOString().split('T')[0];
-          } else if (typeof rawBirthDate === 'number') {
-            const dateObj = new Date((rawBirthDate - 25569) * 86400 * 1000);
-            birthDateStr = dateObj.toISOString().split('T')[0];
-          } else {
-            birthDateStr = rawBirthDate.toString().trim();
-          }
-        }
+        const birthDateStr = calculateBirthDateFromNationalId(natId);
         
         const phoneVal = (row['رقم التليفون'] || row['رقم الهاتف'] || row['الهاتف'] || '').toString().trim();
         
