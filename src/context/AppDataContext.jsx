@@ -1028,6 +1028,16 @@ export function AppDataProvider({ children }) {
     setPlatformRowaqs(prev => [...prev, newItem]);
     platformRowaqsAPI.create(newItem).catch(err => console.error(err));
   };
+  const updatePlatformRowaq = (id, updatedItem) => {
+    setPlatformRowaqs(prev => prev.map(m => String(m.id) === String(id) ? { ...m, ...updatedItem } : m));
+    platformRowaqsAPI.update(id, updatedItem).catch(err => console.error(err));
+  };
+  const deletePlatformRowaq = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setPlatformRowaqs(prev => prev.filter(m => String(m.id) !== String(id)));
+      platformRowaqsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
 
   const deleteAllStudents = () => {
     if (window.confirm('هل أنت متأكد من حذف جميع الطلاب؟ هذه العملية لا يمكن التراجع عنها.')) {
