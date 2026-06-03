@@ -10,8 +10,15 @@ export const getCoordinators = async (req, res) => {
 };
 
 export const createCoordinator = async (req, res) => {
-  const coordinator = new Coordinator(req.body);
   try {
+    const { national_id } = req.body;
+    if (national_id) {
+      const existing = await Coordinator.findOne({ national_id });
+      if (existing) {
+        return res.status(400).json({ message: 'الرقم القومي مسجل بالفعل لمنسق آخر' });
+      }
+    }
+    const coordinator = new Coordinator(req.body);
     const newCoordinator = await coordinator.save();
     res.status(201).json(newCoordinator);
   } catch (error) {
@@ -21,6 +28,13 @@ export const createCoordinator = async (req, res) => {
 
 export const updateCoordinator = async (req, res) => {
   try {
+    const { national_id } = req.body;
+    if (national_id) {
+      const existing = await Coordinator.findOne({ national_id, id: { $ne: req.params.id } });
+      if (existing) {
+        return res.status(400).json({ message: 'الرقم القومي مسجل بالفعل لمنسق آخر' });
+      }
+    }
     const coordinator = await Coordinator.findOne({ id: req.params.id });
     if (!coordinator) return res.status(404).json({ message: 'Coordinator not found' });
     Object.assign(coordinator, req.body);

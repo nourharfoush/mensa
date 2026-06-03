@@ -56,6 +56,16 @@ function PlatformStudentsCreate() {
       return;
     }
 
+    // Check duplicate passport/national ID
+    const duplicateStudent = platformStudents.find(s => 
+      String(s.passport_no || s.national_id || '').trim() === String(form.passport_no).trim() && 
+      (!isEditing || String(s.id) !== String(studentId))
+    );
+    if (duplicateStudent) {
+      alert('خطأ: رقم جواز السفر/الرقم القومي مسجل بالفعل لدارس آخر.');
+      return;
+    }
+
     const selectedSession = platformSessions.find(s => s.session_no === form.session_id);
     const finalForm = {
       ...form,

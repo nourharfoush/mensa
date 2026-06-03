@@ -10,8 +10,15 @@ export const getStudents = async (req, res) => {
 };
 
 export const createStudent = async (req, res) => {
-  const student = new Student(req.body);
   try {
+    const { national_id } = req.body;
+    if (national_id) {
+      const existing = await Student.findOne({ national_id });
+      if (existing) {
+        return res.status(400).json({ message: 'الرقم القومي مسجل بالفعل لطالب آخر' });
+      }
+    }
+    const student = new Student(req.body);
     const newStudent = await student.save();
     res.status(201).json(newStudent);
   } catch (error) {
@@ -21,6 +28,14 @@ export const createStudent = async (req, res) => {
 
 export const updateStudent = async (req, res) => {
   try {
+    const { national_id } = req.body;
+    if (national_id) {
+      // Find duplicate with same national_id but different custom id
+      const existing = await Student.findOne({ national_id, id: { $ne: req.params.id } });
+      if (existing) {
+        return res.status(400).json({ message: 'الرقم القومي مسجل بالفعل لطالب آخر' });
+      }
+    }
     const student = await Student.findOne({ id: req.params.id });
     if (!student) return res.status(404).json({ message: 'Student not found' });
     Object.assign(student, req.body);

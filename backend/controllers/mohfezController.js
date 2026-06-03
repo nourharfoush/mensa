@@ -10,8 +10,15 @@ export const getMohfezs = async (req, res) => {
 };
 
 export const createMohfez = async (req, res) => {
-  const mohfez = new Mohfez(req.body);
   try {
+    const { national_id } = req.body;
+    if (national_id) {
+      const existing = await Mohfez.findOne({ national_id });
+      if (existing) {
+        return res.status(400).json({ message: 'الرقم القومي مسجل بالفعل لمحفظ آخر' });
+      }
+    }
+    const mohfez = new Mohfez(req.body);
     const newMohfez = await mohfez.save();
     res.status(201).json(newMohfez);
   } catch (error) {
@@ -21,6 +28,13 @@ export const createMohfez = async (req, res) => {
 
 export const updateMohfez = async (req, res) => {
   try {
+    const { national_id } = req.body;
+    if (national_id) {
+      const existing = await Mohfez.findOne({ national_id, id: { $ne: req.params.id } });
+      if (existing) {
+        return res.status(400).json({ message: 'الرقم القومي مسجل بالفعل لمحفظ آخر' });
+      }
+    }
     const mohfez = await Mohfez.findOne({ id: req.params.id });
     if (!mohfez) return res.status(404).json({ message: 'Mohfez not found' });
     Object.assign(mohfez, req.body);

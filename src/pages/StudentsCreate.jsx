@@ -66,6 +66,16 @@ function StudentsCreate() {
       alert('الرجاء ملء الحقول المطلوبة');
       return;
     }
+
+    // Check duplicate national ID
+    const duplicateStudent = students.find(s => 
+      String(s.national_id).trim() === String(form.national_id).trim() && 
+      (!isEditing || String(s.id) !== String(studentId))
+    );
+    if (duplicateStudent) {
+      alert('خطأ: الرقم القومي مسجل بالفعل لطالب آخر.');
+      return;
+    }
     
     const computedBirthDate = calculateBirthDateFromNationalId(form.national_id);
     if (!computedBirthDate) {

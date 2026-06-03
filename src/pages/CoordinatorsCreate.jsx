@@ -64,6 +64,16 @@ function CoordinatorsCreate() {
       return;
     }
 
+    // Check duplicate national ID
+    const duplicateCoordinator = coordinators.find(c => 
+      String(c.national_id).trim() === String(form.national_id).trim() && 
+      (!isEditing || String(c.id) !== String(coordinatorId))
+    );
+    if (duplicateCoordinator) {
+      alert('خطأ: الرقم القومي مسجل بالفعل لمنسق آخر.');
+      return;
+    }
+
     const finalForm = {
       ...form,
       username: form.national_id,

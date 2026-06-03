@@ -62,6 +62,16 @@ function MohfezCreate() {
       return;
     }
 
+    // Check duplicate national ID
+    const duplicateMohfez = mohfezs.find(m => 
+      String(m.national_id).trim() === String(form.national_id).trim() && 
+      (!isEditing || String(m.id) !== String(mohfezId))
+    );
+    if (duplicateMohfez) {
+      alert('خطأ: الرقم القومي مسجل بالفعل لمحفظ آخر.');
+      return;
+    }
+
     const finalForm = {
       ...form,
       username: form.national_id,

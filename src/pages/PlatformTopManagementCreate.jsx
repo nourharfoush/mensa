@@ -42,6 +42,16 @@ function PlatformTopManagementCreate() {
       return;
     }
 
+    // Check duplicate national ID
+    const duplicateMember = platformTopManagement.find(m => 
+      String(m.national_id).trim() === String(form.national_id).trim() && 
+      (!isEditing || String(m.id) !== String(itemId))
+    );
+    if (duplicateMember) {
+      alert('خطأ: الرقم القومي مسجل بالفعل لعضو إدارة عليا آخر.');
+      return;
+    }
+
     const finalForm = {
       ...form,
       username: form.national_id,

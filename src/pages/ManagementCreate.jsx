@@ -59,9 +59,19 @@ function ManagementCreate() {
     const required = ['name', 'email', 'phone', 'national_id', 'specialty', 'record_no', 'job_title', 'workplace', 'job_grade', 'qualification', 'decision_no', 'admin', 'address'];
     for (const f of required) {
       if (!form[f]) {
-        alert(`الرجاء ملء الحقل: ${f}`);
+        alert(`الرجاء ملء الحقول المطلوبة`);
         return;
       }
+    }
+
+    // Check duplicate national ID
+    const duplicateManager = managers.find(m => 
+      String(m.national_id).trim() === String(form.national_id).trim() && 
+      (!isEditing || String(m.id) !== String(managerId))
+    );
+    if (duplicateManager) {
+      alert('خطأ: الرقم القومي مسجل بالفعل لمدير آخر.');
+      return;
     }
 
     const finalForm = {

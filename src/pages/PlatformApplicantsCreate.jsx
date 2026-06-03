@@ -47,6 +47,16 @@ function PlatformApplicantsCreate() {
       return;
     }
 
+    // Check duplicate national ID
+    const duplicateApplicant = platformApplicants.find(a => 
+      String(a.national_id).trim() === String(form.national_id).trim() && 
+      (!isEditing || String(a.id) !== String(applicantId))
+    );
+    if (duplicateApplicant) {
+      alert('خطأ: الرقم القومي مسجل بالفعل لمتقدم آخر.');
+      return;
+    }
+
     const finalForm = {
       ...form,
       username: form.national_id,
