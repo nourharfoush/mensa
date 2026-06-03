@@ -95,7 +95,9 @@ function BranchesList() {
       'العنوان': b.address || '',
       'الهاتف': b.phone || '',
       'رقم القرار': b.decision_no || '',
-      'ايام العمل': (b.workDays || []).join('، '),
+      'ايام العمل': (b.workDays && b.workDays.length > 0)
+        ? b.workDays.map(d => d === 'الأحد' ? 'الاحد' : d).join(',')
+        : 'لا يعمل',
       'الوقت من': b.timeFrom || '',
       'الوقت الي': b.timeTo || '',
       'الإدارة': b.admin || '',
