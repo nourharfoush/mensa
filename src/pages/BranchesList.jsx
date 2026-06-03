@@ -84,7 +84,12 @@ function BranchesList() {
       (filterName ? normalizeArabic(b.name).includes(normalizeArabic(filterName)) : true) &&
       (filterAdmin ? normalizeArabic(b.admin) === normalizeArabic(filterAdmin) : true) &&
       (filterCenter ? normalizeArabic(b.center) === normalizeArabic(filterCenter) : true) &&
-      (filterWorkDay ? (b.workDays || []).some(d => normalizeArabic(d) === normalizeArabic(filterWorkDay)) : true)
+      (filterWorkDay 
+        ? (filterWorkDay === 'لا يعمل' 
+            ? (!b.workDays || b.workDays.length === 0 || b.workDays.some(d => normalizeArabic(d) === normalizeArabic('لا يعمل')))
+            : (b.workDays || []).some(d => normalizeArabic(d) === normalizeArabic(filterWorkDay))
+          )
+        : true)
     );
   });
 
@@ -237,6 +242,7 @@ function BranchesList() {
             <select className="form-select" value={filterWorkDay} onChange={e => setFilterWorkDay(e.target.value)}>
               <option value="">--- اختار اليوم ---</option>
               {workDaysList.map((d, i) => <option key={i} value={d}>{d}</option>)}
+              <option value="لا يعمل">لا يعمل</option>
             </select>
           </div>
         </div>
