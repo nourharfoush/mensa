@@ -9,7 +9,7 @@ import egyptCenters from '../data/egyptCenters';
 const governorates = Object.keys(egyptCenters);
 
 function MohfezList() {
-  const { mohfezs, deleteMohfez, addMohfez, branches, hasPermission } = useAppData();
+  const { mohfezs, deleteMohfez, addMohfez, branches, hasPermission, sessions, updateSession } = useAppData();
   const importRef = useRef(null);
 
   const getStatusStyle = (status) => {
@@ -148,18 +148,55 @@ function MohfezList() {
   });
 
   const handleExport = () => {
-    const exportData = filtered.map(m => ({
-      'اسم المحفظ': m.name,
-      'الإدارة': m.admin,
-      'المركز': m.center,
-      'الفرع': m.branch,
-      'تاريخ المسابقة': m.contest_date,
-      'الرواق': m.rowaq,
-      'الرقم القومي': m.national_id,
-      'البريد الإلكتروني': m.email,
-      'التخصص': m.specialization,
-      'الحالة': m.status,
-    }));
+    let exportData = filtered.map(m => {
+      const assignedSessions = Array.from(new Set(
+        sessions
+          .filter(s => normalizeArabic(s.mohfez) === normalizeArabic(m.name))
+          .map(s => s.session_no)
+          .filter(Boolean)
+      )).join(',');
+
+      return {
+        'الاسم': m.name || '',
+        'الحالة': m.status || '',
+        'رواق': m.rowaq || '',
+        'إدارة': m.admin || '',
+        'المركز': m.center || '',
+        'الفرع': m.branch || '',
+        'رقم السجل': m.registry_no || '',
+        'الرقم القومي': m.national_id || '',
+        'الوظيفة': m.job || '',
+        'جهة العمل': m.workplace || '',
+        'الدرجة الوظيفية': m.job_grade || '',
+        'المؤهل': m.qualification || '',
+        'رقم القرار': m.decision_no || '',
+        'العنوان': m.address || '',
+        'الهاتف': m.phone || '',
+        'الحلقات': assignedSessions,
+      };
+    });
+
+    if (exportData.length === 0) {
+      exportData = [{
+        'الاسم': '',
+        'الحالة': '',
+        'رواق': '',
+        'إدارة': '',
+        'المركز': '',
+        'الفرع': '',
+        'رقم السجل': '',
+        'الرقم القومي': '',
+        'الوظيفة': '',
+        'جهة العمل': '',
+        'الدرجة الوظيفية': '',
+        'المؤهل': '',
+        'رقم القرار': '',
+        'العنوان': '',
+        'الهاتف': '',
+        'الحلقات': '',
+      }];
+    }
+
     exportToXLSX(exportData, 'المحفظين', 'إدارة المحفظين');
   };
 
@@ -168,22 +205,57 @@ function MohfezList() {
     if (!file) return;
     try {
       const rows = await importFromXLSX(file);
-      rows.forEach(row => {
+      
+      const validRows = rows.filter(row => row['الاسم'] && row['الاسم'].toString().trim() !== '');
+
+      if (validRows.length === 0) {
+        alert('الملف فارغ أو يحتوي على صفوف فارغة فقط');
+        e.target.value = '';
+        return;
+      }
+
+      validRows.forEach(row => {
         addMohfez({
-          name: row['اسم المحفظ'] || '',
-          admin: row['الإدارة'] || '',
+          name: row['الاسم'] || '',
+          status: row['الحالة'] || '',
+          rowaq: row['رواق'] || row['الرواق'] || '',
+          admin: row['إدارة'] || row['الإدارة'] || '',
           center: row['المركز'] || '',
           branch: row['الفرع'] || '',
-          contest_date: row['تاريخ المسابقة'] || '',
-          rowaq: row['الرواق'] || '',
+          registry_no: row['رقم السجل'] || '',
           national_id: row['الرقم القومي'] || '',
-          email: row['البريد الإلكتروني'] || '',
-          specialization: row['التخصص'] || '',
-          status: row['الحالة'] || '',
+          job: row['الوظيفة'] || '',
+          workplace: row['جهة العمل'] || '',
+          job_grade: row['الدرجة الوظيفية'] || '',
+          qualification: row['المؤهل'] || '',
+          decision_no: row['رقم القرار'] || '',
+          address: row['العنوان'] || '',
+          phone: row['الهاتف'] || '',
         });
+
+        // Handle sessions mapping if specified
+        const sessionNosStr = row['الحلقات'] || '';
+        if (sessionNosStr) {
+          const sessionNos = sessionNosStr
+            .toString()
+            .split(/[，,،]/)
+            .map(x => x.trim())
+            .filter(Boolean);
+          
+          sessionNos.forEach(sNo => {
+            const sessionToUpdate = sessions.find(s => String(s.session_no) === String(sNo));
+            if (sessionToUpdate) {
+              updateSession(sessionToUpdate.id, {
+                ...sessionToUpdate,
+                mohfez: row['الاسم']
+              });
+            }
+          });
+        }
       });
       alert('تم استيراد البيانات بنجاح');
-    } catch {
+    } catch (err) {
+      console.error(err);
       alert('حدث خطأ في استيراد الملف');
     }
     e.target.value = '';
