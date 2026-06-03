@@ -89,6 +89,20 @@ function BranchesList() {
   });
 
   const handleExport = () => {
+    const formatTimeTo12Hour = (timeStr) => {
+      if (!timeStr) return '';
+      const parts = timeStr.split(':');
+      if (parts.length < 2) return timeStr;
+      let hours = parseInt(parts[0], 10);
+      const minutes = parts[1];
+      if (isNaN(hours)) return timeStr;
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const hourFormatted = String(hours).padStart(2, '0');
+      return `${hourFormatted}:${minutes} ${ampm}`;
+    };
+
     const exportData = filtered.map(b => ({
       'الكود': b.id,
       'فرع': b.name,
@@ -98,8 +112,8 @@ function BranchesList() {
       'ايام العمل': (b.workDays && b.workDays.length > 0)
         ? b.workDays.map(d => d === 'الأحد' ? 'الاحد' : d).join(',')
         : 'لا يعمل',
-      'الوقت من': b.timeFrom || '',
-      'الوقت الي': b.timeTo || '',
+      'الوقت من': formatTimeTo12Hour(b.timeFrom),
+      'الوقت الي': formatTimeTo12Hour(b.timeTo),
       'الإدارة': b.admin || '',
       'المركز': b.center || '',
       'المحفّظين': mohfezs.filter(m => 
