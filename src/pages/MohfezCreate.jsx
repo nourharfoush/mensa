@@ -198,8 +198,13 @@ function MohfezCreate() {
             <label>الحالة <span className="req">*</span></label>
             <select name="status" className="form-select" value={form.status} onChange={handleChange}>
               <option value="">اختار الحالة</option>
-              <option value="نشط">نشط</option>
-              <option value="غير نشط">غير نشط</option>
+              <option value="مسّكن">مسّكن</option>
+              <option value="اجازة">اجازة</option>
+              <option value="اُخرى">اُخرى</option>
+              <option value="معتذر">معتذر</option>
+              <option value="انتظار">انتظار</option>
+              <option value="مستبعد">مستبعد</option>
+              <option value="موقوف">موقوف</option>
             </select>
           </div>
         </div>

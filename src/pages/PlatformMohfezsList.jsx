@@ -8,6 +8,61 @@ import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
 function PlatformMohfezsList() {
   const { platformMohfezs, deletePlatformMohfez, addPlatformMohfez, hasPermission, platformSessions } = useAppData();
   const importRef = useRef(null);
+
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case 'مسّكن':
+      case 'نشط':
+        return {
+          background: 'rgba(16, 185, 129, 0.15)',
+          color: '#10b981',
+          border: '1px solid rgba(16, 185, 129, 0.3)'
+        };
+      case 'اجازة':
+        return {
+          background: 'rgba(245, 158, 11, 0.15)',
+          color: '#f59e0b',
+          border: '1px solid rgba(245, 158, 11, 0.3)'
+        };
+      case 'معتذر':
+        return {
+          background: 'rgba(107, 114, 128, 0.15)',
+          color: '#6b7280',
+          border: '1px solid rgba(107, 114, 128, 0.3)'
+        };
+      case 'انتظار':
+        return {
+          background: 'rgba(59, 130, 246, 0.15)',
+          color: '#3b82f6',
+          border: '1px solid rgba(59, 130, 246, 0.3)'
+        };
+      case 'مستبعد':
+      case 'غير نشط':
+        return {
+          background: 'rgba(239, 68, 68, 0.15)',
+          color: '#ef4444',
+          border: '1px solid rgba(239, 68, 68, 0.3)'
+        };
+      case 'موقوف':
+        return {
+          background: 'rgba(139, 92, 246, 0.15)',
+          color: '#8b5cf6',
+          border: '1px solid rgba(139, 92, 246, 0.3)'
+        };
+      case 'اُخرى':
+        return {
+          background: 'rgba(20, 184, 166, 0.15)',
+          color: '#14b8a6',
+          border: '1px solid rgba(20, 184, 166, 0.3)'
+        };
+      default:
+        return {
+          background: 'rgba(107, 114, 128, 0.15)',
+          color: '#6b7280',
+          border: '1px solid rgba(107, 114, 128, 0.3)'
+        };
+    }
+  };
   
   // Get current user and role
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
@@ -116,8 +171,13 @@ function PlatformMohfezsList() {
             <label>الحالة</label>
             <select className="form-select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
               <option value="">--- اختار الحالة ---</option>
-              <option value="نشط">نشط</option>
-              <option value="غير نشط">غير نشط</option>
+              <option value="مسّكن">مسّكن</option>
+              <option value="اجازة">اجازة</option>
+              <option value="اُخرى">اُخرى</option>
+              <option value="معتذر">معتذر</option>
+              <option value="انتظار">انتظار</option>
+              <option value="مستبعد">مستبعد</option>
+              <option value="موقوف">موقوف</option>
             </select>
           </div>
         </div>
@@ -185,9 +245,7 @@ function PlatformMohfezsList() {
                       borderRadius: '4px',
                       fontSize: '12px',
                       fontWeight: 'bold',
-                      background: m.status === 'نشط' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                      color: m.status === 'نشط' ? '#10b981' : '#ef4444',
-                      border: `1px solid ${m.status === 'نشط' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
+                      ...getStatusStyle(m.status)
                     }}>
                       {m.status || 'غير محدد'}
                     </span>
