@@ -9,7 +9,7 @@ import egyptCenters from '../data/egyptCenters';
 const governorates = Object.keys(egyptCenters);
 
 function StudentsList() {
-  const { students, deleteStudent, addStudent, branches, sessions, hasPermission } = useAppData();
+  const { students, deleteStudent, addStudent, branches, sessions, hasPermission, users, addUser, updateUser } = useAppData();
   const importRef = useRef(null);
   
   // Get current user and role
@@ -119,26 +119,117 @@ function StudentsList() {
     exportToXLSX(exportData, 'الدارسين', 'إدارة الطلاب');
   };
 
+  const handleDownloadTemplate = () => {
+    const templateData = [{
+      'الاسم': '',
+      'المحافظة': '',
+      'المركز': '',
+      'الفرع': '',
+      'الحلقة': '',
+      'النوع': '',
+      'الرقم القومى': '',
+      'تاريخ الميلاد': '',
+      'رقم التليفون': '',
+      'العنوان': '',
+      'المؤهل': '',
+      'الوظيفة': ''
+    }];
+    exportToXLSX(templateData, 'نموذج_استيراد_الدارسين', 'نموذج استيراد الدارسين');
+  };
+
   const handleImport = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     try {
       const rows = await importFromXLSX(file);
-      rows.forEach(row => {
+      const validRows = rows.filter(row => row['الاسم'] && row['الاسم'].toString().trim() !== '');
+
+      if (validRows.length === 0) {
+        alert('الملف فارغ أو يحتوي على صفوف فارغة فقط');
+        e.target.value = '';
+        return;
+      }
+
+      validRows.forEach(row => {
+        const sessionNo = (row['الحلقة'] || '').toString().trim();
+        const matchedSession = sessions.find(s => String(s.session_no) === sessionNo || String(s.id) === sessionNo);
+        
+        const adminVal = row['المحافظة'] || row['الإدارة'] || row['إدارة'] || matchedSession?.admin || '';
+        const centerVal = row['المركز'] || matchedSession?.center || '';
+        const branchVal = row['الفرع'] || matchedSession?.branch || '';
+        const rowaqVal = row['الرواق'] || matchedSession?.rowaq || '';
+        const levelVal = row['المستوى'] || matchedSession?.level || '';
+        
+        const genderVal = row['النوع'] || row['الجنس'] || matchedSession?.student_type || '';
+        const natId = (row['الرقم القومى'] || row['الرقم القومي'] || '').toString().trim();
+        
+        const rawBirthDate = row['تاريخ الميلاد'];
+        let birthDateStr = '';
+        if (rawBirthDate) {
+          if (rawBirthDate instanceof Date) {
+            birthDateStr = rawBirthDate.toISOString().split('T')[0];
+          } else if (typeof rawBirthDate === 'number') {
+            const dateObj = new Date((rawBirthDate - 25569) * 86400 * 1000);
+            birthDateStr = dateObj.toISOString().split('T')[0];
+          } else {
+            birthDateStr = rawBirthDate.toString().trim();
+          }
+        }
+        
+        const phoneVal = (row['رقم التليفون'] || row['رقم الهاتف'] || row['الهاتف'] || '').toString().trim();
+        
         addStudent({
           name: row['الاسم'] || '',
-          admin: row['الإدارة'] || '',
-          center: row['المركز'] || '',
-          branch: row['الفرع'] || '',
-          rowaq: row['الرواق'] || '',
-          gender: row['الجنس'] || '',
-          level: row['المستوى'] || '',
-          session_id: row['الحلقة'] || '',
-          national_id: row['الرقم القومي'] || '',
+          admin: adminVal,
+          center: centerVal,
+          branch: branchVal,
+          rowaq: rowaqVal,
+          level: levelVal,
+          session_id: sessionNo,
+          gender: genderVal,
+          national_id: natId,
+          birth_date: birthDateStr,
+          phone: phoneVal,
+          address: row['العنوان'] || '',
+          qualification: row['المؤهل'] || '',
+          job: row['الوظيفة'] || '',
+          username: natId,
+          password: natId
         });
+
+        if (natId) {
+          const existingUser = (users || []).find(u => u.national_id === natId || u.email === natId);
+          if (existingUser) {
+            updateUser(existingUser.id, {
+              name: row['الاسم'] || '',
+              phone: phoneVal,
+              role: 'student',
+              email: natId,
+              national_id: natId,
+              userAdmin: adminVal,
+              userCenter: centerVal,
+              userBranch: branchVal,
+              userSession: sessionNo
+            });
+          } else {
+            addUser({
+              name: row['الاسم'] || '',
+              email: natId,
+              password: natId,
+              phone: phoneVal,
+              role: 'student',
+              national_id: natId,
+              userAdmin: adminVal,
+              userCenter: centerVal,
+              userBranch: branchVal,
+              userSession: sessionNo
+            });
+          }
+        }
       });
       alert('تم استيراد البيانات بنجاح');
-    } catch {
+    } catch (err) {
+      console.error(err);
       alert('حدث خطأ في استيراد الملف');
     }
     e.target.value = '';
@@ -244,6 +335,9 @@ function StudentsList() {
               <Link to="/students/create" className="btn btn-primary" style={{ textDecoration: 'none' }}>
                 <Plus size={16} /> إضافة طالب
               </Link>
+              <button className="btn btn-gold-outline" onClick={handleDownloadTemplate}>
+                <Download size={16} /> تحميل النموذج
+              </button>
               <button className="btn btn-gold-outline" onClick={() => importRef.current.click()}>
                 <Upload size={16} /> استيراد
               </button>
