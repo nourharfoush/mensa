@@ -6,6 +6,23 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
+// Mongoose query middleware plugin to handle queries searching by custom 'id' field
+// that might actually be MongoDB's native '_id'.
+mongoose.plugin((schema) => {
+  schema.pre(['find', 'findOne', 'findOneAndDelete', 'findOneAndUpdate', 'deleteOne', 'deleteMany', 'updateOne', 'updateMany'], function (next) {
+    const query = this.getQuery();
+    if (query && query.id) {
+      const idVal = query.id;
+      if (idVal && mongoose.Types.ObjectId.isValid(idVal)) {
+        const idStr = idVal.toString();
+        delete query.id;
+        query.$or = [{ _id: new mongoose.Types.ObjectId(idStr) }, { id: idStr }];
+      }
+    }
+    next();
+  });
+});
+
 // Import routes
 import managerRoutes from './routes/managers.js';
 import coordinatorRoutes from './routes/coordinators.js';

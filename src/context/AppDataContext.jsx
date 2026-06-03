@@ -288,9 +288,13 @@ export function AppDataProvider({ children }) {
           const remoteData = await api.getAll().catch(() => null);
           if (remoteData) {
             if (remoteData.length > 0) {
-              setState(remoteData);
-              saveToLocalStorage(key, remoteData);
-              console.log(`✓ Fetched ${remoteData.length} items for ${key} from MongoDB`);
+              const normalizedData = remoteData.map(item => ({
+                ...item,
+                id: item.id || item._id
+              }));
+              setState(normalizedData);
+              saveToLocalStorage(key, normalizedData);
+              console.log(`✓ Fetched ${normalizedData.length} items for ${key} from MongoDB`);
             } else if (state && state.length > 0) {
               console.log(`Upload ${state.length} local items for ${key} to MongoDB...`);
               await api.bulkImport(state).catch(err => console.error(`Bulk import failed for ${key}:`, err));
