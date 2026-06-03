@@ -145,19 +145,47 @@ function BranchesList() {
     if (!file) return;
     try {
       const rows = await importFromXLSX(file);
+      
+      const parseTimeTo24Hour = (timeStr) => {
+        if (!timeStr) return '';
+        timeStr = timeStr.toString().trim();
+        const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+        if (match) {
+          let hours = parseInt(match[1], 10);
+          const minutes = match[2];
+          const ampm = match[3].toUpperCase();
+          if (ampm === 'PM' && hours < 12) {
+            hours += 12;
+          } else if (ampm === 'AM' && hours === 12) {
+            hours = 0;
+          }
+          return `${String(hours).padStart(2, '0')}:${minutes}`;
+        }
+        return timeStr;
+      };
+
       rows.forEach(row => {
+        const workDaysRaw = row['ايام العمل'] || row['أيام العمل'] || '';
+        const workDays = workDaysRaw 
+          ? workDaysRaw.split(/[，,،]/).map(d => d.trim()).filter(Boolean) 
+          : [];
+        const cleanWorkDays = workDays.map(d => d === 'الاحد' ? 'الأحد' : d);
+
         addBranch({
-          name: row['اسم الفرع'] || '',
+          name: row['فرع'] || row['اسم الفرع'] || '',
           admin: row['الإدارة'] || '',
           center: row['المركز'] || '',
           decision_no: row['رقم القرار'] || '',
-          workDays: (row['أيام العمل'] || '').split('، '),
-          timeFrom: row['من'] || '',
-          timeTo: row['إلى'] || '',
+          address: row['العنوان'] || '',
+          phone: row['الهاتف'] || '',
+          workDays: cleanWorkDays,
+          timeFrom: parseTimeTo24Hour(row['الوقت من'] || row['من'] || ''),
+          timeTo: parseTimeTo24Hour(row['الوقت الي'] || row['الوقت إلى'] || row['إلى'] || ''),
         });
       });
       alert('تم استيراد البيانات بنجاح');
-    } catch {
+    } catch (err) {
+      console.error(err);
       alert('حدث خطأ في استيراد الملف');
     }
     e.target.value = '';
