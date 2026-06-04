@@ -122,11 +122,18 @@ function ManagementList() {
         alert('الملف فارغ أو يحتوي على بيانات غير صالحة');
         return;
       }
+      const processedNationalIds = [];
       rows.forEach(row => {
-        const nationalId = String(row['الرقم القومي'] || '').trim();
+        const nationalId = String(row['الرقم القومي'] || row['الرقم القومى'] || '').trim();
         const recordNo = String(row['رقم السجل'] || '').trim();
         if (!nationalId) return; // Skip invalid rows
         
+        // Avoid duplicate managers by national_id
+        const isDuplicateInState = managers.some(m => String(m.national_id || '').trim() === nationalId);
+        const isDuplicateInBatch = processedNationalIds.includes(nationalId);
+        if (isDuplicateInState || isDuplicateInBatch) return;
+        processedNationalIds.push(nationalId);
+
         const finalForm = {
           name: row['الاسم'] || '',
           admin: row['إدارة'] || row['الإدارة'] || '',
@@ -145,26 +152,22 @@ function ManagementList() {
           password: recordNo,
         };
         
-        // Avoid duplicate managers by national_id
-        const isDuplicate = managers.some(m => String(m.national_id || '').trim() === nationalId);
-        if (!isDuplicate) {
-          addManager(finalForm);
-          
-          let computedRole = 'rowaq_member';
-          if (finalForm.specialty === 'مدير الإدارة') computedRole = 'rowaq_manager';
-          else if (finalForm.specialty === 'العضو التقني') computedRole = 'rowaq_tech';
+        addManager(finalForm);
+        
+        let computedRole = 'rowaq_member';
+        if (finalForm.specialty === 'مدير الإدارة') computedRole = 'rowaq_manager';
+        else if (finalForm.specialty === 'العضو التقني') computedRole = 'rowaq_tech';
 
-          addUser({
-            name: finalForm.name,
-            email: finalForm.national_id,
-            password: finalForm.record_no,
-            phone: finalForm.phone,
-            role: computedRole,
-            national_id: finalForm.national_id,
-            record_number: finalForm.record_no,
-            userAdmin: finalForm.admin || ''
-          });
-        }
+        addUser({
+          name: finalForm.name,
+          email: finalForm.national_id,
+          password: finalForm.record_no,
+          phone: finalForm.phone,
+          role: computedRole,
+          national_id: finalForm.national_id,
+          record_number: finalForm.record_no,
+          userAdmin: finalForm.admin || ''
+        });
       });
       alert('تم استيراد أعضاء الإدارة بنجاح');
     } catch (err) {

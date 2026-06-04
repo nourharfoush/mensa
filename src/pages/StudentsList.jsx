@@ -199,6 +199,12 @@ function StudentsList() {
         
         const genderVal = row['النوع'] || row['الجنس'] || matchedSession?.student_type || '';
         const natId = (row['الرقم القومى'] || row['الرقم القومي'] || '').toString().trim();
+
+        if (natId) {
+          const existsInState = students.some(s => String(s.national_id).trim() === natId);
+          const existsInBatch = studentsToImport.some(s => String(s.national_id).trim() === natId);
+          if (existsInState || existsInBatch) return;
+        }
         
         const birthDateStr = calculateBirthDateFromNationalId(natId);
         const phoneVal = (row['رقم التليفون'] || row['رقم الهاتف'] || row['الهاتف'] || '').toString().trim();

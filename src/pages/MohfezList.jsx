@@ -212,7 +212,16 @@ function MohfezList() {
         return;
       }
 
+      const processedNationalIds = [];
       validRows.forEach(row => {
+        const natId = (row['الرقم القومي'] || row['الرقم القومى'] || '').toString().trim();
+        if (natId) {
+          const existsInState = mohfezs.some(m => String(m.national_id).trim() === natId);
+          const existsInBatch = processedNationalIds.includes(natId);
+          if (existsInState || existsInBatch) return; // Skip duplicates
+          processedNationalIds.push(natId);
+        }
+
         addMohfez({
           name: row['الاسم'] || '',
           status: row['الحالة'] || '',
@@ -221,7 +230,7 @@ function MohfezList() {
           center: row['المركز'] || '',
           branch: row['الفرع'] || '',
           registry_no: row['رقم السجل'] || '',
-          national_id: row['الرقم القومي'] || '',
+          national_id: natId,
           job: row['الوظيفة'] || '',
           workplace: row['جهة العمل'] || '',
           job_grade: row['الدرجة الوظيفية'] || '',
