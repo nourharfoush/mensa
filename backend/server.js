@@ -68,32 +68,6 @@ mongoose.connect(process.env.MONGODB_URI, {
     console.log('⚠ Server running without active MongoDB connection. Please check your DB connection.');
   });
 
-// Routes
-app.use('/api/managers', managerRoutes);
-app.use('/api/coordinators', coordinatorRoutes);
-app.use('/api/mohfezs', mohfezRoutes);
-app.use('/api/students', studentRoutes);
-app.use('/api/branches', branchRoutes);
-app.use('/api/sessions', sessionRoutes);
-app.use('/api/users', userRoutes);
-
-app.use('/api/monthlyreports', monthlyReportRoutes);
-app.use('/api/followupreports', followUpReportRoutes);
-app.use('/api/applicants', applicantRoutes);
-app.use('/api/rowaqs', rowaqRoutes);
-app.use('/api/applicantbranches', applicantBranchRoutes);
-app.use('/api/sessionreports', sessionReportRoutes);
-app.use('/api/platformtopmanagement', platformTopManagementRoutes);
-app.use('/api/platformsupervisors', platformSupervisorRoutes);
-app.use('/api/platformcoordinators', platformCoordinatorRoutes);
-app.use('/api/platformmohfezs', platformMohfezRoutes);
-app.use('/api/platformsessions', platformSessionRoutes);
-app.use('/api/platformstudents', platformStudentRoutes);
-app.use('/api/platformapplicants', platformApplicantRoutes);
-app.use('/api/platformrowaqs', platformRowaqRoutes);
-app.use('/api/administrations', administrationRoutes);
-app.use('/api/rolepermissions', rolePermissionRoutes);
-
 // Generic Delete All endpoint
 app.delete('/api/:collection/all', async (req, res) => {
   const { collection } = req.params;
@@ -134,6 +108,32 @@ app.delete('/api/:collection/all', async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+// Routes
+app.use('/api/managers', managerRoutes);
+app.use('/api/coordinators', coordinatorRoutes);
+app.use('/api/mohfezs', mohfezRoutes);
+app.use('/api/students', studentRoutes);
+app.use('/api/branches', branchRoutes);
+app.use('/api/sessions', sessionRoutes);
+app.use('/api/users', userRoutes);
+
+app.use('/api/monthlyreports', monthlyReportRoutes);
+app.use('/api/followupreports', followUpReportRoutes);
+app.use('/api/applicants', applicantRoutes);
+app.use('/api/rowaqs', rowaqRoutes);
+app.use('/api/applicantbranches', applicantBranchRoutes);
+app.use('/api/sessionreports', sessionReportRoutes);
+app.use('/api/platformtopmanagement', platformTopManagementRoutes);
+app.use('/api/platformsupervisors', platformSupervisorRoutes);
+app.use('/api/platformcoordinators', platformCoordinatorRoutes);
+app.use('/api/platformmohfezs', platformMohfezRoutes);
+app.use('/api/platformsessions', platformSessionRoutes);
+app.use('/api/platformstudents', platformStudentRoutes);
+app.use('/api/platformapplicants', platformApplicantRoutes);
+app.use('/api/platformrowaqs', platformRowaqRoutes);
+app.use('/api/administrations', administrationRoutes);
+app.use('/api/rolepermissions', rolePermissionRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
