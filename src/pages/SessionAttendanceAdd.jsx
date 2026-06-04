@@ -15,10 +15,43 @@ function SessionAttendanceAdd() {
     ? platformSessions.find(s => String(s.id) === String(id))
     : sessions.find(s => String(s.id) === String(id));
   
-  // Find students in this session. Assuming student.session_id matches session.session_no
+  const normalizeArabic = (str) => {
+    if (!str) return '';
+    return str
+      .toString()
+      .trim()
+      .normalize('NFKD')
+      .normalize('NFC')
+      .replace(/ً/g, '')
+      .replace(/ٌ/g, '')
+      .replace(/ٍ/g, '')
+      .replace(/َ/g, '')
+      .replace(/ُ/g, '')
+      .replace(/ِ/g, '')
+      .replace(/ّ/g, '')
+      .replace(/ْ/g, '')
+      .replace(/[أإآا]/g, 'ا')
+      .replace(/[ىي]/g, 'ي')
+      .replace(/[ة]/g, 'ه')
+      .replace(/[ـ]/g, '')
+      .replace(/\s+/g, ' ')
+      .toLowerCase()
+      .trim();
+  };
+  
+  // Find students in this session.
   const sessionStudents = isPlatform
-    ? platformStudents.filter(s => s.session_id === session?.session_no)
-    : students.filter(s => s.session_id === session?.session_no);
+    ? platformStudents.filter(s => 
+        (s.session_id && String(s.session_id) === String(session?.id)) ||
+        (String(s.session_no) === String(session?.session_no))
+      )
+    : students.filter(s => 
+        (s.session_id && String(s.session_id) === String(session?.id)) ||
+        (String(s.session_no) === String(session?.session_no) &&
+         normalizeArabic(s.branch) === normalizeArabic(session?.branch) &&
+         normalizeArabic(s.center) === normalizeArabic(session?.center) &&
+         normalizeArabic(s.admin) === normalizeArabic(session?.admin))
+      );
   
   const [date, setDate] = useState(new Date().toISOString().split('T')[0].replace(/-/g, '/'));
   
