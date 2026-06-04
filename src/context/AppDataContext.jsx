@@ -1045,7 +1045,19 @@ export function AppDataProvider({ children }) {
     }
   };
 
+  const verifyDeleteAllPassword = () => {
+    const password = prompt('الرجاء إدخال كلمة المرور لتأكيد حذف الجميع:');
+    if (password === '4219') {
+      return true;
+    }
+    if (password !== null) {
+      alert('كلمة المرور غير صحيحة!');
+    }
+    return false;
+  };
+
   const deleteAllStudents = () => {
+    if (!verifyDeleteAllPassword()) return;
     if (window.confirm('هل أنت متأكد من حذف جميع الطلاب؟ هذه العملية لا يمكن التراجع عنها.')) {
       setStudents([]);
       studentsAPI.deleteAll().catch(err => console.error(err));
@@ -1053,6 +1065,7 @@ export function AppDataProvider({ children }) {
   };
 
   const deleteAllMohfezs = () => {
+    if (!verifyDeleteAllPassword()) return;
     if (window.confirm('هل أنت متأكد من حذف جميع المحفظين؟ هذه العملية لا يمكن التراجع عنها.')) {
       setMohfezs([]);
       mohfezsAPI.deleteAll().catch(err => console.error(err));
@@ -1060,6 +1073,7 @@ export function AppDataProvider({ children }) {
   };
 
   const deleteAllCoordinators = () => {
+    if (!verifyDeleteAllPassword()) return;
     if (window.confirm('هل أنت متأكد من حذف جميع المنسقين؟ هذه العملية لا يمكن التراجع عنها.')) {
       setCoordinators([]);
       coordinatorsAPI.deleteAll().catch(err => console.error(err));
@@ -1067,6 +1081,7 @@ export function AppDataProvider({ children }) {
   };
 
   const deleteAllBranches = () => {
+    if (!verifyDeleteAllPassword()) return;
     if (window.confirm('هل أنت متأكد من حذف جميع الفروع؟ هذه العملية لا يمكن التراجع عنها.')) {
       setBranches([]);
       branchesAPI.deleteAll().catch(err => console.error(err));
@@ -1074,6 +1089,7 @@ export function AppDataProvider({ children }) {
   };
 
   const deleteAllSessions = () => {
+    if (!verifyDeleteAllPassword()) return;
     if (window.confirm('هل أنت متأكد من حذف جميع الحلقات؟ هذه العملية لا يمكن التراجع عنها.')) {
       setSessions([]);
       sessionsAPI.deleteAll().catch(err => console.error(err));
@@ -1081,6 +1097,7 @@ export function AppDataProvider({ children }) {
   };
 
   const deleteAllManagers = () => {
+    if (!verifyDeleteAllPassword()) return;
     if (window.confirm('هل أنت متأكد من حذف جميع المشرفين والمدراء؟ هذه العملية لا يمكن التراجع عنها.')) {
       setManagers([]);
       managersAPI.deleteAll().catch(err => console.error(err));
@@ -1088,6 +1105,7 @@ export function AppDataProvider({ children }) {
   };
 
   const deleteAllApplicants = () => {
+    if (!verifyDeleteAllPassword()) return;
     if (window.confirm('هل أنت متأكد من حذف جميع طلبات التقديم؟ هذه العملية لا يمكن التراجع عنها.')) {
       setApplicants([]);
       applicantsAPI.deleteAll().catch(err => console.error(err));
@@ -1095,6 +1113,7 @@ export function AppDataProvider({ children }) {
   };
 
   const deleteAllPlatformTopManagement = () => {
+    if (!verifyDeleteAllPassword()) return;
     if (window.confirm('هل أنت متأكد من حذف جميع أعضاء الإدارة العليا للمنصة؟ هذه العملية لا يمكن التراجع عنها.')) {
       setPlatformTopManagement([]);
       platformTopManagementAPI.deleteAll().catch(err => console.error(err));
@@ -1102,6 +1121,7 @@ export function AppDataProvider({ children }) {
   };
 
   const deleteAllPlatformSupervisors = () => {
+    if (!verifyDeleteAllPassword()) return;
     if (window.confirm('هل أنت متأكد من حذف جميع مشرفي المنصة؟ هذه العملية لا يمكن التراجع عنها.')) {
       setPlatformSupervisors([]);
       platformSupervisorsAPI.deleteAll().catch(err => console.error(err));
@@ -1109,6 +1129,7 @@ export function AppDataProvider({ children }) {
   };
 
   const deleteAllPlatformCoordinators = () => {
+    if (!verifyDeleteAllPassword()) return;
     if (window.confirm('هل أنت متأكد من حذف جميع منسقي المنصة؟ هذه العملية لا يمكن التراجع عنها.')) {
       setPlatformCoordinators([]);
       platformCoordinatorsAPI.deleteAll().catch(err => console.error(err));
@@ -1116,6 +1137,7 @@ export function AppDataProvider({ children }) {
   };
 
   const deleteAllPlatformMohfezs = () => {
+    if (!verifyDeleteAllPassword()) return;
     if (window.confirm('هل أنت متأكد من حذف جميع محفظي المنصة؟ هذه العملية لا يمكن التراجع عنها.')) {
       setPlatformMohfezs([]);
       platformMohfezsAPI.deleteAll().catch(err => console.error(err));
@@ -1123,6 +1145,7 @@ export function AppDataProvider({ children }) {
   };
 
   const deleteAllPlatformSessions = () => {
+    if (!verifyDeleteAllPassword()) return;
     if (window.confirm('هل أنت متأكد من حذف جميع حلقات المنصة؟ هذه العملية لا يمكن التراجع عنها.')) {
       setPlatformSessions([]);
       platformSessionsAPI.deleteAll().catch(err => console.error(err));
@@ -1130,6 +1153,7 @@ export function AppDataProvider({ children }) {
   };
 
   const deleteAllPlatformStudents = () => {
+    if (!verifyDeleteAllPassword()) return;
     if (window.confirm('هل أنت متأكد من حذف جميع دارسي المنصة؟ هذه العملية لا يمكن التراجع عنها.')) {
       setPlatformStudents([]);
       platformStudentsAPI.deleteAll().catch(err => console.error(err));
@@ -1137,6 +1161,7 @@ export function AppDataProvider({ children }) {
   };
 
   const deleteAllPlatformApplicants = () => {
+    if (!verifyDeleteAllPassword()) return;
     if (window.confirm('هل أنت متأكد من حذف جميع طلبات تقديم المنصة؟ هذه العملية لا يمكن التراجع عنها.')) {
       setPlatformApplicants([]);
       platformApplicantsAPI.deleteAll().catch(err => console.error(err));
