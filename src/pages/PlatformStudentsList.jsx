@@ -68,6 +68,10 @@ function PlatformStudentsList() {
       'المستوى': s.level,
       'الحلقة': s.session_id,
       'رقم جواز السفر': s.passport_no || s.national_id || '',
+      'رقم التليفون': s.phone || '',
+      'العنوان': s.address || '',
+      'المؤهل': s.qualification || '',
+      'الوظيفة': s.job || '',
     }));
     exportToXLSX(exportData, 'الدارسين', 'دارسين المنصة');
   };

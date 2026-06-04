@@ -116,6 +116,10 @@ function StudentsList() {
       'المستوى': s.level,
       'الحلقة': s.session_id,
       'الرقم القومي': s.national_id,
+      'رقم التليفون': s.phone || '',
+      'العنوان': s.address || '',
+      'المؤهل': s.qualification || '',
+      'الوظيفة': s.job || '',
     }));
     exportToXLSX(exportData, 'الدارسين', 'إدارة الطلاب');
   };
