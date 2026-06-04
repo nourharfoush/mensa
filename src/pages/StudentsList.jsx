@@ -160,11 +160,40 @@ function StudentsList() {
 
       validRows.forEach(row => {
         const sessionNo = (row['الحلقة'] || '').toString().trim();
-        const matchedSession = sessions.find(s => String(s.session_no) === sessionNo || String(s.id) === sessionNo);
+        const adminFromRow = (row['المحافظة'] || row['الإدارة'] || row['إدارة'] || '').toString().trim();
+        const centerFromRow = (row['المركز'] || '').toString().trim();
+        const branchFromRow = (row['الفرع'] || '').toString().trim();
+
+        // 1. Strict Match: match by session_no AND branch AND center AND admin
+        let matchedSession = sessions.find(s => {
+          const numMatch = String(s.session_no) === sessionNo || String(s.id) === sessionNo;
+          if (!numMatch) return false;
+
+          const adminMatch = adminFromRow ? normalizeArabic(s.admin) === normalizeArabic(adminFromRow) : true;
+          const centerMatch = centerFromRow ? normalizeArabic(s.center) === normalizeArabic(centerFromRow) : true;
+          const branchMatch = branchFromRow ? normalizeArabic(s.branch) === normalizeArabic(branchFromRow) : true;
+
+          return adminMatch && centerMatch && branchMatch;
+        });
+
+        // 2. Fallback Match: if no strict match, match by session_no AND branch
+        if (!matchedSession && branchFromRow) {
+          matchedSession = sessions.find(s => {
+            const numMatch = String(s.session_no) === sessionNo || String(s.id) === sessionNo;
+            if (!numMatch) return false;
+
+            return normalizeArabic(s.branch) === normalizeArabic(branchFromRow);
+          });
+        }
+
+        // 3. Last Fallback: match by session_no only
+        if (!matchedSession) {
+          matchedSession = sessions.find(s => String(s.session_no) === sessionNo || String(s.id) === sessionNo);
+        }
         
-        const adminVal = row['المحافظة'] || row['الإدارة'] || row['إدارة'] || matchedSession?.admin || '';
-        const centerVal = row['المركز'] || matchedSession?.center || '';
-        const branchVal = row['الفرع'] || matchedSession?.branch || '';
+        const adminVal = adminFromRow || matchedSession?.admin || '';
+        const centerVal = centerFromRow || matchedSession?.center || '';
+        const branchVal = branchFromRow || matchedSession?.branch || '';
         const rowaqVal = row['الرواق'] || matchedSession?.rowaq || '';
         const levelVal = row['المستوى'] || matchedSession?.level || '';
         
