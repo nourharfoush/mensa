@@ -116,13 +116,13 @@
 }
 
 .management-table th {
-  background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-sidebar) 100%);
-  color: var(--accent-gold);
+  background: linear-gradient(180deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%);
+  color: #000000;
   text-align: right;
   padding: 16px 20px;
   font-size: 14px;
   font-weight: 700;
-  border-bottom: 2px solid var(--accent-gold-dark);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
 
