@@ -122,17 +122,34 @@ function ManagementList() {
         alert('الملف فارغ أو يحتوي على بيانات غير صالحة');
         return;
       }
-      const processedNationalIds = [];
+      const duplicates = [];
+      rows.forEach((row, index) => {
+        const nationalId = String(row['الرقم القومي'] || row['الرقم القومى'] || '').trim();
+        if (nationalId) {
+          const existsInState = managers.some(m => String(m.national_id || '').trim() === nationalId);
+          const existsInBatchIndex = rows.findIndex((r, idx) => 
+            idx < index && 
+            String(r['الرقم القومي'] || r['الرقم القومى'] || '').trim() === nationalId
+          );
+          
+          if (existsInState) {
+            duplicates.push(`الرقم القومي (${nationalId}) في الصف ${index + 2} موجود بالفعل في النظام`);
+          } else if (existsInBatchIndex !== -1) {
+            duplicates.push(`الرقم القومي (${nationalId}) مكرر في الملف في الصف ${index + 2} والصف ${existsInBatchIndex + 2}`);
+          }
+        }
+      });
+
+      if (duplicates.length > 0) {
+        alert(`فشل الاستيراد لوجود قيم مكررة:\n${duplicates.slice(0, 10).join('\n')}${duplicates.length > 10 ? '\n...وغيرها' : ''}`);
+        e.target.value = '';
+        return;
+      }
+
       rows.forEach(row => {
         const nationalId = String(row['الرقم القومي'] || row['الرقم القومى'] || '').trim();
         const recordNo = String(row['رقم السجل'] || '').trim();
-        if (!nationalId) return; // Skip invalid rows
-        
-        // Avoid duplicate managers by national_id
-        const isDuplicateInState = managers.some(m => String(m.national_id || '').trim() === nationalId);
-        const isDuplicateInBatch = processedNationalIds.includes(nationalId);
-        if (isDuplicateInState || isDuplicateInBatch) return;
-        processedNationalIds.push(nationalId);
+        if (!nationalId) return;
 
         const finalForm = {
           name: row['الاسم'] || '',

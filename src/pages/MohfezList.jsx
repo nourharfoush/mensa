@@ -212,15 +212,32 @@ function MohfezList() {
         return;
       }
 
-      const processedNationalIds = [];
-      validRows.forEach(row => {
+      const duplicates = [];
+      validRows.forEach((row, index) => {
         const natId = (row['الرقم القومي'] || row['الرقم القومى'] || '').toString().trim();
         if (natId) {
           const existsInState = mohfezs.some(m => String(m.national_id).trim() === natId);
-          const existsInBatch = processedNationalIds.includes(natId);
-          if (existsInState || existsInBatch) return; // Skip duplicates
-          processedNationalIds.push(natId);
+          const existsInBatchIndex = validRows.findIndex((r, idx) => 
+            idx < index && 
+            String(r['الرقم القومي'] || r['الرقم القومى'] || '').toString().trim() === natId
+          );
+          
+          if (existsInState) {
+            duplicates.push(`الرقم القومي (${natId}) في الصف ${index + 2} موجود بالفعل في النظام`);
+          } else if (existsInBatchIndex !== -1) {
+            duplicates.push(`الرقم القومي (${natId}) مكرر في الملف في الصف ${index + 2} والصف ${existsInBatchIndex + 2}`);
+          }
         }
+      });
+
+      if (duplicates.length > 0) {
+        alert(`فشل الاستيراد لوجود قيم مكررة:\n${duplicates.slice(0, 10).join('\n')}${duplicates.length > 10 ? '\n...وغيرها' : ''}`);
+        e.target.value = '';
+        return;
+      }
+
+      validRows.forEach(row => {
+        const natId = (row['الرقم القومي'] || row['الرقم القومى'] || '').toString().trim();
 
         addMohfez({
           name: row['الاسم'] || '',

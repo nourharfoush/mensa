@@ -148,8 +148,26 @@ function StudentsList() {
       const rows = await importFromXLSX(file);
       const validRows = rows.filter(row => row['الاسم'] && row['الاسم'].toString().trim() !== '');
 
-      if (validRows.length === 0) {
-        alert('الملف فارغ أو يحتوي على صفوف فارغة فقط');
+      const duplicates = [];
+      validRows.forEach((row, index) => {
+        const natId = (row['الرقم القومى'] || row['الرقم القومي'] || '').toString().trim();
+        if (natId) {
+          const existsInState = students.some(s => String(s.national_id).trim() === natId);
+          const existsInBatchIndex = validRows.findIndex((r, idx) => 
+            idx < index && 
+            String(r['الرقم القومى'] || r['الرقم القومي'] || '').toString().trim() === natId
+          );
+          
+          if (existsInState) {
+            duplicates.push(`الرقم القومي (${natId}) في الصف ${index + 2} موجود بالفعل في النظام`);
+          } else if (existsInBatchIndex !== -1) {
+            duplicates.push(`الرقم القومي (${natId}) مكرر في الملف في الصف ${index + 2} والصف ${existsInBatchIndex + 2}`);
+          }
+        }
+      });
+
+      if (duplicates.length > 0) {
+        alert(`فشل الاستيراد لوجود قيم مكررة:\n${duplicates.slice(0, 10).join('\n')}${duplicates.length > 10 ? '\n...وغيرها' : ''}`);
         e.target.value = '';
         return;
       }
