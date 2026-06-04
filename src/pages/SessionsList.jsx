@@ -210,9 +210,23 @@ function SessionsList() {
       }
 
       validRows.forEach(row => {
+        const rawMohfezType = (row['نوع المحفظ'] || '').toString().trim();
+        let mohfezType = '';
+        if (normalizeArabic(rawMohfezType) === normalizeArabic('أساسي')) mohfezType = 'أساسي';
+        else if (normalizeArabic(rawMohfezType) === normalizeArabic('منتدب')) mohfezType = 'منتدب';
+
         const rawStudentType = row['نوع الدارسين'] || '';
         const rawOldStudentType = row['الدارسين'] && isNaN(Number(row['الدارسين'])) ? row['الدارسين'] : '';
-        const studentType = rawStudentType || rawOldStudentType || '';
+        const rawStudentTypeFinal = (rawStudentType || rawOldStudentType || '').toString().trim();
+        let studentType = '';
+        if (normalizeArabic(rawStudentTypeFinal) === normalizeArabic('أطفال')) studentType = 'أطفال';
+        else if (normalizeArabic(rawStudentTypeFinal) === normalizeArabic('رجال')) studentType = 'رجال';
+        else if (normalizeArabic(rawStudentTypeFinal) === normalizeArabic('نساء')) studentType = 'نساء';
+
+        const rawAttendanceType = (row['نوع الحضور'] || '').toString().trim();
+        let attendanceType = '';
+        if (normalizeArabic(rawAttendanceType) === normalizeArabic('مباشر')) attendanceType = 'مباشر';
+        else if (normalizeArabic(rawAttendanceType) === normalizeArabic('عن بعد')) attendanceType = 'عن بعد';
 
         addSession({
           session_no: row['رقم الحلقة'] || Date.now().toString().slice(-8),
@@ -221,10 +235,10 @@ function SessionsList() {
           branch: row['الفرع'] || '',
           rowaq: row['الرواق'] || '',
           level: row['المستوى'] || '',
-          mohfez_type: row['نوع المحفظ'] || '',
+          mohfez_type: mohfezType,
           mohfez: row['المحفّظ'] || row['المحفظ'] || '',
           student_type: studentType,
-          attendance_type: row['نوع الحضور'] || '',
+          attendance_type: attendanceType,
           workDays: parseWorkDays(row['ايام العمل'] || row['أيام العمل'] || ''),
           time_start: parseTimeTo24Hour(row['الوقت من'] || ''),
           time_end: parseTimeTo24Hour(row['الوقت الي'] || ''),
