@@ -154,6 +154,7 @@ function StudentsList() {
         return;
       }
 
+      const isValidObjectId = (id) => typeof id === 'string' && id.length === 24 && /^[0-9a-fA-F]{24}$/.test(id);
       const studentsToImport = [];
       const usersToImport = [];
 
@@ -173,6 +174,8 @@ function StudentsList() {
         const birthDateStr = calculateBirthDateFromNationalId(natId);
         const phoneVal = (row['رقم التليفون'] || row['رقم الهاتف'] || row['الهاتف'] || '').toString().trim();
         
+        const sessionObjId = matchedSession?.id && isValidObjectId(matchedSession.id) ? matchedSession.id : undefined;
+
         studentsToImport.push({
           name: row['الاسم'] || '',
           admin: adminVal,
@@ -180,7 +183,8 @@ function StudentsList() {
           branch: branchVal,
           rowaq: rowaqVal,
           level: levelVal,
-          session_id: sessionNo,
+          session_id: sessionObjId,
+          session_no: sessionNo,
           gender: genderVal,
           national_id: natId,
           birth_date: birthDateStr,

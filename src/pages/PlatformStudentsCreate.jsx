@@ -75,6 +75,8 @@ function PlatformStudentsCreate() {
 
     const studentData = {
       ...finalForm,
+      session_id: selectedSession?.id || selectedSession?._id || undefined,
+      session_no: form.session_id,
       rowaq: selectedSession?.rowaq || '',
       level: selectedSession?.level || '',
       gender: selectedSession?.student_type || '',

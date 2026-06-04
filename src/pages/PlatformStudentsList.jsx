@@ -84,9 +84,13 @@ function PlatformStudentsList() {
       const platformStudentsToImport = [];
       const usersToImport = [];
 
+      const isValidObjectId = (id) => typeof id === 'string' && id.length === 24 && /^[0-9a-fA-F]{24}$/.test(id);
       rows.forEach(row => {
         const passport = String(row['رقم جواز السفر'] || row['الرقم القومي'] || '').trim();
         if (!passport) return;
+        const sessionNo = (row['الحلقة'] || '').toString().trim();
+        const matchedSession = platformSessions.find(s => String(s.session_no) === sessionNo || String(s.id) === sessionNo);
+        const sessionObjId = matchedSession?.id && isValidObjectId(matchedSession.id) ? matchedSession.id : undefined;
 
         platformStudentsToImport.push({
           name: row['الاسم'] || '',
@@ -94,7 +98,8 @@ function PlatformStudentsList() {
           rowaq: row['الرواق'] || '',
           gender: row['الجنس'] || '',
           level: row['المستوى'] || '',
-          session_id: row['الحلقة'] || '',
+          session_id: sessionObjId,
+          session_no: sessionNo,
           passport_no: passport,
           phone: row['رقم التليفون'] || '',
           address: row['العنوان'] || '',
@@ -109,7 +114,7 @@ function PlatformStudentsList() {
           phone: row['رقم التليفون'] || '',
           role: 'student',
           national_id: passport,
-          userSession: row['الحلقة'] || ''
+          userSession: sessionNo
         });
       });
 

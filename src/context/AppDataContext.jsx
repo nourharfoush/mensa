@@ -791,6 +791,7 @@ export function AppDataProvider({ children }) {
       await studentsAPI.bulkImport(newStudents);
     } catch (err) {
       console.error('Failed to bulk import students to DB:', err);
+      alert('فشل حفظ الطلاب في قاعدة البيانات: ' + err.message);
     }
     if (userList && userList.length > 0) {
       const newUsers = userList.map(u => ({
@@ -812,6 +813,7 @@ export function AppDataProvider({ children }) {
         await usersAPI.bulkImport(newUsers);
       } catch (err) {
         console.error('Failed to bulk import users to DB:', err);
+        alert('فشل حفظ حسابات الطلاب في قاعدة البيانات: ' + err.message);
       }
     }
   };
@@ -1062,6 +1064,7 @@ export function AppDataProvider({ children }) {
       await platformStudentsAPI.bulkImport(newStudents);
     } catch (err) {
       console.error('Failed platform students bulk import:', err);
+      alert('فشل حفظ دارسي المنصة في قاعدة البيانات: ' + err.message);
     }
     if (userList && userList.length > 0) {
       const newUsers = userList.map(u => ({
@@ -1083,6 +1086,7 @@ export function AppDataProvider({ children }) {
         await usersAPI.bulkImport(newUsers);
       } catch (err) {
         console.error('Failed bulk import users:', err);
+        alert('فشل حفظ حسابات دارسي المنصة في قاعدة البيانات: ' + err.message);
       }
     }
   };
