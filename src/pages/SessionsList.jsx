@@ -148,7 +148,13 @@ function SessionsList() {
 
   const handleExport = () => {
     let exportData = filtered.map(s => {
-      const studentCount = (students || []).filter(stud => String(stud.session_id) === String(s.session_no)).length;
+      const studentCount = (students || []).filter(stud => 
+        (stud.session_id && String(stud.session_id) === String(s.id)) ||
+        (String(stud.session_no) === String(s.session_no) &&
+         normalizeArabic(stud.branch) === normalizeArabic(s.branch) &&
+         normalizeArabic(stud.center) === normalizeArabic(s.center) &&
+         normalizeArabic(stud.admin) === normalizeArabic(s.admin))
+      ).length;
       return {
         'رقم الحلقة': s.session_no || '',
         'إدارة': s.admin || '',
@@ -369,7 +375,13 @@ function SessionsList() {
               </tr>
             ) : (
               filtered.map(s => {
-                const studentCount = (students || []).filter(stud => String(stud.session_id) === String(s.session_no) || String(stud.session_id) === String(s.id)).length;
+                const studentCount = (students || []).filter(stud => 
+                  (stud.session_id && String(stud.session_id) === String(s.id)) ||
+                  (String(stud.session_no) === String(s.session_no) &&
+                   normalizeArabic(stud.branch) === normalizeArabic(s.branch) &&
+                   normalizeArabic(stud.center) === normalizeArabic(s.center) &&
+                   normalizeArabic(stud.admin) === normalizeArabic(s.admin))
+                ).length;
                 return (
                   <tr key={s.id}>
                     <td style={{ direction: 'ltr', textAlign: 'right' }}>{s.session_no}</td>
