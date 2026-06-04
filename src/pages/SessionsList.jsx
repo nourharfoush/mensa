@@ -45,29 +45,53 @@ function SessionsList() {
     }
   }, [currentUser]);
 
+  const normalizeArabic = (str) => {
+    if (!str) return '';
+    return str
+      .toString()
+      .trim()
+      .normalize('NFKD')  // Use NFKD for stronger decomposition
+      .normalize('NFC')   // Then recompose
+      .replace(/ً/g, '')  // Remove FATHATAN
+      .replace(/ٌ/g, '')  // Remove DAMMATAN
+      .replace(/ٍ/g, '')  // Remove KASRATAN
+      .replace(/َ/g, '')  // Remove FATHA
+      .replace(/ُ/g, '')  // Remove DAMMA
+      .replace(/ِ/g, '')  // Remove KASRA
+      .replace(/ّ/g, '')  // Remove SHADDA
+      .replace(/ْ/g, '')  // Remove SUKUN
+      .replace(/[أإآا]/g, 'ا')  // Normalize all forms of alef
+      .replace(/[ىي]/g, 'ي')    // Normalize ya
+      .replace(/[ة]/g, 'ه')      // Normalize ta marbuta
+      .replace(/[ـ]/g, '')       // Remove Arabic tatweel
+      .replace(/\s+/g, ' ')      // Normalize spaces
+      .toLowerCase()
+      .trim();
+  };
+
   const availableCenters = filterAdmin ? (egyptCenters[filterAdmin] || []) : [];
-  const availableBranches = branches.filter(b => b.admin === filterAdmin && b.center === filterCenter);
+  const availableBranches = branches.filter(b => normalizeArabic(b.admin) === normalizeArabic(filterAdmin) && normalizeArabic(b.center) === normalizeArabic(filterCenter));
 
   const filtered = sessions.filter(s => {
     // 1. Geographic role restrictions
-    if (isRowaqStaff && userAdmin && s.admin !== userAdmin) return false;
-    if (isBranchCoordinator && userBranch && s.branch !== userBranch) return false;
+    if (isRowaqStaff && userAdmin && normalizeArabic(s.admin) !== normalizeArabic(userAdmin)) return false;
+    if (isBranchCoordinator && userBranch && normalizeArabic(s.branch) !== normalizeArabic(userBranch)) return false;
     if (isMohfez) {
       if (userSession) {
         if (String(s.id) !== String(userSession) && s.session_name !== userSession && s.session_no !== userSession) return false;
       } else if (userBranch) {
-        if (s.branch !== userBranch) return false;
+        if (normalizeArabic(s.branch) !== normalizeArabic(userBranch)) return false;
       }
     }
 
     // 2. Normal filters
     return (
-      (filterAdmin ? s.admin === filterAdmin : true) &&
-      (filterCenter ? s.center === filterCenter : true) &&
-      (filterBranch ? s.branch === filterBranch : true) &&
-      (filterRowaq ? s.rowaq === filterRowaq : true) &&
-      (filterStudentType ? s.student_type === filterStudentType : true) &&
-      (filterAttendance ? s.attendance_type === filterAttendance : true)
+      (filterAdmin ? normalizeArabic(s.admin) === normalizeArabic(filterAdmin) : true) &&
+      (filterCenter ? normalizeArabic(s.center) === normalizeArabic(filterCenter) : true) &&
+      (filterBranch ? normalizeArabic(s.branch) === normalizeArabic(filterBranch) : true) &&
+      (filterRowaq ? normalizeArabic(s.rowaq) === normalizeArabic(filterRowaq) : true) &&
+      (filterStudentType ? normalizeArabic(s.student_type) === normalizeArabic(filterStudentType) : true) &&
+      (filterAttendance ? normalizeArabic(s.attendance_type) === normalizeArabic(filterAttendance) : true)
     );
   });
 

@@ -784,21 +784,31 @@ export function AppDataProvider({ children }) {
       ...s,
       id: s.id || String(Date.now() + Math.random())
     }));
-    setStudents(prev => [...prev, ...newStudents]);
-    const savedStudents = getFromLocalStorage('students', []);
-    saveToLocalStorage('students', [...savedStudents, ...newStudents]);
+    
     try {
       await studentsAPI.bulkImport(newStudents);
     } catch (err) {
       console.error('Failed to bulk import students to DB:', err);
       alert('فشل حفظ الطلاب في قاعدة البيانات: ' + err.message);
+      throw err;
     }
+
+    setStudents(prev => [...prev, ...newStudents]);
+    const savedStudents = getFromLocalStorage('students', []);
+    saveToLocalStorage('students', [...savedStudents, ...newStudents]);
+
     if (userList && userList.length > 0) {
       const newUsers = userList.map(u => ({
         ...u,
         id: u.id || String(Date.now() + Math.random()),
         created_at: new Date().toLocaleDateString('ar-EG')
       }));
+      try {
+        await usersAPI.bulkImport(newUsers);
+      } catch (err) {
+        console.error('Failed to bulk import users to DB:', err);
+        alert('تنبيه: فشل حفظ بعض حسابات الدخول للطلاب في قاعدة البيانات: ' + err.message);
+      }
       setUsers(prev => {
         const uniqueUsers = [...prev];
         newUsers.forEach(nu => {
@@ -809,12 +819,6 @@ export function AppDataProvider({ children }) {
         saveToLocalStorage('users', uniqueUsers);
         return uniqueUsers;
       });
-      try {
-        await usersAPI.bulkImport(newUsers);
-      } catch (err) {
-        console.error('Failed to bulk import users to DB:', err);
-        alert('فشل حفظ حسابات الطلاب في قاعدة البيانات: ' + err.message);
-      }
     }
   };
 
@@ -1057,21 +1061,31 @@ export function AppDataProvider({ children }) {
       ...s,
       id: s.id || String(Date.now() + Math.random())
     }));
-    setPlatformStudents(prev => [...prev, ...newStudents]);
-    const saved = getFromLocalStorage('platformStudents', []);
-    saveToLocalStorage('platformStudents', [...saved, ...newStudents]);
+    
     try {
       await platformStudentsAPI.bulkImport(newStudents);
     } catch (err) {
       console.error('Failed platform students bulk import:', err);
       alert('فشل حفظ دارسي المنصة في قاعدة البيانات: ' + err.message);
+      throw err;
     }
+
+    setPlatformStudents(prev => [...prev, ...newStudents]);
+    const saved = getFromLocalStorage('platformStudents', []);
+    saveToLocalStorage('platformStudents', [...saved, ...newStudents]);
+
     if (userList && userList.length > 0) {
       const newUsers = userList.map(u => ({
         ...u,
         id: u.id || String(Date.now() + Math.random()),
         created_at: new Date().toLocaleDateString('ar-EG')
       }));
+      try {
+        await usersAPI.bulkImport(newUsers);
+      } catch (err) {
+        console.error('Failed bulk import users:', err);
+        alert('تنبيه: فشل حفظ بعض حسابات الدخول لدارسي المنصة في قاعدة البيانات: ' + err.message);
+      }
       setUsers(prev => {
         const uniqueUsers = [...prev];
         newUsers.forEach(nu => {
@@ -1082,12 +1096,6 @@ export function AppDataProvider({ children }) {
         saveToLocalStorage('users', uniqueUsers);
         return uniqueUsers;
       });
-      try {
-        await usersAPI.bulkImport(newUsers);
-      } catch (err) {
-        console.error('Failed bulk import users:', err);
-        alert('فشل حفظ حسابات دارسي المنصة في قاعدة البيانات: ' + err.message);
-      }
     }
   };
 
