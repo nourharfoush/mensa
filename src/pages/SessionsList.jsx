@@ -9,7 +9,7 @@ import egyptCenters from '../data/egyptCenters';
 const governorates = Object.keys(egyptCenters);
 
 function SessionsList() {
-  const { sessions, deleteSession, addSession, branches, hasPermission, students, deleteAllSessions } = useAppData();
+  const { sessions, deleteSession, addSession, updateSession, branches, hasPermission, students, deleteAllSessions } = useAppData();
   const importRef = useRef(null);
   
   // Get current user and role
@@ -228,11 +228,23 @@ function SessionsList() {
         if (normalizeArabic(rawAttendanceType) === normalizeArabic('مباشر')) attendanceType = 'مباشر';
         else if (normalizeArabic(rawAttendanceType) === normalizeArabic('عن بعد')) attendanceType = 'عن بعد';
 
-        addSession({
-          session_no: row['رقم الحلقة'] || Date.now().toString().slice(-8),
-          admin: row['إدارة'] || row['الإدارة'] || '',
-          center: row['المركز'] || '',
-          branch: row['الفرع'] || '',
+        const sessionNo = row['رقم الحلقة'] || Date.now().toString().slice(-8);
+        const adminVal = row['إدارة'] || row['الإدارة'] || '';
+        const centerVal = row['المركز'] || '';
+        const branchVal = row['الفرع'] || '';
+
+        const existingSession = sessions.find(s => 
+          String(s.session_no) === String(sessionNo) &&
+          normalizeArabic(s.branch) === normalizeArabic(branchVal) &&
+          normalizeArabic(s.center) === normalizeArabic(centerVal) &&
+          normalizeArabic(s.admin) === normalizeArabic(adminVal)
+        );
+
+        const sessionData = {
+          session_no: sessionNo,
+          admin: adminVal,
+          center: centerVal,
+          branch: branchVal,
           rowaq: row['الرواق'] || '',
           level: row['المستوى'] || '',
           mohfez_type: mohfezType,
@@ -242,7 +254,13 @@ function SessionsList() {
           workDays: parseWorkDays(row['ايام العمل'] || row['أيام العمل'] || ''),
           time_start: parseTimeTo24Hour(row['الوقت من'] || ''),
           time_end: parseTimeTo24Hour(row['الوقت الي'] || ''),
-        });
+        };
+
+        if (existingSession) {
+          updateSession(existingSession.id, sessionData);
+        } else {
+          addSession(sessionData);
+        }
       });
       alert('تم استيراد البيانات بنجاح');
     } catch (err) {
