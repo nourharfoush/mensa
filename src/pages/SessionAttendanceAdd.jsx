@@ -73,9 +73,53 @@ function SessionAttendanceAdd() {
     }));
   };
 
+  const checkDateValidity = (dateStr) => {
+    if (!dateStr) return { valid: false, msg: 'يرجى اختيار التاريخ' };
+    const normalizedDateStr = dateStr.replace(/\//g, '-');
+    const selectedDate = new Date(normalizedDateStr);
+    if (isNaN(selectedDate.getTime())) return { valid: false, msg: 'تاريخ غير صالح' };
+    
+    // 1. Check if it's a future date
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const selectedDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+    
+    if (selectedDay > today) {
+      return { valid: false, msg: 'لا يمكن تسجيل الغياب لتاريخ في المستقبل' };
+    }
+    
+    // 2. Check if more than 24 hours have passed since the end of that day (only today and yesterday are allowed)
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const diffMs = today.getTime() - selectedDay.getTime();
+    if (diffMs > oneDayMs) {
+      return { valid: false, msg: 'عفواً، لقد مضى أكثر من 24 ساعة على هذا اليوم، لا يمكن تسجيل الغياب' };
+    }
+    
+    // 3. Check if it is a working day of the session (only for branch sessions, platform sessions can be on any day)
+    if (!isPlatform && session?.workDays && session.workDays.length > 0) {
+      const daysMap = {
+        0: 'الأحد', 1: 'الاثنين', 2: 'الثلاثاء', 3: 'الأربعاء', 4: 'الخميس', 5: 'الجمعة', 6: 'السبت'
+      };
+      const selectedDayOfWeek = daysMap[selectedDay.getDay()];
+      const cleanSelectedDayOfWeek = normalizeArabic(selectedDayOfWeek);
+      const isWorkDay = session.workDays.some(wd => normalizeArabic(wd) === cleanSelectedDayOfWeek);
+      if (!isWorkDay) {
+        return { valid: false, msg: `هذا اليوم (${selectedDayOfWeek}) ليس من أيام عمل هذه الحلقة: (${session.workDays.join(', ')})` };
+      }
+    }
+    
+    return { valid: true };
+  };
+
   const handleSave = () => {
     if (!date) {
       alert('يرجى اختيار التاريخ');
+      return;
+    }
+
+    const validation = checkDateValidity(date);
+    if (!validation.valid) {
+      alert(validation.msg);
       return;
     }
     
@@ -120,12 +164,16 @@ function SessionAttendanceAdd() {
         <div className="form-group" style={{ marginBottom: '30px' }}>
           <label>التاريخ <span className="req">*</span></label>
           <input 
-            type="text" 
+            type="date" 
             className="form-input" 
-            value={date} 
-            onChange={(e) => setDate(e.target.value)} 
-            placeholder="YYYY/MM/DD"
+            value={date ? date.replace(/\//g, '-') : ''} 
+            onChange={(e) => setDate(e.target.value ? e.target.value.replace(/-/g, '/') : '')} 
           />
+          {date && !checkDateValidity(date).valid && (
+            <span style={{ color: '#ef4444', fontSize: '13px', marginTop: '5px', display: 'block' }}>
+              ⚠️ {checkDateValidity(date).msg}
+            </span>
+          )}
         </div>
 
         <div className="form-group" style={{ marginBottom: '30px' }}>
