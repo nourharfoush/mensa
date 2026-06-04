@@ -331,6 +331,7 @@ function SessionsList() {
               <th>الفرع</th>
               <th>الرواق</th>
               <th>المستوى</th>
+              <th>نوع الدارسين</th>
               <th>الدارسين</th>
               <th>الإجراءات</th>
             </tr>
@@ -338,37 +339,41 @@ function SessionsList() {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>
+                <td colSpan="10" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>
                   لا توجد بيانات.
                 </td>
               </tr>
             ) : (
-              filtered.map(s => (
-                <tr key={s.id}>
-                  <td style={{ direction: 'ltr', textAlign: 'right' }}>{s.session_no}</td>
-                  <td>{s.mohfez}</td>
-                  <td>{s.admin}</td>
-                  <td>{s.center}</td>
-                  <td>{s.branch}</td>
-                  <td>{s.rowaq}</td>
-                  <td>{s.level}</td>
-                  <td>{s.student_type}</td>
-                  <td className="actions-cell" style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
-                    <Link to={`/sessions/${s.id}/attendance`} title="الغياب" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#10b981', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', textDecoration: 'none' }}>
-                      <ClipboardCheck size={14}/> الغياب
-                    </Link>
-                    <Link to={`/sessions/${s.id}/reports`} title="التقارير اليومية" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', textDecoration: 'none' }}>
-                      <FileText size={14}/> التقارير
-                    </Link>
-                    {hasPermission('sessions', 'edit') && (
-                      <Link to={`/sessions/create?id=${s.id}`} className="action-icon edit" style={{textDecoration: 'none', color: 'inherit'}} title="تعديل"><Edit size={16}/></Link>
-                    )}
-                    {hasPermission('sessions', 'delete') && (
-                      <button className="action-icon delete" title="حذف" onClick={() => deleteSession(s.id)}><Trash2 size={16}/></button>
-                    )}
-                  </td>
-                </tr>
-              ))
+              filtered.map(s => {
+                const studentCount = (students || []).filter(stud => String(stud.session_id) === String(s.session_no) || String(stud.session_id) === String(s.id)).length;
+                return (
+                  <tr key={s.id}>
+                    <td style={{ direction: 'ltr', textAlign: 'right' }}>{s.session_no}</td>
+                    <td>{s.mohfez}</td>
+                    <td>{s.admin}</td>
+                    <td>{s.center}</td>
+                    <td>{s.branch}</td>
+                    <td>{s.rowaq}</td>
+                    <td>{s.level}</td>
+                    <td>{s.student_type}</td>
+                    <td>{studentCount}</td>
+                    <td className="actions-cell" style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
+                      <Link to={`/sessions/${s.id}/attendance`} title="الغياب" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#10b981', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', textDecoration: 'none' }}>
+                        <ClipboardCheck size={14}/> الغياب
+                      </Link>
+                      <Link to={`/sessions/${s.id}/reports`} title="التقارير اليومية" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', textDecoration: 'none' }}>
+                        <FileText size={14}/> التقارير
+                      </Link>
+                      {hasPermission('sessions', 'edit') && (
+                        <Link to={`/sessions/create?id=${s.id}`} className="action-icon edit" style={{textDecoration: 'none', color: 'inherit'}} title="تعديل"><Edit size={16}/></Link>
+                      )}
+                      {hasPermission('sessions', 'delete') && (
+                        <button className="action-icon delete" title="حذف" onClick={() => deleteSession(s.id)}><Trash2 size={16}/></button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
