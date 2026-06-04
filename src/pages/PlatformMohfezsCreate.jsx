@@ -205,10 +205,10 @@ function PlatformMohfezsCreate() {
             <label>الرواق <span className="req">*</span></label>
             <select name="rowaq" className="form-select" value={form.rowaq} onChange={handleChange}>
               <option value="">اختار الرواق</option>
-              <option value="رواق القرآن الكريم (أطفال)">رواق القرآن الكريم (أطفال)</option>
-              <option value="رواق القرآن الكريم (كبار)">رواق القرآن الكريم (كبار)</option>
-              <option value="رواق التجويد">رواق التجويد</option>
-              <option value="رواق القراءات">رواق القراءات</option>
+              <option value="رواق القرآن الكريم ( أطفال )">رواق القرآن الكريم ( أطفال )</option>
+              <option value="رواق القرآن الكريم ( كبار )">رواق القرآن الكريم ( كبار )</option>
+              <option value="متعدد البرامج ( قرآن كريم_قراءات_تجويد)">متعدد البرامج ( قرآن كريم_قراءات_تجويد)</option>
+              <option value="متعدد البرامج ( قرآن كريم_قراءات_تجويد)">متعدد البرامج ( قرآن كريم_قراءات_تجويد)</option>
             </select>
           </div>
         </div>

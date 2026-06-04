@@ -281,10 +281,10 @@ function SessionsList() {
             <label>الرواق</label>
             <select className="form-select" value={filterRowaq} onChange={e => setFilterRowaq(e.target.value)}>
               <option value="">--- اختار الرواق ---</option>
-              <option value="رواق القرآن الكريم (أطفال)">رواق القرآن الكريم (أطفال)</option>
-              <option value="رواق القرآن الكريم (كبار)">رواق القرآن الكريم (كبار)</option>
-              <option value="رواق التجويد">رواق التجويد</option>
-              <option value="رواق القراءات">رواق القراءات</option>
+              <option value="رواق القرآن الكريم ( أطفال )">رواق القرآن الكريم ( أطفال )</option>
+              <option value="رواق القرآن الكريم ( كبار )">رواق القرآن الكريم ( كبار )</option>
+              <option value="متعدد البرامج ( قرآن كريم_قراءات_تجويد)">متعدد البرامج ( قرآن كريم_قراءات_تجويد)</option>
+              <option value="متعدد البرامج ( قرآن كريم_قراءات_تجويد)">متعدد البرامج ( قرآن كريم_قراءات_تجويد)</option>
             </select>
           </div>
           <div className="form-group">

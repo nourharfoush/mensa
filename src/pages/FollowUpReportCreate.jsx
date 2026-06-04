@@ -34,7 +34,7 @@ function FollowUpReportCreate() {
         )
       )
     : [];
-  const displayRwaqs = derivedRwaqs.length > 0 ? derivedRwaqs : ['رواق القرآن الكريم (أطفال)'];
+  const displayRwaqs = derivedRwaqs.length > 0 ? derivedRwaqs : ['رواق القرآن الكريم ( أطفال )'];
 
   // Derive Coordinators
   const branchCoordinators = branchVisit

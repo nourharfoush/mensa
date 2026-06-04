@@ -170,7 +170,7 @@ export function AppDataProvider({ children }) {
               center: b.center,
               branch: b.branch,
               address: 'معهد بنين نصر الله - أبو حمص',
-              rwaqs: ['رواق القرآن الكريم (أطفال)'],
+              rwaqs: ['رواق القرآن الكريم ( أطفال )'],
               workDays: ['الأحد', 'الثلاثاء', 'الخميس'],
               timeFrom: '14:00',
               timeTo: '18:00',

@@ -100,7 +100,7 @@ function FollowUpReportPreview() {
             <div style={{ gridColumn: 'span 2' }}><strong className="print-label" style={{ color: 'var(--text-secondary)' }}>الفرع: </strong> {report.branch}</div>
             <div style={{ gridColumn: 'span 2' }}>
               <strong className="print-label" style={{ color: 'var(--text-secondary)' }}>الأروقة المتواجدة: </strong> 
-              {report.rwaqs?.join('، ') || 'رواق القرآن الكريم (أطفال)'}
+              {report.rwaqs?.join('، ') || 'رواق القرآن الكريم ( أطفال )'}
             </div>
             <div>
               <strong className="print-label" style={{ color: 'var(--text-secondary)' }}>أيام عمل الفرع: </strong> 
