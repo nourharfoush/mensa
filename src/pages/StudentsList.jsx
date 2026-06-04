@@ -379,6 +379,7 @@ function StudentsList() {
               <th>الإدارة</th>
               <th>المركز</th>
               <th>الفرع</th>
+              <th>الحلقة</th>
               <th>الرواق</th>
               <th>الجنس</th>
               <th>المستوى</th>
@@ -388,7 +389,7 @@ function StudentsList() {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan="8" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>
+                <td colSpan="9" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>
                   لا توجد بيانات.
                 </td>
               </tr>
@@ -399,6 +400,7 @@ function StudentsList() {
                   <td>{s.admin}</td>
                   <td>{s.center}</td>
                   <td>{s.branch}</td>
+                  <td>{s.session_no || '-'}</td>
                   <td>{s.rowaq}</td>
                   <td>{s.gender || '-'}</td>
                   <td>{s.level}</td>

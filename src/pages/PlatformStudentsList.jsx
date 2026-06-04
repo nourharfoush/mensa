@@ -223,6 +223,7 @@ function PlatformStudentsList() {
             <tr>
               <th>الاسم</th>
               <th>الدولة</th>
+              <th>الحلقة</th>
               <th>الرواق</th>
               <th>الجنس</th>
               <th>المستوى</th>
@@ -232,7 +233,7 @@ function PlatformStudentsList() {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>
+                <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>
                   لا توجد بيانات.
                 </td>
               </tr>
@@ -241,6 +242,7 @@ function PlatformStudentsList() {
                 <tr key={s.id}>
                   <td>{s.name}</td>
                   <td>{s.country || '-'}</td>
+                  <td>{s.session_no || '-'}</td>
                   <td>{s.rowaq}</td>
                   <td>{s.gender || '-'}</td>
                   <td>{s.level}</td>
