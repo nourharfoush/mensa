@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Mohfez from '../models/Mohfez.js';
 
 export const getMohfezs = async (req, res) => {
@@ -28,14 +29,24 @@ export const createMohfez = async (req, res) => {
 
 export const updateMohfez = async (req, res) => {
   try {
+    const { id } = req.params;
     const { national_id } = req.body;
+    
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ id }, { _id: id }] }
+      : { id };
+
     if (national_id) {
-      const existing = await Mohfez.findOne({ national_id, id: { $ne: req.params.id } });
+      const queryDuplicate = mongoose.Types.ObjectId.isValid(id)
+        ? { national_id, $and: [{ id: { $ne: id } }, { _id: { $ne: id } }] }
+        : { national_id, id: { $ne: id } };
+      const existing = await Mohfez.findOne(queryDuplicate);
       if (existing) {
         return res.status(400).json({ message: 'الرقم القومي مسجل بالفعل لمحفظ آخر' });
       }
     }
-    const mohfez = await Mohfez.findOne({ id: req.params.id });
+    
+    const mohfez = await Mohfez.findOne(query);
     if (!mohfez) return res.status(404).json({ message: 'Mohfez not found' });
     Object.assign(mohfez, req.body);
     const updated = await mohfez.save();
@@ -47,7 +58,12 @@ export const updateMohfez = async (req, res) => {
 
 export const deleteMohfez = async (req, res) => {
   try {
-    const mohfez = await Mohfez.findOneAndDelete({ id: req.params.id });
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ id }, { _id: id }] }
+      : { id };
+      
+    const mohfez = await Mohfez.findOneAndDelete(query);
     if (!mohfez) return res.status(404).json({ message: 'Mohfez not found' });
     res.json({ message: 'Mohfez deleted' });
   } catch (error) {
