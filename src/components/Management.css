@@ -106,6 +106,8 @@
 .table-wrapper {
   padding: 0;
   overflow-x: auto;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .management-table {
@@ -114,12 +116,22 @@
 }
 
 .management-table th {
-  background-color: #555555;
-  color: #fff;
+  background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-sidebar) 100%);
+  color: var(--accent-gold);
   text-align: right;
-  padding: 15px;
+  padding: 16px 20px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
+  border-bottom: 2px solid var(--accent-gold-dark);
+  transition: all 0.3s ease;
+}
+
+.management-table th:first-child {
+  border-top-right-radius: 12px;
+}
+
+.management-table th:last-child {
+  border-top-left-radius: 12px;
 }
 
 .management-table td {
@@ -129,8 +141,12 @@
   font-size: 14px;
 }
 
+.management-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
 .management-table tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: var(--bg-transparent-05);
 }
 
 .actions-cell {
