@@ -7,7 +7,7 @@ import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
 import { countriesList } from '../data/countries';
 
 function PlatformStudentsList() {
-  const { platformStudents, deletePlatformStudent, addPlatformStudent, platformSessions, rowaqs, hasPermission, users, addUser, updateUser, deleteAllPlatformStudents } = useAppData();
+  const { platformStudents, deletePlatformStudent, addPlatformStudent, platformSessions, rowaqs, hasPermission, users, addUser, updateUser, deleteAllPlatformStudents, bulkImportPlatformStudents } = useAppData();
   const importRef = useRef(null);
   
   // Get current user and role
@@ -81,11 +81,14 @@ function PlatformStudentsList() {
     if (!file) return;
     try {
       const rows = await importFromXLSX(file);
+      const platformStudentsToImport = [];
+      const usersToImport = [];
+
       rows.forEach(row => {
         const passport = String(row['رقم جواز السفر'] || row['الرقم القومي'] || '').trim();
         if (!passport) return;
 
-        addPlatformStudent({
+        platformStudentsToImport.push({
           name: row['الاسم'] || '',
           country: row['الدولة'] || '',
           rowaq: row['الرواق'] || '',
@@ -93,34 +96,24 @@ function PlatformStudentsList() {
           level: row['المستوى'] || '',
           session_id: row['الحلقة'] || '',
           passport_no: passport,
+          phone: row['رقم التليفون'] || '',
+          address: row['العنوان'] || '',
+          qualification: row['المؤهل'] || '',
+          job: row['الوظيفة'] || ''
         });
 
-        // إنشاء أو تحديث حساب المستخدم
-        const existingUser = users.find(u =>
-          String(u.national_id || '').trim() === passport ||
-          String(u.email || '').trim() === passport
-        );
-
-        if (existingUser) {
-          updateUser(existingUser.id, {
-            name: row['الاسم'] || '',
-            role: 'student',
-            email: passport,
-            national_id: passport,
-            userSession: row['الحلقة'] || ''
-          });
-        } else {
-          addUser({
-            name: row['الاسم'] || '',
-            email: passport,
-            password: passport,
-            phone: '',
-            role: 'student',
-            national_id: passport,
-            userSession: row['الحلقة'] || ''
-          });
-        }
+        usersToImport.push({
+          name: row['الاسم'] || '',
+          email: passport,
+          password: passport,
+          phone: row['رقم التليفون'] || '',
+          role: 'student',
+          national_id: passport,
+          userSession: row['الحلقة'] || ''
+        });
       });
+
+      await bulkImportPlatformStudents(platformStudentsToImport, usersToImport);
       alert('تم استيراد البيانات بنجاح');
     } catch (err) {
       console.error(err);

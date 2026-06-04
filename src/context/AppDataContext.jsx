@@ -779,6 +779,43 @@ export function AppDataProvider({ children }) {
     }
   };
 
+  const bulkImportStudents = async (studentList, userList) => {
+    const newStudents = studentList.map(s => ({
+      ...s,
+      id: s.id || String(Date.now() + Math.random())
+    }));
+    setStudents(prev => [...prev, ...newStudents]);
+    const savedStudents = getFromLocalStorage('students', []);
+    saveToLocalStorage('students', [...savedStudents, ...newStudents]);
+    try {
+      await studentsAPI.bulkImport(newStudents);
+    } catch (err) {
+      console.error('Failed to bulk import students to DB:', err);
+    }
+    if (userList && userList.length > 0) {
+      const newUsers = userList.map(u => ({
+        ...u,
+        id: u.id || String(Date.now() + Math.random()),
+        created_at: new Date().toLocaleDateString('ar-EG')
+      }));
+      setUsers(prev => {
+        const uniqueUsers = [...prev];
+        newUsers.forEach(nu => {
+          if (!uniqueUsers.some(u => String(u.national_id).trim() === String(nu.national_id).trim())) {
+            uniqueUsers.push(nu);
+          }
+        });
+        saveToLocalStorage('users', uniqueUsers);
+        return uniqueUsers;
+      });
+      try {
+        await usersAPI.bulkImport(newUsers);
+      } catch (err) {
+        console.error('Failed to bulk import users to DB:', err);
+      }
+    }
+  };
+
   const addApplicant = (applicant) => {
     const newApplicant = { ...applicant, id: String(Date.now() + Math.random()), register_date: new Date().toLocaleDateString('en-GB') };
     setApplicants(prev => [...prev, newApplicant]);
@@ -1013,6 +1050,43 @@ export function AppDataProvider({ children }) {
     }
   };
 
+  const bulkImportPlatformStudents = async (studentList, userList) => {
+    const newStudents = studentList.map(s => ({
+      ...s,
+      id: s.id || String(Date.now() + Math.random())
+    }));
+    setPlatformStudents(prev => [...prev, ...newStudents]);
+    const saved = getFromLocalStorage('platformStudents', []);
+    saveToLocalStorage('platformStudents', [...saved, ...newStudents]);
+    try {
+      await platformStudentsAPI.bulkImport(newStudents);
+    } catch (err) {
+      console.error('Failed platform students bulk import:', err);
+    }
+    if (userList && userList.length > 0) {
+      const newUsers = userList.map(u => ({
+        ...u,
+        id: u.id || String(Date.now() + Math.random()),
+        created_at: new Date().toLocaleDateString('ar-EG')
+      }));
+      setUsers(prev => {
+        const uniqueUsers = [...prev];
+        newUsers.forEach(nu => {
+          if (!uniqueUsers.some(u => String(u.national_id).trim() === String(nu.national_id).trim())) {
+            uniqueUsers.push(nu);
+          }
+        });
+        saveToLocalStorage('users', uniqueUsers);
+        return uniqueUsers;
+      });
+      try {
+        await usersAPI.bulkImport(newUsers);
+      } catch (err) {
+        console.error('Failed bulk import users:', err);
+      }
+    }
+  };
+
   const addPlatformApplicant = (item) => {
     const newItem = { ...item, id: String(Date.now()) };
     setPlatformApplicants(prev => [...prev, newItem]);
@@ -1194,7 +1268,7 @@ export function AppDataProvider({ children }) {
       coordinators, addCoordinator, updateCoordinator, deleteCoordinator, deleteAllCoordinators,
       mohfezs, addMohfez, updateMohfez, deleteMohfez, deleteAllMohfezs,
       sessions, addSession, updateSession, deleteSession, deleteAllSessions,
-      students, addStudent, updateStudent, deleteStudent, deleteAllStudents,
+      students, addStudent, updateStudent, deleteStudent, deleteAllStudents, bulkImportStudents,
       followUpReports, addFollowUpReport, confirmFollowUpReport,
       applicants, addApplicant, updateApplicant, deleteApplicant, deleteAllApplicants,
       administrations, addCenterToAdmin,
@@ -1210,7 +1284,7 @@ export function AppDataProvider({ children }) {
       platformCoordinators, addPlatformCoordinator, updatePlatformCoordinator, deletePlatformCoordinator, deleteAllPlatformCoordinators,
       platformMohfezs, addPlatformMohfez, updatePlatformMohfez, deletePlatformMohfez, deleteAllPlatformMohfezs,
       platformSessions, addPlatformSession, updatePlatformSession, deletePlatformSession, deleteAllPlatformSessions,
-      platformStudents, addPlatformStudent, updatePlatformStudent, deletePlatformStudent, deleteAllPlatformStudents,
+      platformStudents, addPlatformStudent, updatePlatformStudent, deletePlatformStudent, deleteAllPlatformStudents, bulkImportPlatformStudents,
       platformApplicants, addPlatformApplicant, updatePlatformApplicant, deletePlatformApplicant, deleteAllPlatformApplicants,
       platformRowaqs, addPlatformRowaq, updatePlatformRowaq, deletePlatformRowaq,
 

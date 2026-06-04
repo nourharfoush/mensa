@@ -10,7 +10,7 @@ import { calculateBirthDateFromNationalId } from '../utils/nationalIdHelper';
 const governorates = Object.keys(egyptCenters);
 
 function StudentsList() {
-  const { students, deleteStudent, addStudent, branches, sessions, hasPermission, users, addUser, updateUser, deleteAllStudents } = useAppData();
+  const { students, deleteStudent, addStudent, branches, sessions, hasPermission, users, addUser, updateUser, deleteAllStudents, bulkImportStudents } = useAppData();
   const importRef = useRef(null);
   
   // Get current user and role
@@ -154,6 +154,9 @@ function StudentsList() {
         return;
       }
 
+      const studentsToImport = [];
+      const usersToImport = [];
+
       validRows.forEach(row => {
         const sessionNo = (row['الحلقة'] || '').toString().trim();
         const matchedSession = sessions.find(s => String(s.session_no) === sessionNo || String(s.id) === sessionNo);
@@ -168,10 +171,9 @@ function StudentsList() {
         const natId = (row['الرقم القومى'] || row['الرقم القومي'] || '').toString().trim();
         
         const birthDateStr = calculateBirthDateFromNationalId(natId);
-        
         const phoneVal = (row['رقم التليفون'] || row['رقم الهاتف'] || row['الهاتف'] || '').toString().trim();
         
-        addStudent({
+        studentsToImport.push({
           name: row['الاسم'] || '',
           admin: adminVal,
           center: centerVal,
@@ -191,35 +193,22 @@ function StudentsList() {
         });
 
         if (natId) {
-          const existingUser = (users || []).find(u => u.national_id === natId || u.email === natId);
-          if (existingUser) {
-            updateUser(existingUser.id, {
-              name: row['الاسم'] || '',
-              phone: phoneVal,
-              role: 'student',
-              email: natId,
-              national_id: natId,
-              userAdmin: adminVal,
-              userCenter: centerVal,
-              userBranch: branchVal,
-              userSession: sessionNo
-            });
-          } else {
-            addUser({
-              name: row['الاسم'] || '',
-              email: natId,
-              password: natId,
-              phone: phoneVal,
-              role: 'student',
-              national_id: natId,
-              userAdmin: adminVal,
-              userCenter: centerVal,
-              userBranch: branchVal,
-              userSession: sessionNo
-            });
-          }
+          usersToImport.push({
+            name: row['الاسم'] || '',
+            email: natId,
+            password: natId,
+            phone: phoneVal,
+            role: 'student',
+            national_id: natId,
+            userAdmin: adminVal,
+            userCenter: centerVal,
+            userBranch: branchVal,
+            userSession: sessionNo
+          });
         }
       });
+
+      await bulkImportStudents(studentsToImport, usersToImport);
       alert('تم استيراد البيانات بنجاح');
     } catch (err) {
       console.error(err);
