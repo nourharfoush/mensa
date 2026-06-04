@@ -209,6 +209,8 @@ function SessionsList() {
         return;
       }
 
+      const processedSessions = [];
+
       validRows.forEach(row => {
         const rawMohfezType = (row['نوع المحفظ'] || '').toString().trim();
         let mohfezType = '';
@@ -228,17 +230,20 @@ function SessionsList() {
         if (normalizeArabic(rawAttendanceType) === normalizeArabic('مباشر')) attendanceType = 'مباشر';
         else if (normalizeArabic(rawAttendanceType) === normalizeArabic('عن بعد')) attendanceType = 'عن بعد';
 
-        const sessionNo = row['رقم الحلقة'] || Date.now().toString().slice(-8);
+        const sessionNo = (row['رقم الحلقة'] || '').toString().trim();
+        if (!sessionNo) return;
+        
         const adminVal = row['إدارة'] || row['الإدارة'] || '';
         const centerVal = row['المركز'] || '';
         const branchVal = row['الفرع'] || '';
 
-        const existingSession = sessions.find(s => 
+        const isMatch = (s) => 
           String(s.session_no) === String(sessionNo) &&
           normalizeArabic(s.branch) === normalizeArabic(branchVal) &&
           normalizeArabic(s.center) === normalizeArabic(centerVal) &&
-          normalizeArabic(s.admin) === normalizeArabic(adminVal)
-        );
+          normalizeArabic(s.admin) === normalizeArabic(adminVal);
+
+        const existingSession = sessions.find(isMatch) || processedSessions.find(isMatch);
 
         const sessionData = {
           session_no: sessionNo,
@@ -257,8 +262,14 @@ function SessionsList() {
         };
 
         if (existingSession) {
-          updateSession(existingSession.id, sessionData);
+          if (existingSession.id) {
+            updateSession(existingSession.id, sessionData);
+          } else {
+            // Update in-place inside our processed local array
+            Object.assign(existingSession, sessionData);
+          }
         } else {
+          processedSessions.push(sessionData);
           addSession(sessionData);
         }
       });
