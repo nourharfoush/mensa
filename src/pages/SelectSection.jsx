@@ -1,11 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, Monitor, BookOpen, LogOut } from 'lucide-react';
+import { Home, Monitor, BookOpen, LogOut, Sun, Moon } from 'lucide-react';
+import { useAppData } from '../context/AppDataContext';
 import './Auth.css'; // We can reuse background styles
 
 function SelectSection() {
   const navigate = useNavigate();
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+  const { theme, toggleTheme } = useAppData();
 
   if (!currentUser) {
     window.location.href = '/login';
@@ -41,8 +43,37 @@ function SelectSection() {
   const isShariaAllowed = true;
 
   return (
-    <div className="auth-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', direction: 'rtl' }}>
-      <div className="auth-background"></div>
+    <div className="auth-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', direction: 'rtl', transition: 'background-color 0.3s ease' }}>
+      <div className="auth-background" style={{
+        filter: theme === 'light' ? 'brightness(0.9) blur(2px)' : 'brightness(0.35) blur(2px)',
+        transition: 'filter 0.3s ease'
+      }}></div>
+
+      {/* Floating Theme Toggle */}
+      <div style={{ position: 'absolute', top: '25px', left: '25px', zIndex: 100 }}>
+        <button 
+          onClick={toggleTheme}
+          style={{
+            background: theme === 'light' ? 'rgba(0, 0, 0, 0.05)' : 'rgba(255, 255, 255, 0.08)',
+            border: theme === 'light' ? '1px solid rgba(0, 0, 0, 0.1)' : '1px solid rgba(255, 255, 255, 0.15)',
+            borderRadius: '50%',
+            width: '46px',
+            height: '46px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--text-primary)',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            transition: 'all 0.3s ease'
+          }}
+          title="تغيير المظهر"
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+        >
+          {theme === 'dark' ? <Sun size={22} /> : <Moon size={22} />}
+        </button>
+      </div>
       
       <div style={{ zIndex: 10, width: '100%', maxWidth: '1200px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         
@@ -265,16 +296,17 @@ function SelectSection() {
         {/* Patronage and Leadership Banner Section */}
         <div style={{
           width: '100%',
-          backgroundColor: 'rgba(28, 32, 43, 0.4)',
-          border: '1px solid rgba(255, 255, 255, 0.05)',
+          backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(28, 32, 43, 0.4)',
+          border: theme === 'light' ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.05)',
           borderRadius: '16px',
           padding: '30px 20px',
           marginBottom: '30px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+          boxShadow: theme === 'light' ? '0 8px 32px rgba(0,0,0,0.06)' : '0 8px 32px rgba(0,0,0,0.15)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '24px'
+          gap: '24px',
+          transition: 'all 0.3s ease'
         }}>
           {/* Main Patron Card */}
           <div style={{
@@ -289,7 +321,7 @@ function SelectSection() {
             <div style={{ color: 'var(--accent-gold)', fontSize: '14px', fontWeight: '600', marginBottom: '8px' }}>
               برعاية كريمة من فضيلة الإمام الأكبر
             </div>
-            <div style={{ color: '#ffffff', fontSize: '26px', fontWeight: 'bold', fontFamily: "'Cairo', sans-serif" }}>
+            <div style={{ color: 'var(--text-primary)', fontSize: '26px', fontWeight: 'bold', fontFamily: "'Cairo', sans-serif" }}>
               أ.د / أحمد الطيب
             </div>
           </div>
@@ -304,51 +336,54 @@ function SelectSection() {
           }}>
             {/* Role 1 */}
             <div style={{
-              background: 'rgba(28, 32, 43, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.05)',
+              background: theme === 'light' ? 'var(--bg-card)' : 'rgba(28, 32, 43, 0.8)',
+              border: theme === 'light' ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.05)',
               borderRadius: '12px',
               padding: '16px 20px',
               textAlign: 'center',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+              boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+              transition: 'all 0.3s ease'
             }}>
               <div style={{ color: 'var(--accent-gold)', fontSize: '13px', marginBottom: '6px' }}>
                 مدير شؤون الأروقة
               </div>
-              <div style={{ color: '#ffffff', fontSize: '16px', fontWeight: 'bold' }}>
+              <div style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 'bold' }}>
                 الدكتور / مصطفى شيشي
               </div>
             </div>
 
             {/* Role 2 */}
             <div style={{
-              background: 'rgba(28, 32, 43, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.05)',
+              background: theme === 'light' ? 'var(--bg-card)' : 'rgba(28, 32, 43, 0.8)',
+              border: theme === 'light' ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.05)',
               borderRadius: '12px',
               padding: '16px 20px',
               textAlign: 'center',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+              boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+              transition: 'all 0.3s ease'
             }}>
               <div style={{ color: 'var(--accent-gold)', fontSize: '13px', marginBottom: '6px' }}>
                 مدير عام الجامع الأزهر
               </div>
-              <div style={{ color: '#ffffff', fontSize: '16px', fontWeight: 'bold' }}>
+              <div style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 'bold' }}>
                 الدكتور / هاني عودة
               </div>
             </div>
 
             {/* Role 3 */}
             <div style={{
-              background: 'rgba(28, 32, 43, 0.8)',
-              border: '1px solid rgba(255, 255, 255, 0.05)',
+              background: theme === 'light' ? 'var(--bg-card)' : 'rgba(28, 32, 43, 0.8)',
+              border: theme === 'light' ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.05)',
               borderRadius: '12px',
               padding: '16px 20px',
               textAlign: 'center',
-              boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+              boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+              transition: 'all 0.3s ease'
             }}>
               <div style={{ color: 'var(--accent-gold)', fontSize: '13px', marginBottom: '6px' }}>
                 المشرف العام على الأروقة
               </div>
-              <div style={{ color: '#ffffff', fontSize: '16px', fontWeight: 'bold' }}>
+              <div style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 'bold' }}>
                 أ.د / عبدالمنعم فؤاد
               </div>
             </div>
