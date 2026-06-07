@@ -312,10 +312,10 @@ function SelectSection() {
               boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
             }}>
               <div style={{ color: 'var(--accent-gold)', fontSize: '13px', marginBottom: '6px' }}>
-                المشرف العام على الأروقة
+                مدير شؤون الأروقة
               </div>
               <div style={{ color: '#ffffff', fontSize: '16px', fontWeight: 'bold' }}>
-                أ.د / عبدالمنعم فؤاد
+                الدكتور / مصطفى شيشي
               </div>
             </div>
 
@@ -346,10 +346,10 @@ function SelectSection() {
               boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
             }}>
               <div style={{ color: 'var(--accent-gold)', fontSize: '13px', marginBottom: '6px' }}>
-                مدير شؤون الأروقة
+                المشرف العام على الأروقة
               </div>
               <div style={{ color: '#ffffff', fontSize: '16px', fontWeight: 'bold' }}>
-                الدكتور / مصطفى شيشي
+                أ.د / عبدالمنعم فؤاد
               </div>
             </div>
           </div>
