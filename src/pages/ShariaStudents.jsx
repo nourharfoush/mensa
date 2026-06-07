@@ -3,13 +3,7 @@ import { Users, Search, GraduationCap } from 'lucide-react';
 
 function ShariaStudents() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [students, setStudents] = useState([
-    { id: 1, name: 'أحمد محمود العشري', nationalId: '29812051200345', phone: '01099887766', course: 'المقدمة الآجرومية في النحو', progress: '85%', regDate: '2026-05-10' },
-    { id: 2, name: 'عبد الرحمن ياسر قدري', nationalId: '29905141500123', phone: '01122334455', course: 'شرح متن أبي شجاع في الفقه', progress: '90%', regDate: '2026-05-12' },
-    { id: 3, name: 'فاطمة محمد إبراهيم', nationalId: '30109201800567', phone: '01233445566', course: 'شرح متن العقيدة الطحاوية', progress: '75%', regDate: '2026-05-13' },
-    { id: 4, name: 'محمود عبد الفتاح مرسي', nationalId: '29712011800987', phone: '01511223344', course: 'مناهل العرفان في علوم القرآن', progress: '95%', regDate: '2026-05-14' },
-    { id: 5, name: 'عائشة أحمد عبد العال', nationalId: '30204121200456', phone: '01066778899', course: 'شرح الأربعين النووية في الحديث', progress: '80%', regDate: '2026-05-15' }
-  ]);
+  const [students, setStudents] = useState([]);
 
   const filteredStudents = students.filter(s => 
     s.name.includes(searchTerm) || 
@@ -85,27 +79,35 @@ function ShariaStudents() {
             </tr>
           </thead>
           <tbody>
-            {filteredStudents.map(s => (
-              <tr key={s.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{s.name}</td>
-                <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{s.nationalId}</td>
-                <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{s.phone}</td>
-                <td style={{ padding: '14px 10px', fontSize: '13px' }}>
-                  <span style={{
-                    background: 'rgba(214, 175, 55, 0.1)',
-                    color: 'var(--accent-gold)',
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    fontWeight: '500'
-                  }}>
-                    {s.course}
-                  </span>
+            {filteredStudents.length === 0 ? (
+              <tr>
+                <td colSpan="6" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+                  لا يوجد طلاب مسجلين حالياً.
                 </td>
-                <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: '#10b981', textAlign: 'center' }}>{s.progress}</td>
-                <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-muted)' }}>{s.regDate}</td>
               </tr>
-            ))}
+            ) : (
+              filteredStudents.map(s => (
+                <tr key={s.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                  <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{s.name}</td>
+                  <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{s.nationalId}</td>
+                  <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{s.phone}</td>
+                  <td style={{ padding: '14px 10px', fontSize: '13px' }}>
+                    <span style={{
+                      background: 'rgba(214, 175, 55, 0.1)',
+                      color: 'var(--accent-gold)',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: '500'
+                    }}>
+                      {s.course}
+                    </span>
+                  </td>
+                  <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: '#10b981', textAlign: 'center' }}>{s.progress}</td>
+                  <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-muted)' }}>{s.regDate}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

@@ -3,13 +3,7 @@ import { Users, Plus, Search, Mail, Phone } from 'lucide-react';
 
 function ShariaTeachers() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [teachers, setTeachers] = useState([
-    { id: 1, name: 'د. أحمد محمود الطيب', title: 'أستاذ العقيدة والفلسفة', department: 'العقيدة الإسلامية', email: 'ahmed.tayeb@azhar.edu.eg', phone: '01012345678', courses: 2 },
-    { id: 2, name: 'الشيخ حسن عبد اللطيف', title: 'مدرس الفقه المقارن', department: 'الفقه وأصوله', email: 'hassan.latif@azhar.edu.eg', phone: '01187654321', courses: 1 },
-    { id: 3, name: 'د. خالد عبد الرحمن', title: 'أستاذ العلوم اللغوية والأدبية', department: 'العلوم العربية', email: 'khaled.rahman@azhar.edu.eg', phone: '01234567890', courses: 2 },
-    { id: 4, name: 'الشيخ محمد يوسف', title: 'مدرس التفسير وعلوم القرآن', department: 'علوم القرآن', email: 'mohammad.youssef@azhar.edu.eg', phone: '01599887766', courses: 1 },
-    { id: 5, name: 'د. مصطفى الشافعي', title: 'أستاذ الحديث وعلومه', department: 'الحديث الشريف', email: 'mostafa.shafey@azhar.edu.eg', phone: '01044332211', courses: 2 }
-  ]);
+  const [teachers, setTeachers] = useState([]);
 
   const filteredTeachers = teachers.filter(t => 
     t.name.includes(searchTerm) || 
@@ -64,71 +58,85 @@ function ShariaTeachers() {
       </div>
 
       {/* Teachers List */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-        gap: '20px'
-      }}>
-        {filteredTeachers.map(t => (
-          <div key={t.id} style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-          }}>
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
-              <div style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, rgba(214,175,55,0.1), rgba(16,185,129,0.1))',
-                border: '1px solid rgba(214,175,55,0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--accent-gold)',
-                fontSize: '20px',
-                fontWeight: 'bold'
-              }}>
-                {t.name[0] === 'د' ? 'أ.د' : 'ش'}
+      {filteredTeachers.length === 0 ? (
+        <div style={{
+          background: 'var(--bg-card)',
+          border: '1px dashed var(--border-subtle)',
+          borderRadius: '12px',
+          padding: '40px',
+          textAlign: 'center',
+          color: 'var(--text-secondary)',
+          fontSize: '14px'
+        }}>
+          لا يوجد أعضاء هيئة تدريس مسجلين حالياً.
+        </div>
+      ) : (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+          gap: '20px'
+        }}>
+          {filteredTeachers.map(t => (
+            <div key={t.id} style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '16px' }}>
+                <div style={{
+                  width: '60px',
+                  height: '60px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, rgba(214,175,55,0.1), rgba(16,185,129,0.1))',
+                  border: '1px solid rgba(214,175,55,0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--accent-gold)',
+                  fontSize: '20px',
+                  fontWeight: 'bold'
+                }}>
+                  {t.name[0] === 'د' ? 'أ.د' : 'ش'}
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '16px', color: 'var(--text-primary)', fontWeight: 'bold', margin: 0 }}>{t.name}</h3>
+                  <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t.title}</span>
+                </div>
               </div>
-              <div>
-                <h3 style={{ fontSize: '16px', color: 'var(--text-primary)', fontWeight: 'bold', margin: 0 }}>{t.name}</h3>
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{t.title}</span>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Mail size={14} color="var(--accent-gold)" />
+                  <span>{t.email}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Phone size={14} color="#10b981" />
+                  <span>{t.phone}</span>
+                </div>
+              </div>
+
+              <hr style={{ border: 'none', borderTop: '1px solid var(--border-subtle)', margin: '14px 0' }} />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+                <span style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-primary)',
+                  padding: '4px 10px',
+                  borderRadius: '6px'
+                }}>
+                  {t.department}
+                </span>
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  المقررات المسندة: <strong style={{ color: 'var(--text-primary)' }}>{t.courses}</strong>
+                </span>
               </div>
             </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Mail size={14} color="var(--accent-gold)" />
-                <span>{t.email}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Phone size={14} color="#10b981" />
-                <span>{t.phone}</span>
-              </div>
-            </div>
-
-            <hr style={{ border: 'none', borderTop: '1px solid var(--border-subtle)', margin: '14px 0' }} />
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
-              <span style={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid var(--border-subtle)',
-                color: 'var(--text-primary)',
-                padding: '4px 10px',
-                borderRadius: '6px'
-              }}>
-                {t.department}
-              </span>
-              <span style={{ color: 'var(--text-secondary)' }}>
-                المقررات المسندة: <strong style={{ color: 'var(--text-primary)' }}>{t.courses}</strong>
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
     </div>
   );

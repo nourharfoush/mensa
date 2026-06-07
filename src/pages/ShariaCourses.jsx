@@ -3,15 +3,7 @@ import { BookOpen, Plus, Search, Filter } from 'lucide-react';
 
 function ShariaCourses() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [courses, setCourses] = useState([
-    { id: 1, code: 'SH101', name: 'شرح متن أبي شجاع في الفقه الشافعي', teacher: 'د. أحمد محمود الطيب', category: 'الفقه وأصوله', hours: 45, level: 'المستوى الأول', students: 45 },
-    { id: 2, code: 'AQ102', name: 'شرح متن العقيدة الطحاوية', teacher: 'الشيخ حسن عبد اللطيف', category: 'العقيدة الإسلامية', hours: 30, level: 'المستوى الأول', students: 60 },
-    { id: 3, code: 'AR201', name: 'المقدمة الآجرومية في علم النحو', teacher: 'د. خالد عبد الرحمن', category: 'العلوم العربية', hours: 40, level: 'المستوى التمهيدي', students: 85 },
-    { id: 4, code: 'QR202', name: 'مناهل العرفان في علوم القرآن', teacher: 'الشيخ محمد يوسف', category: 'علوم القرآن', hours: 50, level: 'المستوى الثاني', students: 50 },
-    { id: 5, code: 'HD103', name: 'شرح الأربعين النووية في الحديث', teacher: 'د. مصطفى الشافعي', category: 'الحديث الشريف', hours: 30, level: 'المستوى الأول', students: 80 },
-    { id: 6, code: 'AR302', name: 'بلاغة الكلمة في القرآن الكريم', teacher: 'الشيخ عبد الله النجار', category: 'العلوم العربية', hours: 35, level: 'المستوى الثالث', students: 35 }
-  ]);
-
+  const [courses, setCourses] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCourse, setNewCourse] = useState({ name: '', teacher: '', category: 'الفقه وأصوله', hours: '', level: 'المستوى الأول', code: '' });
 
@@ -101,66 +93,80 @@ function ShariaCourses() {
       </div>
 
       {/* Courses Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-        gap: '20px'
-      }}>
-        {filteredCourses.map(c => (
-          <div key={c.id} style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            position: 'relative'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold' }}>{c.code}</span>
-              <span style={{
-                background: 'rgba(16, 185, 129, 0.1)',
-                color: '#10b981',
-                padding: '4px 10px',
-                borderRadius: '20px',
-                fontSize: '11px',
-                fontWeight: 'bold'
-              }}>
-                {c.category}
-              </span>
-            </div>
-            
-            <h3 style={{ fontSize: '16px', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '10px', lineHeight: '1.5' }}>
-              {c.name}
-            </h3>
-            
-            <div style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '16px' }}>
-              المحاضر: <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{c.teacher}</span>
-            </div>
-
-            <hr style={{ border: 'none', borderTop: '1px solid var(--border-subtle)', margin: '14px 0' }} />
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-secondary)' }}>
-              <div>ساعات المقرر: <strong style={{ color: 'var(--text-primary)' }}>{c.hours} ساعة</strong></div>
-              <div>المستوى: <strong style={{ color: 'var(--text-primary)' }}>{c.level}</strong></div>
-            </div>
-
-            <div style={{
-              marginTop: '16px',
-              backgroundColor: 'rgba(255, 255, 255, 0.02)',
+      {filteredCourses.length === 0 ? (
+        <div style={{
+          background: 'var(--bg-card)',
+          border: '1px dashed var(--border-subtle)',
+          borderRadius: '12px',
+          padding: '40px',
+          textAlign: 'center',
+          color: 'var(--text-secondary)',
+          fontSize: '14px'
+        }}>
+          لا توجد مقررات دراسية حالياً. اضغط على "إضافة مقرر جديد" لإنشاء مقرر.
+        </div>
+      ) : (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+          gap: '20px'
+        }}>
+          {filteredCourses.map(c => (
+            <div key={c.id} style={{
+              background: 'var(--bg-card)',
               border: '1px solid var(--border-subtle)',
-              borderRadius: '8px',
-              padding: '10px 14px',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              fontSize: '12px'
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              position: 'relative'
             }}>
-              <span style={{ color: 'var(--text-secondary)' }}>الدارسين المسجلين</span>
-              <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold', fontSize: '14px' }}>{c.students} دارس</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'bold' }}>{c.code}</span>
+                <span style={{
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  color: '#10b981',
+                  padding: '4px 10px',
+                  borderRadius: '20px',
+                  fontSize: '11px',
+                  fontWeight: 'bold'
+                }}>
+                  {c.category}
+                </span>
+              </div>
+              
+              <h3 style={{ fontSize: '16px', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '10px', lineHeight: '1.5' }}>
+                {c.name}
+              </h3>
+              
+              <div style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '16px' }}>
+                المحاضر: <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{c.teacher}</span>
+              </div>
+  
+              <hr style={{ border: 'none', borderTop: '1px solid var(--border-subtle)', margin: '14px 0' }} />
+  
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                <div>ساعات المقرر: <strong style={{ color: 'var(--text-primary)' }}>{c.hours} ساعة</strong></div>
+                <div>المستوى: <strong style={{ color: 'var(--text-primary)' }}>{c.level}</strong></div>
+              </div>
+  
+              <div style={{
+                marginTop: '16px',
+                backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                fontSize: '12px'
+              }}>
+                <span style={{ color: 'var(--text-secondary)' }}>الدارسين المسجلين</span>
+                <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold', fontSize: '14px' }}>{c.students} دارس</span>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Add Course Modal Mockup */}
       {showAddModal && (

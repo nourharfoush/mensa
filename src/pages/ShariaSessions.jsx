@@ -3,13 +3,7 @@ import { Calendar, Search, MapPin, Clock } from 'lucide-react';
 
 function ShariaSessions() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [sessions, setSessions] = useState([
-    { id: 1, name: 'حلقة فقه شافعي - المستوى الأول (أ)', teacher: 'د. أحمد محمود الطيب', time: '04:00 م - 05:30 م', location: 'قاعة الإمام البخاري', days: 'الأحد، الثلاثاء', status: 'نشط' },
-    { id: 2, name: 'حلقة عقيدة طحاوية - المستوى الأول', teacher: 'الشيخ حسن عبد اللطيف', time: '06:00 م - 07:30 م', location: 'قاعة الإمام الشافعي', days: 'الاثنين، الأربعاء', status: 'نشط' },
-    { id: 3, name: 'حلقة النحو والصرف - المستوى التمهيدي', teacher: 'د. خالد عبد الرحمن', time: '04:00 م - 05:30 م', location: 'قاعة الدراسات الإسلامية', days: 'السبت، الخميس', status: 'نشط' },
-    { id: 4, name: 'حلقة علوم القرآن - المستوى الثاني', teacher: 'الشيخ محمد يوسف', time: '08:00 م - 09:30 م', location: 'عبر الإنترنت (زووم)', days: 'الأحد، الثلاثاء', status: 'نشط' },
-    { id: 5, name: 'حلقة الحديث الشريف - المستوى الأول', teacher: 'د. مصطفى الشافعي', time: '06:00 م - 07:30 م', location: 'قاعة الإمام البخاري', days: 'الاثنين، الخميس', status: 'نشط' }
-  ]);
+  const [sessions, setSessions] = useState([]);
 
   const filteredSessions = sessions.filter(s => 
     s.name.includes(searchTerm) || 
@@ -65,56 +59,70 @@ function ShariaSessions() {
       </div>
 
       {/* Sessions Cards Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-        gap: '20px'
-      }}>
-        {filteredSessions.map(s => (
-          <div key={s.id} style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: '12px',
-            padding: '24px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <span style={{
-                background: 'rgba(16, 185, 129, 0.15)',
-                color: '#10b981',
-                padding: '4px 12px',
-                borderRadius: '20px',
-                fontSize: '12px',
-                fontWeight: 'bold'
-              }}>
-                {s.status}
-              </span>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{s.days}</span>
-            </div>
-
-            <h3 style={{ fontSize: '16px', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '12px' }}>
-              {s.name}
-            </h3>
-
-            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-              المحاضر: <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{s.teacher}</span>
-            </div>
-
-            <hr style={{ border: 'none', borderTop: '1px solid var(--border-subtle)', margin: '14px 0' }} />
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Clock size={15} color="var(--accent-gold)" />
-                <span>التوقيت: {s.time}</span>
+      {filteredSessions.length === 0 ? (
+        <div style={{
+          background: 'var(--bg-card)',
+          border: '1px dashed var(--border-subtle)',
+          borderRadius: '12px',
+          padding: '40px',
+          textAlign: 'center',
+          color: 'var(--text-secondary)',
+          fontSize: '14px'
+        }}>
+          لا توجد حلقات دراسية مسجلة حالياً.
+        </div>
+      ) : (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+          gap: '20px'
+        }}>
+          {filteredSessions.map(s => (
+            <div key={s.id} style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: '12px',
+              padding: '24px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <span style={{
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  color: '#10b981',
+                  padding: '4px 12px',
+                  borderRadius: '20px',
+                  fontSize: '12px',
+                  fontWeight: 'bold'
+                }}>
+                  {s.status}
+                </span>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{s.days}</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <MapPin size={15} color="#3b82f6" />
-                <span>المكان: {s.location}</span>
+  
+              <h3 style={{ fontSize: '16px', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '12px' }}>
+                {s.name}
+              </h3>
+  
+              <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                المحاضر: <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{s.teacher}</span>
+              </div>
+  
+              <hr style={{ border: 'none', borderTop: '1px solid var(--border-subtle)', margin: '14px 0' }} />
+  
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Clock size={15} color="var(--accent-gold)" />
+                  <span>التوقيت: {s.time}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <MapPin size={15} color="#3b82f6" />
+                  <span>المكان: {s.location}</span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
     </div>
   );

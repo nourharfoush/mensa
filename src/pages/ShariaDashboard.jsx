@@ -9,40 +9,34 @@ function ShariaDashboard() {
     {
       id: 1,
       title: 'البرامج والدورات',
-      value: 8,
+      value: 0,
       iconColor: '#10b981',
       iconType: 'book'
     },
     {
       id: 2,
       title: 'أعضاء هيئة التدريس',
-      value: 14,
+      value: 0,
       iconColor: '#a855f7',
       iconType: 'graduation-cap'
     },
     {
       id: 3,
       title: 'الطلاب والدارسين',
-      value: 320,
+      value: 0,
       iconColor: '#f97316',
       iconType: 'users'
     },
     {
       id: 4,
       title: 'الحلقات الدراسية',
-      value: 18,
+      value: 0,
       iconColor: '#3b82f6',
       iconType: 'book-open'
     }
   ];
 
-  const courses = [
-    { id: 1, name: 'شرح متن أبي شجاع في الفقه الشافعي', teacher: 'د. أحمد محمود الطيب', category: 'الفقه وأصوله', level: 'المستوى الأول', students: 45 },
-    { id: 2, name: 'شرح متن العقيدة الطحاوية', teacher: 'الشيخ حسن عبد اللطيف', category: 'العقيدة الإسلامية', level: 'المستوى الأول', students: 60 },
-    { id: 3, name: 'المقدمة الآجرومية في علم النحو', teacher: 'د. خالد عبد الرحمن', category: 'العلوم العربية', level: 'المستوى التمهيدي', students: 85 },
-    { id: 4, name: 'مناهل العرفان في علوم القرآن', teacher: 'الشيخ محمد يوسف', category: 'علوم القرآن', level: 'المستوى الثاني', students: 50 },
-    { id: 5, name: 'شرح الأربعين النووية في الحديث', teacher: 'د. مصطفى الشافعي', category: 'الحديث الشريف', level: 'المستوى الأول', students: 80 }
-  ];
+  const courses = [];
 
   return (
     <div className="dashboard-page" style={{ direction: 'rtl' }}>
@@ -139,24 +133,32 @@ function ShariaDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {courses.map(c => (
-                  <tr key={c.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                    <td style={{ padding: '14px 8px', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{c.name}</td>
-                    <td style={{ padding: '14px 8px', fontSize: '13px', color: 'var(--text-secondary)' }}>{c.teacher}</td>
-                    <td style={{ padding: '14px 8px', fontSize: '13px' }}>
-                      <span style={{
-                        background: 'rgba(214, 175, 55, 0.1)',
-                        color: 'var(--accent-gold)',
-                        padding: '4px 10px',
-                        borderRadius: '6px',
-                        fontSize: '11px'
-                      }}>
-                        {c.category}
-                      </span>
+                {courses.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+                      لا توجد مقررات نشطة حالياً
                     </td>
-                    <td style={{ padding: '14px 8px', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', textAlign: 'center' }}>{c.students}</td>
                   </tr>
-                ))}
+                ) : (
+                  courses.map(c => (
+                    <tr key={c.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                      <td style={{ padding: '14px 8px', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{c.name}</td>
+                      <td style={{ padding: '14px 8px', fontSize: '13px', color: 'var(--text-secondary)' }}>{c.teacher}</td>
+                      <td style={{ padding: '14px 8px', fontSize: '13px' }}>
+                        <span style={{
+                          background: 'rgba(214, 175, 55, 0.1)',
+                          color: 'var(--accent-gold)',
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          fontSize: '11px'
+                        }}>
+                          {c.category}
+                        </span>
+                      </td>
+                      <td style={{ padding: '14px 8px', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', textAlign: 'center' }}>{c.students}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -176,42 +178,16 @@ function ShariaDashboard() {
           </h2>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {[
-              { id: 1, time: '04:00 م - 05:30 م', course: 'المقدمة الآجرومية في علم النحو', hall: 'قاعة الإمام البخاري', status: 'مباشر' },
-              { id: 2, time: '06:00 م - 07:30 م', course: 'شرح متن أبي شجاع في الفقه', hall: 'قاعة الإمام الشافعي', status: 'مباشر' },
-              { id: 3, time: '08:00 م - 09:30 م', course: 'شرح متن العقيدة الطحاوية', hall: 'قاعة الدراسات الإسلامية', status: 'عبر الإنترنت' }
-            ].map(item => (
-              <div key={item.id} style={{
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '12px',
-                padding: '16px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{item.course}</div>
-                  <div style={{ display: 'flex', gap: '12px', marginTop: '6px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                    <span>{item.time}</span>
-                    <span>•</span>
-                    <span>{item.hall}</span>
-                  </div>
-                </div>
-                <div>
-                  <span style={{
-                    backgroundColor: item.status === 'مباشر' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(59, 130, 246, 0.15)',
-                    color: item.status === 'مباشر' ? '#10b981' : '#3b82f6',
-                    padding: '6px 12px',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    fontWeight: 'bold'
-                  }}>
-                    {item.status}
-                  </span>
-                </div>
-              </div>
-            ))}
+            <div style={{
+              padding: '30px 20px',
+              textAlign: 'center',
+              color: 'var(--text-muted)',
+              fontSize: '14px',
+              border: '1px dashed var(--border-subtle)',
+              borderRadius: '12px'
+            }}>
+              لا توجد محاضرات مجدولة اليوم
+            </div>
           </div>
 
           <div style={{
@@ -224,7 +200,7 @@ function ShariaDashboard() {
           }}>
             <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: 'bold' }}>أخبار هامة وقرارات</h4>
             <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-              بدء التسجيل للدورة المكثفة في مصطلح الحديث للطلاب المتقدمين اعتباراً من الأسبوع القادم عبر منسقي المحافظات.
+              سيتم الإعلان عن المواعيد الدراسية وتوزيع المحاضرين فور اعتماد الفصل الدراسي الجديد.
             </p>
           </div>
         </div>
