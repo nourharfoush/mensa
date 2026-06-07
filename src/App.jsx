@@ -48,6 +48,13 @@ import PlatformStudentsCreate from './pages/PlatformStudentsCreate';
 import PlatformApplicantsList from './pages/PlatformApplicantsList';
 import PlatformApplicantsCreate from './pages/PlatformApplicantsCreate';
 
+// Sharia & Arabic Sciences Components
+import ShariaDashboard from './pages/ShariaDashboard';
+import ShariaCourses from './pages/ShariaCourses';
+import ShariaTeachers from './pages/ShariaTeachers';
+import ShariaStudents from './pages/ShariaStudents';
+import ShariaSessions from './pages/ShariaSessions';
+
 import AdministrationsList from './pages/AdministrationsList';
 import RowaqsList from './pages/RowaqsList';
 import RowaqsCreate from './pages/RowaqsCreate';
@@ -63,6 +70,7 @@ import PublicQuran from './pages/PublicQuran';
 import PublicIslamicStudies from './pages/PublicIslamicStudies';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import SelectSection from './pages/SelectSection';
 
 const initialDashboardData = {
   stats: [
@@ -92,6 +100,23 @@ function DashboardLayout() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+  const activeSection = sessionStorage.getItem('activeSection');
+
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!activeSection) {
+    return <Navigate to="/select-section" replace />;
+  }
+
+  const getRedirectPath = (section) => {
+    if (section === 'platform') return '/platform-dashboard';
+    if (section === 'sharia_arabic') return '/sharia-dashboard';
+    return '/dashboard';
+  };
+
   return (
     <div className="app-layout">
       <Sidebar isOpen={isSidebarOpen} toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
@@ -100,9 +125,10 @@ function DashboardLayout() {
         <Header toggleSidebar={() => setSidebarOpen(!isSidebarOpen)} />
         <div className="content-scroll-area" style={{ overflowY: 'auto', flex: 1, padding: '20px' }}>
           <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="/" element={<Navigate to={getRedirectPath(activeSection)} replace />} />
             <Route path="/dashboard" element={<Dashboard data={dashboardData} />} />
             <Route path="/platform-dashboard" element={<PlatformDashboard />} />
+            <Route path="/sharia-dashboard" element={<ShariaDashboard />} />
             
             {/* System Administration */}
             <Route path="/management" element={<ManagementList />} />
@@ -164,6 +190,12 @@ function DashboardLayout() {
             <Route path="/platform-students/create" element={<PlatformStudentsCreate />} />
             <Route path="/platform-applicants" element={<PlatformApplicantsList />} />
             <Route path="/platform-applicants/create" element={<PlatformApplicantsCreate />} />
+
+            {/* Sharia & Arabic Sciences Routes */}
+            <Route path="/sharia-courses" element={<ShariaCourses />} />
+            <Route path="/sharia-teachers" element={<ShariaTeachers />} />
+            <Route style={{ direction: 'rtl' }} path="/sharia-students" element={<ShariaStudents />} />
+            <Route path="/sharia-sessions" element={<ShariaSessions />} />
           </Routes>
         </div>
       </main>
@@ -181,6 +213,7 @@ function App() {
           <Route path="/IslamicStudies" element={<PublicIslamicStudies />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Navigate to="/login" replace />} />
+          <Route path="/select-section" element={<SelectSection />} />
           <Route path="/*" element={<DashboardLayout />} />
         </Routes>
       </Router>

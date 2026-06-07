@@ -39,13 +39,48 @@ function Header({ toggleSidebar }) {
 
   const unreadCount = notifications.filter(n => n.unread).length;
 
+  const activeSection = sessionStorage.getItem('activeSection');
+  const getSectionName = (sec) => {
+    if (sec === 'platform') return 'المنصة الإلكترونية';
+    if (sec === 'sharia_arabic') return 'العلوم الشرعية والعربية';
+    return 'شؤون الأروقة';
+  };
+  const getSectionColor = (sec) => {
+    if (sec === 'platform') return '#3b82f6';
+    if (sec === 'sharia_arabic') return '#10b981';
+    return 'var(--accent-gold)';
+  };
+
   return (
     <header className="app-header">
-      <div className="header-left">
+      <div className="header-left" style={{ display: 'flex', alignItems: 'center' }}>
         <button className="icon-btn text-muted" onClick={toggleSidebar}>
           <Menu size={20} />
         </button>
-        <Link to="/" className="primary-btn" style={{ textDecoration: 'none' }}>
+        {activeSection && (
+          <span style={{
+            marginRight: '15px',
+            backgroundColor: `${getSectionColor(activeSection)}15`,
+            color: getSectionColor(activeSection),
+            border: `1px solid ${getSectionColor(activeSection)}30`,
+            padding: '6px 14px',
+            borderRadius: '20px',
+            fontSize: '13px',
+            fontWeight: 'bold',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+            <span style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: getSectionColor(activeSection)
+            }}></span>
+            {getSectionName(activeSection)}
+          </span>
+        )}
+        <Link to="/" className="primary-btn" style={{ textDecoration: 'none', marginRight: '15px' }}>
           الصفحة الرئيسية
         </Link>
       </div>

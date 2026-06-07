@@ -207,9 +207,9 @@ function Login() {
       if (foundUser) {
         const userToSave = { ...foundUser, id: foundUser.id || Date.now() };
         sessionStorage.setItem('currentUser', JSON.stringify(userToSave));
+        sessionStorage.removeItem('activeSection');
         setLoading(false);
-        const homePage = getHomePageForRole(foundUser.role);
-        navigate(homePage);
+        navigate('/select-section');
       } else {
         // عرض معلومات تشخيصية مفصلة
         console.log('❌ لم يتم العثور على المستخدم في أي مصدر بيانات');

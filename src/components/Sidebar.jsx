@@ -1,8 +1,8 @@
 import React from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, Users, FileText, Calendar, GitBranch, 
-  BookOpen, Building, MapPin, UserPlus, FilePlus, Settings, User, LogOut, Shield
+  BookOpen, Building, MapPin, UserPlus, FilePlus, Settings, User, LogOut, Shield, ArrowRightLeft, BookOpen as BookIcon
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -10,8 +10,9 @@ const menuGroups = [
   {
     isAlwaysVisible: true,
     items: [
-      { name: 'لوحة تحكم المنصة', icon: Home, path: '/platform-dashboard' },
-      { name: 'لوحة تحكم شؤون الأروقة', icon: Home, path: '/dashboard' },
+      { name: 'لوحة تحكم شؤون الأروقة', icon: Home, path: '/dashboard', isRowaqOnly: true },
+      { name: 'لوحة تحكم المنصة', icon: Home, path: '/platform-dashboard', isPlatformOnly: true },
+      { name: 'لوحة العلوم الشرعية والعربية', icon: Home, path: '/sharia-dashboard', isShariaOnly: true },
     ]
   },
   {
@@ -37,6 +38,7 @@ const menuGroups = [
   },
   {
     title: 'إعدادات النظام',
+    isRowaqOnly: true, // Only show system settings in Rowaq
     items: [
       { name: 'الإدارات', icon: Building, path: '/administrations', isRowaqOnly: true },
       { name: 'الأروقة', icon: MapPin, path: '/riwaqs', isRowaqOnly: true },
@@ -59,11 +61,23 @@ const menuGroups = [
       { name: 'الدارسين', icon: BookOpen, path: '/platform-students' },
       { name: 'المتقدمين الجدد', icon: UserPlus, path: '/platform-applicants' },
     ]
+  },
+  {
+    title: 'العلوم الشرعية والعربية',
+    isShariaOnly: true,
+    items: [
+      { name: 'الدورات والبرامج', icon: BookIcon, path: '/sharia-courses' },
+      { name: 'هيئة التدريس', icon: Users, path: '/sharia-teachers' },
+      { name: 'الطلاب والدارسين', icon: BookOpen, path: '/sharia-students' },
+      { name: 'الحلقات المجدولة', icon: Calendar, path: '/sharia-sessions' },
+    ]
   }
 ];
 
 function Sidebar({ isOpen, toggleSidebar }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const activeSection = sessionStorage.getItem('activeSection') || 'rowaq';
 
   const handleLinkClick = () => {
     if (window.innerWidth < 992 && toggleSidebar) {
@@ -83,6 +97,11 @@ function Sidebar({ isOpen, toggleSidebar }) {
   }
 
   const isPathAllowed = (path, userRole) => {
+    // Sharia paths allowed for everyone for demonstration/management
+    if (['/sharia-dashboard', '/sharia-courses', '/sharia-teachers', '/sharia-students', '/sharia-sessions'].includes(path)) {
+      return true;
+    }
+
     // Super Admin can access everything
     if (userRole === 'admin') return true;
 
@@ -205,9 +224,32 @@ function Sidebar({ isOpen, toggleSidebar }) {
     return false;
   };
 
-  // Filter groups based on path visibility rules
+  const handleChangeSection = () => {
+    sessionStorage.removeItem('activeSection');
+    navigate('/select-section');
+  };
+
+  // Filter groups based on the active main section and path visibility rules
   const filteredGroups = menuGroups.map(group => {
-    const items = group.items.filter(item => isPathAllowed(item.path, role));
+    // Filter out group entirely if it belongs to another section
+    if (activeSection === 'rowaq' && (group.isPlatformOnly || group.isShariaOnly)) return null;
+    if (activeSection === 'platform' && (group.isRowaqOnly || group.isShariaOnly)) return null;
+    if (activeSection === 'sharia_arabic' && (group.isRowaqOnly || group.isPlatformOnly)) return null;
+
+    const items = group.items.filter(item => {
+      // Filter individual items within group
+      if (activeSection === 'rowaq' && item.isPlatformOnly) return false;
+      if (activeSection === 'rowaq' && item.isShariaOnly) return false;
+      
+      if (activeSection === 'platform' && item.isRowaqOnly) return false;
+      if (activeSection === 'platform' && item.isShariaOnly) return false;
+      
+      if (activeSection === 'sharia_arabic' && item.isRowaqOnly) return false;
+      if (activeSection === 'sharia_arabic' && item.isPlatformOnly) return false;
+
+      return isPathAllowed(item.path, role);
+    });
+
     if (items.length === 0) return null;
     return { ...group, items };
   }).filter(Boolean);
@@ -227,6 +269,34 @@ function Sidebar({ isOpen, toggleSidebar }) {
             <h3>لوحة التحكم</h3>
             <p>إدارة النظام</p>
           </div>
+        </div>
+
+        {/* Change Section Button */}
+        <div style={{ padding: '0 16px 12px' }}>
+          <button 
+            onClick={handleChangeSection}
+            style={{
+              width: '100%',
+              backgroundColor: 'rgba(214, 175, 55, 0.08)',
+              border: '1px solid rgba(214, 175, 55, 0.25)',
+              borderRadius: '8px',
+              color: 'var(--accent-gold)',
+              padding: '10px 12px',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(214, 175, 55, 0.15)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(214, 175, 55, 0.08)'; }}
+          >
+            <ArrowRightLeft size={16} />
+            <span>تغيير القسم الرئيسي</span>
+          </button>
         </div>
         
         <div className="sidebar-menu">
@@ -255,6 +325,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
              <hr className="menu-divider" />
              <NavLink to="#" className="menu-item logout-btn" onClick={() => {
                sessionStorage.removeItem('currentUser');
+               sessionStorage.removeItem('activeSection');
                window.location.href = '/login';
              }}>
                 <LogOut size={18} className="menu-icon" />
