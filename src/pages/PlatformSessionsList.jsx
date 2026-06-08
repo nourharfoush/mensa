@@ -23,8 +23,35 @@ function PlatformSessionsList() {
   const [filterStudentType, setFilterStudentType] = useState('');
   const [filterActiveNow, setFilterActiveNow] = useState(searchParams.get('active') === 'true');
 
+  const normalizeArabic = (str) => {
+    if (!str) return '';
+    return str
+      .toString()
+      .trim()
+      .normalize('NFKD')
+      .normalize('NFC')
+      .replace(/ً/g, '')
+      .replace(/ٌ/g, '')
+      .replace(/ٍ/g, '')
+      .replace(/َ/g, '')
+      .replace(/ُ/g, '')
+      .replace(/ِ/g, '')
+      .replace(/ّ/g, '')
+      .replace(/ْ/g, '')
+      .replace(/[أإآا]/g, 'ا')
+      .replace(/[ىي]/g, 'ي')
+      .replace(/[ة]/g, 'ه')
+      .replace(/[ـ]/g, '')
+      .replace(/\s+/g, ' ')
+      .toLowerCase()
+      .trim();
+  };
+
   const filtered = platformSessions.filter(s => {
     // 1. Geographic / session role restriction
+    if (role === 'platform_mohfez') {
+      if (currentUser.name && normalizeArabic(s.mohfez) !== normalizeArabic(currentUser.name)) return false;
+    }
     if (isPlatformRestricted && userSession) {
       if (String(s.id) !== String(userSession) && s.session_name !== userSession && s.session_no !== userSession) return false;
     }

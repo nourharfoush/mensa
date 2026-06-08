@@ -32,6 +32,30 @@ function SessionReports() {
   const isPlatformMohfez = role === 'platform_mohfez';
   const isStudent = role === 'student';
 
+  const normalizeArabic = (str) => {
+    if (!str) return '';
+    return str
+      .toString()
+      .trim()
+      .normalize('NFKD')
+      .normalize('NFC')
+      .replace(/ً/g, '')
+      .replace(/ٌ/g, '')
+      .replace(/ٍ/g, '')
+      .replace(/َ/g, '')
+      .replace(/ُ/g, '')
+      .replace(/ِ/g, '')
+      .replace(/ّ/g, '')
+      .replace(/ْ/g, '')
+      .replace(/[أإآا]/g, 'ا')
+      .replace(/[ىي]/g, 'ي')
+      .replace(/[ة]/g, 'ه')
+      .replace(/[ـ]/g, '')
+      .replace(/\s+/g, ' ')
+      .toLowerCase()
+      .trim();
+  };
+
   // Check geographic access to the session
   let hasGeographicAccess = true;
   if (!isSuperAdmin) {
@@ -41,6 +65,11 @@ function SessionReports() {
     if (session) {
       if (isRowaqStaff && userAdmin && session.admin !== userAdmin) hasGeographicAccess = false;
       if (isBranchCoordinator && userBranch && session.branch !== userBranch) hasGeographicAccess = false;
+      if (isMohfez || isPlatformMohfez) {
+        if (currentUser.name && normalizeArabic(session.mohfez) !== normalizeArabic(currentUser.name)) {
+          hasGeographicAccess = false;
+        }
+      }
       if ((isMohfez || isPlatformMohfez || isPlatformCoordinator || isStudent) && userSession) {
         if (String(session.id) !== String(userSession) && session.session_name !== userSession && session.session_no !== userSession) {
           hasGeographicAccess = false;

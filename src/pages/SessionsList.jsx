@@ -77,6 +77,7 @@ function SessionsList() {
     if (isRowaqStaff && userAdmin && normalizeArabic(s.admin) !== normalizeArabic(userAdmin)) return false;
     if (isBranchCoordinator && userBranch && normalizeArabic(s.branch) !== normalizeArabic(userBranch)) return false;
     if (isMohfez) {
+      if (currentUser.name && normalizeArabic(s.mohfez) !== normalizeArabic(currentUser.name)) return false;
       if (userSession) {
         if (String(s.id) !== String(userSession) && s.session_name !== userSession && s.session_no !== userSession) return false;
       } else if (userBranch) {

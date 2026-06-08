@@ -9,13 +9,78 @@ function SessionAttendance() {
   const { id } = useParams();
   const location = useLocation();
   const isPlatform = location.pathname.startsWith('/platform-sessions');
-  const { sessions, platformSessions, attendances, deleteAttendance } = useAppData();
+  const { sessions, platformSessions, attendances, deleteAttendance, hasPermission } = useAppData();
   
   const sessionId = id;
   const session = isPlatform
     ? platformSessions.find(s => String(s.id) === String(id))
     : sessions.find(s => String(s.id) === String(id));
   const sessionAttendances = attendances.filter(a => String(a.sessionId) === String(sessionId) && !!a.isPlatform === isPlatform);
+
+  // Get current user and role
+  const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+  const role = currentUser ? currentUser.role : 'admin';
+  const userAdmin = currentUser ? currentUser.userAdmin : '';
+  const userBranch = currentUser ? currentUser.userBranch : '';
+  const userSession = currentUser ? currentUser.userSession : '';
+
+  const isSuperAdmin = role === 'admin';
+  const isRowaqAdmin = role === 'rowaq_admin';
+  const isPlatformAdmin = role === 'platform_admin';
+  const isRowaqStaff = ['rowaq_manager', 'rowaq_tech', 'rowaq_member'].includes(role);
+  const isBranchCoordinator = ['branch_admin_coordinator', 'branch_scientific_coordinator'].includes(role);
+  const isMohfez = role === 'mohfez';
+  const isPlatformCoordinator = role === 'platform_coordinator';
+  const isPlatformMohfez = role === 'platform_mohfez';
+  const isStudent = role === 'student';
+
+  const normalizeArabic = (str) => {
+    if (!str) return '';
+    return str
+      .toString()
+      .trim()
+      .normalize('NFKD')
+      .normalize('NFC')
+      .replace(/ً/g, '')
+      .replace(/ٌ/g, '')
+      .replace(/ٍ/g, '')
+      .replace(/َ/g, '')
+      .replace(/ُ/g, '')
+      .replace(/ِ/g, '')
+      .replace(/ّ/g, '')
+      .replace(/ْ/g, '')
+      .replace(/[أإآا]/g, 'ا')
+      .replace(/[ىي]/g, 'ي')
+      .replace(/[ة]/g, 'ه')
+      .replace(/[ـ]/g, '')
+      .replace(/\s+/g, ' ')
+      .toLowerCase()
+      .trim();
+  };
+
+  // Check geographic access to the session
+  let hasGeographicAccess = true;
+  if (!isSuperAdmin) {
+    if (isRowaqAdmin && isPlatform) hasGeographicAccess = false;
+    if (isPlatformAdmin && !isPlatform) hasGeographicAccess = false;
+
+    if (session) {
+      if (isRowaqStaff && userAdmin && session.admin !== userAdmin) hasGeographicAccess = false;
+      if (isBranchCoordinator && userBranch && session.branch !== userBranch) hasGeographicAccess = false;
+      if (isMohfez || isPlatformMohfez) {
+        if (currentUser.name && normalizeArabic(session.mohfez) !== normalizeArabic(currentUser.name)) {
+          hasGeographicAccess = false;
+        }
+      }
+      if ((isMohfez || isPlatformMohfez || isPlatformCoordinator || isStudent) && userSession) {
+        if (String(session.id) !== String(userSession) && session.session_name !== userSession && session.session_no !== userSession) {
+          hasGeographicAccess = false;
+        }
+      }
+    } else {
+      hasGeographicAccess = false;
+    }
+  }
 
 
   const handleExport = () => {
@@ -26,6 +91,17 @@ function SessionAttendance() {
     }));
     exportToXLSX(exportData, `غياب_حلقة_${session?.session_no || sessionId}`, `إدارة الغياب - حلقة: ${session?.session_no || sessionId}`);
   };
+
+  if (!hasPermission('sessions', 'view') || !hasGeographicAccess) {
+    return (
+      <div className="management-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+        <div className="box-card" style={{ textAlign: 'center', maxWidth: '500px', padding: '40px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+          <h3 style={{ color: '#ef4444', marginBottom: '15px' }}>عذراً، ليس لديك صلاحية لعرض هذا القسم</h3>
+          <p style={{ color: 'var(--text-secondary)' }}>يرجى التواصل مع مدير النظام للحصول على الصلاحيات اللازمة أو التأكد من نطاق صلاحيتك الجغرافية.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="management-page">
