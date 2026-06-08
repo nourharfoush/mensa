@@ -10,7 +10,8 @@ function Dashboard() {
 
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
   const role = currentUser ? currentUser.role : '';
-  const isAdmin = ['admin', 'rowaq_admin', 'rowaq_manager', 'rowaq_tech'].includes(role);
+  const isSuperAdmin = ['admin', 'rowaq_admin'].includes(role);
+  const isRowaqStaff = ['rowaq_manager', 'rowaq_tech', 'rowaq_member'].includes(role);
   const isBranchCoordinator = ['branch_admin_coordinator', 'branch_scientific_coordinator'].includes(role);
 
   const normalizeArabic = (str) => {
@@ -49,6 +50,11 @@ function Dashboard() {
       userCenter = userCenter || matchedCoord.center || '';
       userBranch = userBranch || matchedCoord.branch || '';
     }
+  } else if (isRowaqStaff && !userAdmin) {
+    const matchedMgr = managers?.find(m => String(m.national_id || '').trim() === nationalId);
+    if (matchedMgr) {
+      userAdmin = userAdmin || matchedMgr.admin || '';
+    }
   }
 
   let filteredCoordinators = coordinators || [];
@@ -68,6 +74,15 @@ function Dashboard() {
     filteredApplicants = (applicants || []).filter(a => normalizeArabic(a.branch) === branchNorm);
     filteredStudents = (students || []).filter(s => normalizeArabic(s.branch) === branchNorm);
     filteredManagers = [];
+  } else if (isRowaqStaff && userAdmin) {
+    const adminNorm = normalizeArabic(userAdmin);
+    filteredCoordinators = (coordinators || []).filter(c => normalizeArabic(c.admin) === adminNorm);
+    filteredMohfezs = (mohfezs || []).filter(m => normalizeArabic(m.admin) === adminNorm);
+    filteredSessions = (sessions || []).filter(s => normalizeArabic(s.admin) === adminNorm);
+    filteredBranches = (branches || []).filter(b => normalizeArabic(b.admin) === adminNorm);
+    filteredApplicants = (applicants || []).filter(a => normalizeArabic(a.admin) === adminNorm);
+    filteredStudents = (students || []).filter(s => normalizeArabic(s.admin) === adminNorm);
+    filteredManagers = (managers || []).filter(m => normalizeArabic(m.admin) === adminNorm);
   }
 
   const dynamicStats = [
@@ -77,10 +92,10 @@ function Dashboard() {
     { id: 4, title: 'الفروع', value: filteredBranches.length, iconColor: '#f97316', iconType: 'graduation-cap' },
     { id: 5, title: 'طلبات التقديم', value: filteredApplicants.length, iconColor: '#22c55e', iconType: 'user-check' },
     { id: 6, title: 'الدارسين', value: filteredStudents.length, iconColor: '#eab308', iconType: 'book-open' },
-    ...(isAdmin ? [{ id: 7, title: 'أعضاء الإدارة', value: filteredManagers.length, iconColor: '#ec4899', iconType: 'users' }] : []),
+    ...((isSuperAdmin || isRowaqStaff) ? [{ id: 7, title: 'أعضاء الإدارة', value: filteredManagers.length, iconColor: '#ec4899', iconType: 'users' }] : []),
   ];
 
-  const showStats = isAdmin || isBranchCoordinator;
+  const showStats = isSuperAdmin || isRowaqStaff || isBranchCoordinator;
 
   return (
     <div className="dashboard-page">
