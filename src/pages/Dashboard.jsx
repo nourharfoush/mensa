@@ -44,14 +44,20 @@ function Dashboard() {
   let userBranch = currentUser ? currentUser.userBranch : '';
 
   if (isBranchCoordinator && (!userAdmin || !userCenter || !userBranch)) {
-    const matchedCoord = coordinators?.find(c => String(c.national_id || '').trim() === nationalId);
+    const matchedCoord = coordinators?.find(c => 
+      (nationalId && String(c.national_id || '').trim() === nationalId) ||
+      (currentUser?.name && normalizeArabic(c.name) === normalizeArabic(currentUser.name))
+    );
     if (matchedCoord) {
       userAdmin = userAdmin || matchedCoord.admin || '';
       userCenter = userCenter || matchedCoord.center || '';
       userBranch = userBranch || matchedCoord.branch || '';
     }
   } else if (isRowaqStaff && !userAdmin) {
-    const matchedMgr = managers?.find(m => String(m.national_id || '').trim() === nationalId);
+    const matchedMgr = managers?.find(m => 
+      (nationalId && String(m.national_id || '').trim() === nationalId) ||
+      (currentUser?.name && normalizeArabic(m.name) === normalizeArabic(currentUser.name))
+    );
     if (matchedMgr) {
       userAdmin = userAdmin || matchedMgr.admin || '';
     }

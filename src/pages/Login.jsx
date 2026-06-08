@@ -62,10 +62,37 @@ function Login() {
       return ids.some(id => id && id === inputUser) && pws.some(pw => pw && pw === inputPass);
     });
 
+    const normalizeArabic = (str) => {
+      if (!str) return '';
+      return str
+        .toString()
+        .trim()
+        .normalize('NFKD')
+        .normalize('NFC')
+        .replace(/ً/g, '')
+        .replace(/ٌ/g, '')
+        .replace(/ٍ/g, '')
+        .replace(/َ/g, '')
+        .replace(/ُ/g, '')
+        .replace(/ِ/g, '')
+        .replace(/ّ/g, '')
+        .replace(/ْ/g, '')
+        .replace(/[أإآا]/g, 'ا')
+        .replace(/[ىي]/g, 'ي')
+        .replace(/[ة]/g, 'ه')
+        .replace(/[ـ]/g, '')
+        .replace(/\s+/g, ' ')
+        .toLowerCase()
+        .trim();
+    };
+
     // ===== 2) إذا لم نجده، نبحث في جميع بيانات النظام، وإلا نقوم بتحديث الحقول الجغرافية إذا كان منسقاً أو محفظاً =====
     if (foundUser) {
       const nationalId = String(foundUser.national_id || foundUser.username || foundUser.email || '').trim();
-      const coord = coordinators.find(c => String(c.national_id || '').trim() === nationalId);
+      const coord = coordinators.find(c => 
+        String(c.national_id || '').trim() === nationalId ||
+        (foundUser.name && normalizeArabic(c.name) === normalizeArabic(foundUser.name))
+      );
       if (coord) {
         foundUser.userAdmin = foundUser.userAdmin || coord.admin || '';
         foundUser.userCenter = foundUser.userCenter || coord.center || '';
@@ -74,7 +101,10 @@ function Login() {
           foundUser.role = coord.specialization === 'إداري' ? 'branch_admin_coordinator' : 'branch_scientific_coordinator';
         }
       } else {
-        const moh = mohfezs.find(m => String(m.national_id || '').trim() === nationalId);
+        const moh = mohfezs.find(m => 
+          String(m.national_id || '').trim() === nationalId ||
+          (foundUser.name && normalizeArabic(m.name) === normalizeArabic(foundUser.name))
+        );
         if (moh) {
           foundUser.userAdmin = foundUser.userAdmin || moh.admin || '';
           foundUser.userCenter = foundUser.userCenter || moh.center || '';
