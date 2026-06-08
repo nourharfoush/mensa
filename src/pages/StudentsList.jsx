@@ -10,15 +10,12 @@ import { calculateBirthDateFromNationalId } from '../utils/nationalIdHelper';
 const governorates = Object.keys(egyptCenters);
 
 function StudentsList() {
-  const { students, deleteStudent, addStudent, branches, sessions, hasPermission, users, addUser, updateUser, deleteAllStudents, bulkImportStudents } = useAppData();
+  const { students, deleteStudent, addStudent, branches, sessions, hasPermission, users, addUser, updateUser, deleteAllStudents, bulkImportStudents, coordinators, mohfezs } = useAppData();
   const importRef = useRef(null);
   
   // Get current user and role
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
   const role = currentUser ? currentUser.role : 'admin';
-  const userAdmin = currentUser ? currentUser.userAdmin : '';
-  const userCenter = currentUser ? currentUser.userCenter : '';
-  const userBranch = currentUser ? currentUser.userBranch : '';
   const userSession = currentUser ? currentUser.userSession : '';
 
   const isSuperAdmin = role === 'admin';
@@ -26,6 +23,28 @@ function StudentsList() {
   const isRowaqStaff = ['rowaq_manager', 'rowaq_tech', 'rowaq_member'].includes(role);
   const isBranchCoordinator = ['branch_admin_coordinator', 'branch_scientific_coordinator'].includes(role);
   const isMohfez = role === 'mohfez';
+
+  // Fallbacks for geographic fields if they are missing in currentUser
+  const nationalId = currentUser ? String(currentUser.national_id || currentUser.username || '').trim() : '';
+  let userAdmin = currentUser ? currentUser.userAdmin : '';
+  let userCenter = currentUser ? currentUser.userCenter : '';
+  let userBranch = currentUser ? currentUser.userBranch : '';
+
+  if (isBranchCoordinator && (!userAdmin || !userCenter || !userBranch)) {
+    const matchedCoord = coordinators?.find(c => String(c.national_id || '').trim() === nationalId);
+    if (matchedCoord) {
+      userAdmin = userAdmin || matchedCoord.admin || '';
+      userCenter = userCenter || matchedCoord.center || '';
+      userBranch = userBranch || matchedCoord.branch || '';
+    }
+  } else if (isMohfez && (!userAdmin || !userCenter || !userBranch)) {
+    const matchedMohfez = mohfezs?.find(m => String(m.national_id || '').trim() === nationalId);
+    if (matchedMohfez) {
+      userAdmin = userAdmin || matchedMohfez.admin || '';
+      userCenter = userCenter || matchedMohfez.center || '';
+      userBranch = userBranch || matchedMohfez.branch || '';
+    }
+  }
 
   const [filterName, setFilterName] = useState('');
   const [filterNationalId, setFilterNationalId] = useState('');

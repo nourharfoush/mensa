@@ -62,8 +62,27 @@ function Login() {
       return ids.some(id => id && id === inputUser) && pws.some(pw => pw && pw === inputPass);
     });
 
-    // ===== 2) إذا لم نجده، نبحث في جميع بيانات النظام =====
-    if (!foundUser) {
+    // ===== 2) إذا لم نجده، نبحث في جميع بيانات النظام، وإلا نقوم بتحديث الحقول الجغرافية إذا كان منسقاً أو محفظاً =====
+    if (foundUser) {
+      const nationalId = String(foundUser.national_id || foundUser.username || foundUser.email || '').trim();
+      const coord = coordinators.find(c => String(c.national_id || '').trim() === nationalId);
+      if (coord) {
+        foundUser.userAdmin = foundUser.userAdmin || coord.admin || '';
+        foundUser.userCenter = foundUser.userCenter || coord.center || '';
+        foundUser.userBranch = foundUser.userBranch || coord.branch || '';
+        if (!foundUser.role) {
+          foundUser.role = coord.specialization === 'إداري' ? 'branch_admin_coordinator' : 'branch_scientific_coordinator';
+        }
+      } else {
+        const moh = mohfezs.find(m => String(m.national_id || '').trim() === nationalId);
+        if (moh) {
+          foundUser.userAdmin = foundUser.userAdmin || moh.admin || '';
+          foundUser.userCenter = foundUser.userCenter || moh.center || '';
+          foundUser.userBranch = foundUser.userBranch || moh.branch || '';
+          if (!foundUser.role) foundUser.role = 'mohfez';
+        }
+      }
+    } else {
       console.log('🔍 لم يُعثر عليه في المستخدمين، جاري البحث في بيانات النظام...');
 
       // البحث في المنسقين (شئون الأروقة)
