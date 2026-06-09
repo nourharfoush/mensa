@@ -39,8 +39,22 @@ function SelectSection() {
     'platform_mohfez', 'student'
   ].includes(role);
 
-  // Sharia is open to all for display/management
-  const isShariaAllowed = true;
+  // Sharia is open to admin, rowaq_admin, and the four designated specialties
+  const shariaSpecialties = [
+    'مدير الإدارة',
+    'العضو التقني',
+    'العضو الإداري علوم شرعية وعربية',
+    'العضو العلمي علوم شرعية وعربية',
+    'العضو الإداري، علوم شرعية وعربية',
+    'العضو العلمي، علوم شرعية وعربية',
+    'العضو الإداري للعلوم الشرعية والعربية',
+    'العضو العلمي للعلوم الشرعية والعربية'
+  ];
+
+  const isShariaAllowed = isAdmin || 
+    (role === 'rowaq_admin') || 
+    (role === 'sharia_student') ||
+    shariaSpecialties.includes(currentUser.specialty);
 
   return (
     <div className="auth-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', direction: 'rtl', transition: 'background-color 0.3s ease' }}>

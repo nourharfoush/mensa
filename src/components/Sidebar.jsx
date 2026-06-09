@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, Users, FileText, Calendar, GitBranch, 
-  BookOpen, Building, MapPin, UserPlus, FilePlus, Settings, User, LogOut, Shield, ArrowRightLeft, BookOpen as BookIcon
+  BookOpen, Building, MapPin, UserPlus, FilePlus, Settings, User, LogOut, Shield, ArrowRightLeft, BookOpen as BookIcon, Award, Video, Newspaper
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -66,10 +66,14 @@ const menuGroups = [
     title: 'العلوم الشرعية والعربية',
     isShariaOnly: true,
     items: [
-      { name: 'الدورات والبرامج', icon: BookIcon, path: '/sharia-courses' },
-      { name: 'هيئة التدريس', icon: Users, path: '/sharia-teachers' },
-      { name: 'الطلاب والدارسين', icon: BookOpen, path: '/sharia-students' },
-      { name: 'الحلقات المجدولة', icon: Calendar, path: '/sharia-sessions' },
+      { name: 'الإدارة العليا (الادمن)', icon: Shield, path: '/sharia-dashboard?tab=admins' },
+      { name: 'مسؤولو الإدارات الخارجية', icon: MapPin, path: '/sharia-dashboard?tab=externalAdmins' },
+      { name: 'المقررات والمواد الدراسية', icon: BookIcon, path: '/sharia-dashboard?tab=courses' },
+      { name: 'قسم الدارسين والطلاب', icon: Users, path: '/sharia-dashboard?tab=students' },
+      { name: 'الاختبارات والامتحانات', icon: FileText, path: '/sharia-dashboard?tab=exams' },
+      { name: 'نتائج الامتحانات', icon: Award, path: '/sharia-dashboard?tab=results' },
+      { name: 'البث المباشر والمحاضرات', icon: Video, path: '/sharia-dashboard?tab=live' },
+      { name: 'الأخبار والإعلانات', icon: Newspaper, path: '/sharia-dashboard?tab=news' },
     ]
   }
 ];
@@ -87,19 +91,44 @@ function Sidebar({ isOpen, toggleSidebar }) {
   
   // Get current user and role
   let role = '';
+  let specialty = '';
   try {
     const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
-    if (currentUser && currentUser.role) {
-      role = currentUser.role;
+    if (currentUser) {
+      role = currentUser.role || '';
+      specialty = currentUser.specialty || '';
     }
   } catch (e) {
     console.error('Error parsing currentUser in Sidebar', e);
   }
 
   const isPathAllowed = (path, userRole) => {
-    // Sharia paths allowed for everyone for demonstration/management
-    if (['/sharia-dashboard', '/sharia-courses', '/sharia-teachers', '/sharia-students', '/sharia-sessions'].includes(path)) {
-      return true;
+    // 10. sharia_student (دارس علوم شرعية)
+    if (userRole === 'sharia_student') {
+      const allowed = [
+        '/sharia-dashboard',
+        '/sharia-dashboard?tab=courses',
+        '/sharia-dashboard?tab=exams',
+        '/sharia-dashboard?tab=results',
+        '/sharia-dashboard?tab=live',
+        '/sharia-dashboard?tab=news'
+      ];
+      return allowed.includes(path);
+    }
+
+    // Sharia paths allowed for admin, rowaq_admin, and the four designated specialties
+    if (path.startsWith('/sharia-dashboard') || ['/sharia-courses', '/sharia-teachers', '/sharia-students', '/sharia-sessions'].includes(path)) {
+      const shariaSpecialties = [
+        'مدير الإدارة',
+        'العضو التقني',
+        'العضو الإداري علوم شرعية وعربية',
+        'العضو العلمي علوم شرعية وعربية',
+        'العضو الإداري، علوم شرعية وعربية',
+        'العضو العلمي، علوم شرعية وعربية',
+        'العضو الإداري للعلوم الشرعية والعربية',
+        'العضو العلمي للعلوم الشرعية والعربية'
+      ];
+      return userRole === 'admin' || userRole === 'rowaq_admin' || shariaSpecialties.includes(specialty);
     }
 
     // Super Admin can access everything
@@ -305,11 +334,30 @@ function Sidebar({ isOpen, toggleSidebar }) {
               {group.title && <div className="menu-group-title">{group.title}</div>}
               {group.items.map((item, idy) => {
                 const Icon = item.icon;
+                const isItemActive = () => {
+                  if (item.path === '#') return false;
+                  const targetPath = item.path.split('?')[0];
+                  const currentPath = location.pathname;
+                  if (targetPath !== currentPath) return false;
+                  if (item.path.includes('?')) {
+                    const targetParams = new URLSearchParams(item.path.split('?')[1]);
+                    const currentParams = new URLSearchParams(location.search);
+                    for (const [key, val] of targetParams.entries()) {
+                      if (currentParams.get(key) !== val) return false;
+                    }
+                    return true;
+                  } else {
+                    if (targetPath === '/sharia-dashboard') {
+                      return !location.search || !location.search.includes('tab=');
+                    }
+                    return true;
+                  }
+                };
                 return (
                   <NavLink 
                     to={item.path} 
                     key={idy} 
-                    className={({ isActive }) => `menu-item ${isActive && item.path !== '#' ? 'active' : ''}`}
+                    className={() => `menu-item ${isItemActive() ? 'active' : ''}`}
                     onClick={handleLinkClick}
                   >
                     <Icon size={18} className="menu-icon" />

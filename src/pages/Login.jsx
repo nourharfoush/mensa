@@ -62,6 +62,35 @@ function Login() {
       return ids.some(id => id && id === inputUser) && pws.some(pw => pw && pw === inputPass);
     });
 
+    // تحقق إضافي لدارسي العلوم الشرعية لتحديث دورهم أو التعرف عليهم مباشرة
+    try {
+      const shariaStudents = JSON.parse(localStorage.getItem('sharia_students') || '[]');
+      const shariaMatch = shariaStudents.find(s => 
+        String(s.nationalId || '').trim() === inputUser &&
+        inputPass === String(s.nationalId || '').trim()
+      );
+      if (shariaMatch) {
+        if (foundUser) {
+          foundUser.role = 'sharia_student';
+        } else {
+          foundUser = {
+            name: shariaMatch.name,
+            email: shariaMatch.nationalId,
+            username: shariaMatch.nationalId,
+            national_id: shariaMatch.nationalId,
+            password: shariaMatch.nationalId,
+            record_number: shariaMatch.nationalId,
+            phone: shariaMatch.phone || '',
+            role: 'sharia_student',
+            governorate: shariaMatch.governorate || '',
+            created_at: new Date().toLocaleDateString('ar-EG')
+          };
+        }
+      }
+    } catch (err) {
+      console.error('Error parsing sharia_students in Login', err);
+    }
+
     const normalizeArabic = (str) => {
       if (!str) return '';
       return str
@@ -89,6 +118,10 @@ function Login() {
     // ===== 2) إذا لم نجده، نبحث في جميع بيانات النظام، وإلا نقوم بتحديث الحقول الجغرافية إذا كان منسقاً أو محفظاً =====
     if (foundUser) {
       const nationalId = String(foundUser.national_id || foundUser.username || foundUser.email || '').trim();
+      const mgr = managers.find(mg => String(mg.national_id || '').trim() === nationalId);
+      if (mgr) {
+        foundUser.specialty = mgr.specialty;
+      }
       const coord = coordinators.find(c => 
         String(c.national_id || '').trim() === nationalId ||
         (foundUser.name && normalizeArabic(c.name) === normalizeArabic(foundUser.name))
@@ -157,7 +190,8 @@ function Login() {
           foundUser = {
             name: mgr.name, email: inputUser, username: inputUser, national_id: inputUser,
             password: inputPass, record_number: inputPass, phone: mgr.phone || '',
-            role, userAdmin: mgr.admin || ''
+            role, userAdmin: mgr.admin || '',
+            specialty: mgr.specialty
           };
         }
       }

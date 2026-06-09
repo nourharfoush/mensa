@@ -1,53 +1,466 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { BookOpen, GraduationCap, Users, Calendar, Award } from 'lucide-react';
-import StatsCards from '../components/StatsCards';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { 
+  BookOpen, GraduationCap, Users, Calendar, Award, Shield, MapPin, 
+  Layers, FileText, Newspaper, Radio, Video, Plus, Search, Filter, 
+  Trash, Edit, Check, X, ChevronLeft, ChevronRight, Play, ExternalLink
+} from 'lucide-react';
 import Footer from '../components/Footer';
+import { useAppData } from '../context/AppDataContext';
+
+// All Egyptian governorates + Al-Azhar Mosque
+const GOVERNORATES = [
+  'الجامع الأزهر', 'القاهرة', 'الجيزة', 'الإسكندرية', 'الدقهلية', 
+  'البحر الأحمر', 'البحيرة', 'الفيوم', 'الغربية', 'الإسماعيلية', 
+  'المنوفية', 'المنيا', 'القليوبية', 'الوادي الجديد', 'الشرقية', 
+  'السويس', 'أسوان', 'أسيوط', 'بني سويف', 'بورسعيد', 'دمياط', 
+  'جنوب سيناء', 'كفر الشيخ', 'مطروح', 'الأقصر', 'قنا', 'شمال سيناء', 'سوهاج'
+];
 
 function ShariaDashboard() {
-  const dynamicStats = [
-    {
-      id: 1,
-      title: 'البرامج والدورات',
-      value: 0,
-      iconColor: '#10b981',
-      iconType: 'book'
-    },
-    {
-      id: 2,
-      title: 'أعضاء هيئة التدريس',
-      value: 0,
-      iconColor: '#a855f7',
-      iconType: 'graduation-cap'
-    },
-    {
-      id: 3,
-      title: 'الطلاب والدارسين',
-      value: 0,
-      iconColor: '#f97316',
-      iconType: 'users'
-    },
-    {
-      id: 4,
-      title: 'الحلقات الدراسية',
-      value: 0,
-      iconColor: '#3b82f6',
-      iconType: 'book-open'
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const tabParam = queryParams.get('tab');
+
+  const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+  const userRole = currentUser ? currentUser.role : '';
+  const isShariaStudent = userRole === 'sharia_student';
+
+  const [activeTab, setActiveTab] = useState('overview');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showAddModal, setShowAddModal] = useState(null); // 'admin', 'externalAdmin', 'course', 'student', 'exam', 'result', 'news', 'live'
+  
+  // Governorate filter selection (Students & Live Lectures & Attendance vary per governorate)
+  const [selectedGov, setSelectedGov] = useState('الكل');
+
+  useEffect(() => {
+    const targetTab = tabParam || 'overview';
+    if (isShariaStudent && ['admins', 'externalAdmins', 'students'].includes(targetTab)) {
+      setActiveTab('overview');
+    } else {
+      setActiveTab(targetTab);
     }
+  }, [tabParam, isShariaStudent]);
+
+  const { managers = [], addManager, deleteManager, addUser, updateUser, users = [] } = useAppData();
+
+  const targetSpecialties = [
+    'مدير الإدارة',
+    'العضو التقني',
+    'العضو الإداري للعلوم الشرعية والعربية',
+    'العضو العلمي للعلوم الشرعية والعربية',
+    'العضو الإداري، علوم شرعية وعربية',
+    'العضو العلمي، علوم شرعية وعربية',
+    'العضو الإداري علوم شرعية وعربية',
+    'العضو العلمي علوم شرعية وعربية'
   ];
 
-  const courses = [];
+  // Derive admins from Rowaq managers assigned to 'الجامع الأزهر'
+  const admins = managers.filter(m => {
+    const gov = m.admin || m.governorate;
+    const spec = m.specialty || m.specialization;
+    return gov === 'الجامع الأزهر' && targetSpecialties.includes(spec);
+  }).map(m => ({
+    ...m,
+    governorate: m.admin || m.governorate,
+    specialty: (m.specialty === 'العضو الإداري، علوم شرعية وعربية' || m.specialty === 'العضو الإداري للعلوم الشرعية والعربية' || m.specialty === 'العضو الإداري علوم شرعية وعربية') ? 'العضو الإداري علوم شرعية وعربية' :
+               (m.specialty === 'العضو العلمي، علوم شرعية وعربية' || m.specialty === 'العضو العلمي للعلوم الشرعية والعربية' || m.specialty === 'العضو العلمي علوم شرعية وعربية') ? 'العضو العلمي علوم شرعية وعربية' :
+               m.specialty,
+    status: m.status || 'نشط'
+  }));
+
+  // Derive externalAdmins from Rowaq managers assigned to other governorates
+  const externalAdmins = managers.filter(m => {
+    const gov = m.admin || m.governorate;
+    const spec = m.specialty || m.specialization;
+    return gov && gov !== 'الجامع الأزهر' && targetSpecialties.includes(spec);
+  }).map(m => ({
+    ...m,
+    governorate: m.admin || m.governorate,
+    specialty: (m.specialty === 'العضو الإداري، علوم شرعية وعربية' || m.specialty === 'العضو الإداري للعلوم الشرعية والعربية' || m.specialty === 'العضو الإداري علوم شرعية وعربية') ? 'العضو الإداري علوم شرعية وعربية' :
+               (m.specialty === 'العضو العلمي، علوم شرعية وعربية' || m.specialty === 'العضو العلمي للعلوم الشرعية والعربية' || m.specialty === 'العضو العلمي علوم شرعية وعربية') ? 'العضو العلمي علوم شرعية وعربية' :
+               m.specialty,
+    status: m.status || 'نشط'
+  }));
+
+  // Stages, Levels, Courses (Subjects) are static/global
+  const [courses, setCourses] = useState([
+    // تمهيدية - المستوى الأول
+    { id: 1, stage: 'تمهيدية', level: 'المستوى الأول', discipline: '—', name: 'مدخل إلى العلوم الشرعية', teacher: 'الشيخ أحمد البهتيمي', hours: 30, studentsCount: 120 },
+    { id: 2, stage: 'تمهيدية', level: 'المستوى الأول', discipline: '—', name: 'النحو التطبيقي (مبادئ التأسيس)', teacher: 'الأستاذ الدكتور خالد عبد العزيز', hours: 40, studentsCount: 110 },
+    // تمهيدية - المستوى الثاني
+    { id: 3, stage: 'تمهيدية', level: 'المستوى الثاني', discipline: '—', name: 'تيسير مصطلح الحديث', teacher: 'الشيخ الدكتور حسن الشافعي', hours: 35, studentsCount: 95 },
+    { id: 4, stage: 'تمهيدية', level: 'المستوى الثاني', discipline: '—', name: 'تفسير جزء عم', teacher: 'الشيخ أحمد الطيب', hours: 30, studentsCount: 140 },
+    // متوسطة - المستوى الأول
+    { id: 5, stage: 'متوسطة', level: 'المستوى الأول', discipline: '—', name: 'شرح متن أبي شجاع في الفقه الشافعي', teacher: 'الشيخ محمد مصطفى', hours: 45, studentsCount: 85 },
+    { id: 6, stage: 'متوسطة', level: 'المستوى الأول', discipline: '—', name: 'العقيدة الطحاوية وشرحها الكافي', teacher: 'الشيخ علي جمعة', hours: 40, studentsCount: 90 },
+    // متوسطة - المستوى الثاني
+    { id: 7, stage: 'متوسطة', level: 'المستوى الثاني', discipline: '—', name: 'متن قطر الندى وبل الصدى', teacher: 'الأستاذ يسري جبر', hours: 50, studentsCount: 78 },
+    // متقدمة - فقه وأصوله
+    { id: 8, stage: 'متقدمة', level: 'المستوى الأول', discipline: 'fiqh', name: 'شرح فتح القدير على الهداية (حنفي)', teacher: 'الشيخ أحمد معبد', hours: 60, studentsCount: 65 },
+    { id: 9, stage: 'متقدمة', level: 'المستوى الثاني', discipline: 'fiqh', name: 'شرح جمع الجوامع في أصول الفقه', teacher: 'الشيخ إبراهيم الهدهد', hours: 55, studentsCount: 50 },
+    // متقدمة - تفسير وحديث
+    { id: 10, stage: 'متقدمة', level: 'المستوى الأول', discipline: 'tafsir', name: 'علوم الحديث ومناهج المحدثين', teacher: 'الشيخ عبد الحليم محمود', hours: 48, studentsCount: 72 },
+    // متقدمة - عقيدة
+    { id: 11, stage: 'متقدمة', level: 'المستوى الثالث', discipline: 'aqeedah', name: 'المواقف في علم الكلام وعضد الدين الإيجي', teacher: 'الشيخ عبد الفضيل القوصي', hours: 60, studentsCount: 40 },
+    // متقدمة - لغة عربية
+    { id: 12, stage: 'متقدمة', level: 'المستوى الرابع', discipline: 'arabic', name: 'دلائل الإعجاز لعبد القاهر الجرجاني', teacher: 'الشيخ محمد أبو موسى', hours: 50, studentsCount: 35 }
+  ]);
+
+  const [selectedCourseStage, setSelectedCourseStage] = useState('تمهيدية');
+  const [selectedCourseLevel, setSelectedCourseLevel] = useState('المستوى الأول');
+  const [selectedCourseDiscipline, setSelectedCourseDiscipline] = useState('fiqh');
+
+  // Students list changes per location/governorate with the new fields
+  const [students, setStudents] = useState(() => {
+    try {
+      const stored = localStorage.getItem('sharia_students');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const loggedInStudent = isShariaStudent 
+    ? students.find(s => String(s.nationalId || '').trim() === String(currentUser?.national_id || '').trim())
+    : null;
+
+  useEffect(() => {
+    localStorage.setItem('sharia_students', JSON.stringify(students));
+  }, [students]);
+
+  useEffect(() => {
+    if (isShariaStudent && loggedInStudent) {
+      setSelectedCourseStage(loggedInStudent.stage || 'تمهيدية');
+      setSelectedCourseLevel(loggedInStudent.level || 'المستوى الأول');
+      setSelectedCourseDiscipline(loggedInStudent.discipline || 'fiqh');
+      setSelectedGov(loggedInStudent.governorate || 'الجامع الأزهر');
+    }
+  }, [isShariaStudent, loggedInStudent]);
+
+  const [editingStudent, setEditingStudent] = useState(null);
+
+  const [exams, setExams] = useState([]);
+
+  const [results, setResults] = useState([]);
+
+  // News is static/global
+  const [news, setNews] = useState([]);
+
+  // Live stream lectures change per location/governorate
+  const [liveLectures, setLiveLectures] = useState([]);
+
+  // --- NEW ITEM FORM STATES ---
+  const [adminForm, setAdminForm] = useState({ 
+    name: '', email: '', phone: '', national_id: '', specialty: 'مدير الإدارة',
+    record_no: '', job_title: '', workplace: '', job_grade: '',
+    qualification: '', decision_no: '', admin: 'الجامع الأزهر', address: '', status: 'نشط'
+  });
+  const [externalAdminForm, setExternalAdminForm] = useState({ 
+    name: '', email: '', phone: '', national_id: '', specialty: 'مدير الإدارة',
+    record_no: '', job_title: '', workplace: '', job_grade: '',
+    qualification: '', decision_no: '', governorate: 'الجامع الأزهر', address: '', status: 'نشط', branchCount: 1
+  });
+  const [courseForm, setCourseForm] = useState({ stage: 'تمهيدية', level: 'المستوى الأول', discipline: 'fiqh', name: '', teacher: '', hours: 30 });
+  const [studentForm, setStudentForm] = useState({ 
+    name: '', 
+    nationalId: '', 
+    governorate: 'الجامع الأزهر', 
+    stage: 'تمهيدية', 
+    level: 'المستوى الأول', 
+    discipline: '—', 
+    fiqhSchool: 'شافعي', 
+    gender: 'ذكر', 
+    studyType: 'مباشر',
+    code: '',
+    seatNumber: ''
+  });
+  const [examForm, setExamForm] = useState({ name: '', level: 'تمهيدية - المستوى الأول', date: '', duration: '90 دقيقة', totalQuestions: 40, status: 'مجدول' });
+  const [resultForm, setResultForm] = useState({ studentName: '', examName: '', score: 85, grade: 'جيد جداً', status: 'ناجح', governorate: 'الجامع الأزهر' });
+  const [newsForm, setNewsForm] = useState({ title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'إعلان عام', status: 'منشور' });
+  const [liveForm, setLiveForm] = useState({ title: '', teacher: '', stage: 'تمهيدية - مستوى أول', scheduleTime: '', link: '', status: 'مجدول', governorate: 'الجامع الأزهر' });
+
+  // --- HANDLERS FOR ADDING ITEMS ---
+  const handleAddAdmin = (e) => {
+    e.preventDefault();
+    const finalForm = {
+      ...adminForm,
+      username: adminForm.national_id,
+      password: adminForm.record_no
+    };
+    addManager(finalForm);
+    setShowAddModal(null);
+    setAdminForm({ 
+      name: '', email: '', phone: '', national_id: '', specialty: 'مدير الإدارة',
+      record_no: '', job_title: '', workplace: '', job_grade: '',
+      qualification: '', decision_no: '', admin: 'الجامع الأزهر', address: '', status: 'نشط'
+    });
+  };
+
+  const handleAddExternalAdmin = (e) => {
+    e.preventDefault();
+    const finalForm = {
+      ...externalAdminForm,
+      admin: externalAdminForm.governorate, // Align with main Rowaq admin field
+      username: externalAdminForm.national_id,
+      password: externalAdminForm.record_no
+    };
+    addManager(finalForm);
+    setShowAddModal(null);
+    setExternalAdminForm({ 
+      name: '', email: '', phone: '', national_id: '', specialty: 'مدير الإدارة',
+      record_no: '', job_title: '', workplace: '', job_grade: '',
+      qualification: '', decision_no: '', governorate: 'الجامع الأزهر', address: '', status: 'نشط', branchCount: 1
+    });
+  };
+
+  const handleAddCourse = (e) => {
+    e.preventDefault();
+    const formattedCourse = {
+      id: Date.now(),
+      stage: courseForm.stage,
+      level: courseForm.level,
+      discipline: courseForm.stage === 'متقدمة' ? courseForm.discipline : '—',
+      name: courseForm.name,
+      teacher: courseForm.teacher,
+      studentsCount: 0,
+      hours: Number(courseForm.hours)
+    };
+    setCourses([...courses, formattedCourse]);
+    setShowAddModal(null);
+    setCourseForm({ stage: 'تمهيدية', level: 'المستوى الأول', discipline: 'fiqh', name: '', teacher: '', hours: 30 });
+  };
+
+  const handleAddStudent = (e) => {
+    e.preventDefault();
+    const studentId = Date.now();
+    const newStudent = { ...studentForm, id: studentId };
+    
+    // Add to local state
+    setStudents([...students, newStudent]);
+    
+    // Auto-create user account
+    if (studentForm.nationalId) {
+      const studentUser = {
+        name: studentForm.name,
+        national_id: studentForm.nationalId,
+        username: studentForm.nationalId,
+        password: studentForm.nationalId,
+        email: studentForm.nationalId,
+        role: 'sharia_student',
+        phone: studentForm.phone || '',
+        governorate: studentForm.governorate || '',
+        created_at: new Date().toLocaleDateString('ar-EG')
+      };
+      addUser(studentUser);
+    }
+    
+    setShowAddModal(null);
+    setStudentForm({ 
+      name: '', 
+      nationalId: '', 
+      governorate: 'الجامع الأزهر', 
+      stage: 'تمهيدية', 
+      level: 'المستوى الأول', 
+      discipline: '—', 
+      fiqhSchool: 'شافعي', 
+      gender: 'ذكر', 
+      studyType: 'مباشر',
+      code: '',
+      seatNumber: ''
+    });
+  };
+
+  const handleEditStudent = (e) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+    
+    // Find the original student before editing
+    const originalStudent = students.find(s => s.id === editingStudent.id);
+    const oldNationalId = originalStudent ? originalStudent.nationalId : null;
+    const newNationalId = editingStudent.nationalId;
+    
+    // Update student in list
+    setStudents(students.map(s => s.id === editingStudent.id ? editingStudent : s));
+    
+    // Update or create user credentials
+    if (newNationalId) {
+      const targetOld = oldNationalId ? String(oldNationalId).trim() : '';
+      const associatedUser = users.find(u => {
+        const uNid = String(u.national_id || '').trim();
+        const uUsername = String(u.username || '').trim();
+        const uEmail = String(u.email || '').trim();
+        return (targetOld !== '' && (uNid === targetOld || uUsername === targetOld || uEmail === targetOld));
+      });
+
+      if (associatedUser) {
+        updateUser(associatedUser.id, {
+          national_id: newNationalId,
+          username: newNationalId,
+          password: newNationalId,
+          email: newNationalId
+        });
+      } else {
+        // Fallback: If no associated user was found, create one now
+        const studentUser = {
+          name: editingStudent.name,
+          national_id: newNationalId,
+          username: newNationalId,
+          password: newNationalId,
+          email: newNationalId,
+          role: 'sharia_student',
+          phone: editingStudent.phone || '',
+          governorate: editingStudent.governorate || '',
+          created_at: new Date().toLocaleDateString('ar-EG')
+        };
+        addUser(studentUser);
+      }
+    }
+    
+    setEditingStudent(null);
+  };
+
+  const handleAddExam = (e) => {
+    e.preventDefault();
+    setExams([...exams, { ...examForm, id: Date.now() }]);
+    setShowAddModal(null);
+    setExamForm({ name: '', level: 'تمهيدية - المستوى الأول', date: '', duration: '90 دقيقة', totalQuestions: 40, status: 'مجدول' });
+  };
+
+  const handleAddResult = (e) => {
+    e.preventDefault();
+    setResults([...results, { ...resultForm, id: Date.now(), score: Number(resultForm.score) }]);
+    setShowAddModal(null);
+    setResultForm({ studentName: '', examName: '', score: 85, grade: 'جيد جداً', status: 'ناجح', governorate: 'الجامع الأزهر' });
+  };
+
+  const handleAddNews = (e) => {
+    e.preventDefault();
+    setNews([...news, { ...newsForm, id: Date.now() }]);
+    setShowAddModal(null);
+    setNewsForm({ title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'إعلان عام', status: 'منشور' });
+  };
+
+  const handleAddLive = (e) => {
+    e.preventDefault();
+    setLiveLectures([...liveLectures, { ...liveForm, id: Date.now() }]);
+    setShowAddModal(null);
+    setLiveForm({ title: '', teacher: '', stage: 'تمهيدية - مستوى أول', scheduleTime: '', link: '', status: 'مجدول', governorate: 'الجامع الأزهر' });
+  };
+
+  // --- ACTIONS ---
+  const handleDelete = (id, listName) => {
+    if (confirm('هل أنت متأكد من رغبتك في حذف هذا السجل؟')) {
+      if (listName === 'admins') deleteManager(id);
+      if (listName === 'externalAdmins') deleteManager(id);
+      if (listName === 'courses') setCourses(courses.filter(x => x.id !== id));
+      if (listName === 'preparatory') setCourses(courses.filter(x => x.id !== id));
+      if (listName === 'intermediate') setCourses(courses.filter(x => x.id !== id));
+      if (listName === 'advanced') setCourses(courses.filter(x => x.id !== id));
+      if (listName === 'students') setStudents(students.filter(x => x.id !== id));
+      if (listName === 'exams') setExams(exams.filter(x => x.id !== id));
+      if (listName === 'results') setResults(results.filter(x => x.id !== id));
+      if (listName === 'news') setNews(news.filter(x => x.id !== id));
+      if (listName === 'live') setLiveLectures(liveLectures.filter(x => x.id !== id));
+    }
+  };
+
+  // --- FILTERED DATA FOR ACTIVE GOVERNORATE ---
+  const getFilteredStudents = () => {
+    return students.filter(s => 
+      (selectedGov === 'الكل' || s.governorate === selectedGov) &&
+      (s.name.includes(searchTerm) || s.nationalId.includes(searchTerm) || (s.code && s.code.includes(searchTerm)))
+    );
+  };
+
+  const getFilteredLiveLectures = () => {
+    let filtered = liveLectures;
+    if (isShariaStudent && loggedInStudent) {
+      filtered = filtered.filter(l => {
+        const matchGov = l.governorate === loggedInStudent.governorate;
+        const lectureStage = l.stage || '';
+        const hasStage = lectureStage.includes(loggedInStudent.stage);
+        const hasLevel = lectureStage.includes(loggedInStudent.level) || 
+                         (loggedInStudent.level === 'المستوى الأول' && (lectureStage.includes('الأول') || lectureStage.includes('اول'))) ||
+                         (loggedInStudent.level === 'المستوى الثاني' && (lectureStage.includes('الثاني') || lectureStage.includes('ثاني'))) ||
+                         (loggedInStudent.level === 'المستوى الثالث' && (lectureStage.includes('الثالث') || lectureStage.includes('ثالث'))) ||
+                         (loggedInStudent.level === 'المستوى الرابع' && (lectureStage.includes('الرابع') || lectureStage.includes('رابع')));
+        return matchGov && hasStage && hasLevel;
+      });
+    } else {
+      filtered = filtered.filter(l => selectedGov === 'الكل' || l.governorate === selectedGov);
+    }
+    return filtered;
+  };
+
+  const getFilteredResults = () => {
+    if (isShariaStudent && loggedInStudent) {
+      return results.filter(r => 
+        String(r.studentName || '').trim() === String(loggedInStudent.name || '').trim()
+      );
+    }
+    return results.filter(r => 
+      selectedGov === 'الكل' || r.governorate === selectedGov
+    );
+  };
+
+  const getFilteredExams = () => {
+    if (isShariaStudent && loggedInStudent) {
+      return exams.filter(e => {
+        const examLevel = e.level || '';
+        const hasStage = examLevel.includes(loggedInStudent.stage);
+        const hasLevel = examLevel.includes(loggedInStudent.level) || 
+                         (loggedInStudent.level === 'المستوى الأول' && (examLevel.includes('الأول') || examLevel.includes('اول'))) ||
+                         (loggedInStudent.level === 'المستوى الثاني' && (examLevel.includes('الثاني') || examLevel.includes('ثاني'))) ||
+                         (loggedInStudent.level === 'المستوى الثالث' && (examLevel.includes('الثالث') || examLevel.includes('ثالث'))) ||
+                         (loggedInStudent.level === 'المستوى الرابع' && (examLevel.includes('الرابع') || examLevel.includes('رابع')));
+        return hasStage && hasLevel;
+      });
+    }
+    return exams;
+  };
+
+  // --- COUNTING HELPER ---
+  const getTotalStudents = () => getFilteredStudents().length;
+  const getTotalTeachers = () => {
+    const teachers = new Set(courses.map(c => c.teacher));
+    return teachers.size;
+  };
+  const getTotalCourses = () => courses.length;
+
+  const dynamicStats = [
+    { id: 1, title: 'البرامج والدورات', value: getTotalCourses(), iconColor: '#10b981', iconType: 'book', tab: 'courses' },
+    { id: 2, title: 'أعضاء هيئة التدريس', value: getTotalTeachers(), iconColor: '#a855f7', iconType: 'graduation-cap', tab: 'admins' },
+    { id: 3, title: 'الدارسين بالموقع المختار', value: getTotalStudents(), iconColor: '#f97316', iconType: 'users', tab: 'students' },
+    { id: 4, title: 'البثوث بالموقع المختار', value: getFilteredLiveLectures().length, iconColor: '#3b82f6', iconType: 'book-open', tab: 'live' }
+  ];
+
+  // Render Section Selector Cards on Overview Tab
+  const allSectionGridItems = [
+    { key: 'admins', name: 'الادارة العليا الادمن', desc: 'إدارة مدراء الرواق ومستشاري المواد وصلاحياتهم العلمية والإدارية.', icon: Shield, color: '#a855f7' },
+    { key: 'externalAdmins', name: 'مسؤولو الادارات الخارجية', desc: 'متابعة مسؤولي الأروقة الخارجية ومنسقي المحافظات وعدد فروعهم.', icon: MapPin, color: '#3b82f6' },
+    { key: 'courses', name: 'المقررات والمواد الدراسية', desc: 'عرض وإدارة المقررات والمواد الدراسية والتحكم في إضافة المواد حسب المرحلة والمستوى الدراسي.', icon: BookOpen, color: '#10b981' },
+    { key: 'students', name: 'قسم الدارسين', desc: 'متابعة شؤون الطلاب المسجلين بالمحافظة ومستوياتهم ونسب حضورهم وجداولهم.', icon: Users, color: '#ec4899' },
+    { key: 'exams', name: 'قسم الاختبارات والامتحانات', desc: 'تنظيم وجدولة الامتحانات، وتصميم أوراق الاختبارات الفترية والنهائية.', icon: FileText, color: '#14b8a6' },
+    { key: 'results', name: 'قسم النتائج والتقديرات', desc: 'إصدار نتائج المحافظة وعرض درجات الدارسين ونسب النجاح والرسوب.', icon: Award, color: '#06b6d4' },
+    { key: 'news', name: 'قسم الأخبار والإعلانات', desc: 'إضافة الإعلانات الهامة وتعميم المواعيد وجداول الفصول الدراسية العامة للرواق.', icon: Newspaper, color: '#84cc16' },
+    { key: 'live', name: 'قسم البث المباشر والمحاضرات', desc: 'جدولة البثوث التفاعلية ومواعيد المحاضرات الاونلاين الخاصة بطلاب المحافظة.', icon: Radio, color: '#ef4444' },
+  ];
+
+  const sectionGridItems = isShariaStudent
+    ? allSectionGridItems.filter(item => !['admins', 'externalAdmins', 'students'].includes(item.key))
+    : allSectionGridItems;
 
   return (
-    <div className="dashboard-page" style={{ direction: 'rtl' }}>
+    <div className="dashboard-page" style={{ direction: 'rtl', padding: '10px 0' }}>
       
       {/* Banner */}
       <div style={{
         background: 'linear-gradient(135deg, #11141D 0%, #1c202b 100%)',
         border: '1px solid var(--border-subtle)',
         borderRadius: '16px',
-        padding: '40px 30px',
-        marginBottom: '30px',
+        padding: '30px',
+        marginBottom: '20px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -66,13 +479,13 @@ function ShariaDashboard() {
             display: 'inline-block',
             marginBottom: '12px'
           }}>
-            بوابة التعليم الأزهري المعتمد
+            بوابة التعليم الأزهري التخصصي المعتمد
           </span>
           <h1 style={{ fontSize: '28px', color: 'var(--text-primary)', marginBottom: '10px', fontWeight: 'bold' }}>
-            لوحة تحكم العلوم الشرعية والعربية
+            بوابة العلوم الشرعية والعربية بالجامع الأزهر
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '15px', lineHeight: '1.6', maxWidth: '600px', margin: 0 }}>
-            مرحباً بك في لوحة الإشراف المتخصصة لبرامج ودورات قطاع العلوم الشرعية والعربية بالجامع الأزهر الشريف. تتيح لك هذه المنصة إدارة المقررات وتوزيع المعلمين وجداول الحلقات المباشرة.
+          <p style={{ color: 'var(--text-secondary)', fontSize: '15px', lineHeight: '1.6', maxWidth: '750px', margin: 0 }}>
+            لوحة الإشراف المتخصصة لقطاع العلوم الشرعية والعربية. تتيح لك هذه المنصة التفاعلية إدارة الهيكل التنظيمي للمحافظات، والتحكم ببرامج تمهيدي، متوسط، ومتقدم، وتتبع الدارسين، وجدولة الامتحانات، وإعلان النتائج، وإطلاق المحاضرات المباشرة.
           </p>
         </div>
         
@@ -83,79 +496,864 @@ function ShariaDashboard() {
           padding: '16px 24px',
           textAlign: 'center'
         }}>
-          <div style={{ color: 'var(--accent-gold)', fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }}>حالة الفصل الدراسي</div>
+          <div style={{ color: 'var(--accent-gold)', fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }}>حالة الفصل الدراسي الحالي</div>
           <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--text-primary)' }}>فصل الصيف 2026</div>
           <div style={{ color: '#10b981', fontSize: '13px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
-            نشط ومستمر
+            <span className="pulse-indicator" style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
+            نشط وتفاعلي
           </div>
         </div>
       </div>
 
-      {/* Stats Section */}
-      <StatsCards stats={dynamicStats} />
-
-      {/* Main Content Grid */}
+      {/* Governorate Filter Panel (Important: Students, live stream times, and tables are governorate specific) */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))',
-        gap: '30px',
-        marginTop: '30px',
-        marginBottom: '40px'
+        background: 'var(--bg-card)',
+        border: '1px solid rgba(214, 175, 55, 0.15)',
+        borderRadius: '12px',
+        padding: '16px 24px',
+        marginBottom: '25px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '15px',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)'
       }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(214, 175, 55, 0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--accent-gold)'
+          }}>
+            <MapPin size={18} />
+          </div>
+          <div>
+            <h4 style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 'bold' }}>تصفية الموقع (الجامع الأزهر والمحافظات)</h4>
+            <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>تتغير جداول الدارسين والامتحانات والبث المباشر وأوقات المحاضرات حسب الموقع المختار</p>
+          </div>
+        </div>
         
-        {/* Active Courses Table Card */}
-        <div style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '16px',
-          padding: '24px',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)'
-        }}>
+        {isShariaStudent ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>الموقع النشط حالياً:</span>
+            <span style={{
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: '1px solid var(--border-subtle)',
+              backgroundColor: 'rgba(214, 175, 55, 0.08)',
+              color: 'var(--accent-gold)',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              minWidth: '220px',
+              textAlign: 'center'
+            }}>
+              {selectedGov} (محدد تلقائياً)
+            </span>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>الموقع النشط حالياً:</span>
+            <select
+              value={selectedGov}
+              onChange={(e) => setSelectedGov(e.target.value)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-subtle)',
+                backgroundColor: 'var(--bg-main)',
+                color: 'var(--text-primary)',
+                fontSize: '13px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                outline: 'none',
+                minWidth: '220px'
+              }}
+            >
+              <option value="الكل">الكل (جميع المحافظات والجامع الأزهر)</option>
+              {GOVERNORATES.map(gov => (
+                <option key={gov} value={gov}>{gov}</option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
+      {/* Main Tabs Navigation */}
+      <div style={{
+        display: 'flex',
+        gap: '8px',
+        overflowX: 'auto',
+        paddingBottom: '12px',
+        marginBottom: '25px',
+        borderBottom: '1px solid var(--border-subtle)'
+      }}>
+        <button 
+          onClick={() => { setActiveTab('overview'); setSearchTerm(''); }}
+          style={{
+            padding: '10px 20px',
+            borderRadius: '8px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            border: activeTab === 'overview' ? '1px solid var(--accent-gold)' : '1px solid var(--border-subtle)',
+            backgroundColor: activeTab === 'overview' ? 'rgba(214, 175, 55, 0.15)' : 'var(--bg-card)',
+            color: activeTab === 'overview' ? 'var(--accent-gold)' : 'var(--text-secondary)',
+            whiteSpace: 'nowrap',
+            transition: 'all 0.2s'
+          }}
+        >
+          الرئيسية
+        </button>
+        {sectionGridItems.map(item => (
+          <button 
+            key={item.key}
+            onClick={() => { setActiveTab(item.key); setSearchTerm(''); }}
+            style={{
+              padding: '10px 18px',
+              borderRadius: '8px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              border: activeTab === item.key ? `1px solid ${item.color}` : '1px solid var(--border-subtle)',
+              backgroundColor: activeTab === item.key ? `${item.color}15` : 'var(--bg-card)',
+              color: activeTab === item.key ? item.color : 'var(--text-secondary)',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.2s'
+            }}
+          >
+            {item.name}
+          </button>
+        ))}
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 0. TAB: OVERVIEW */}
+      {/* ========================================================================= */}
+      {activeTab === 'overview' && (
+        <div>
+          {/* Quick Stats */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '30px' }}>
+            {dynamicStats.map(stat => (
+              <div 
+                key={stat.id}
+                onClick={() => setActiveTab(stat.tab)}
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = stat.iconColor}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
+              >
+                <div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px' }}>{stat.title}</div>
+                  <div style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{stat.value}</div>
+                </div>
+                <div style={{
+                  width: '46px',
+                  height: '46px',
+                  borderRadius: '50%',
+                  backgroundColor: `${stat.iconColor}15`,
+                  color: stat.iconColor,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {stat.id === 1 && <BookOpen size={22} />}
+                  {stat.id === 2 && <GraduationCap size={22} />}
+                  {stat.id === 3 && <Users size={22} />}
+                  {stat.id === 4 && <Radio size={22} />}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Section Selection Cards Grid */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h2 style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <BookOpen size={20} color="var(--accent-gold)" />
-              الدورات والمقررات النشطة حالياً
+            <h2 style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: 'bold' }}>
+              أقسام لوحة التحكم بالعلوم الشرعية والعربية
             </h2>
-            <Link to="/sharia-courses" style={{ color: 'var(--accent-gold)', fontSize: '13px', textDecoration: 'none', fontWeight: '600' }}>
-              عرض الكل
-            </Link>
+            <div style={{
+              background: 'rgba(214, 175, 55, 0.1)',
+              color: 'var(--accent-gold)',
+              padding: '6px 14px',
+              borderRadius: '8px',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }}>
+              الموقع النشط: {selectedGov === 'الكل' ? 'الكل (جميع المواقع)' : selectedGov}
+            </div>
           </div>
           
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '20px',
+            marginBottom: '40px'
+          }}>
+            {sectionGridItems.map(item => {
+              const IconComp = item.icon;
+              return (
+                <div 
+                  key={item.key}
+                  onClick={() => setActiveTab(item.key)}
+                  style={{
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: '12px',
+                    padding: '24px',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.borderColor = item.color;
+                    e.currentTarget.style.boxShadow = `0 10px 20px ${item.color}08`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'none';
+                    e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                    <div style={{
+                      padding: '12px',
+                      borderRadius: '10px',
+                      backgroundColor: `${item.color}12`,
+                      color: item.color
+                    }}>
+                      <IconComp size={24} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ fontSize: '16px', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '8px' }}>
+                        {item.name}
+                      </h3>
+                      <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>
+                        {item.desc}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 1. TAB: ADMINS (الادارة العليا) */}
+      {/* ========================================================================= */}
+      {activeTab === 'admins' && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+            <h2 style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Shield size={20} color="#a855f7" />
+              أعضاء الإدارة العليا ومستشاري المواد (الادمن)
+            </h2>
+          </div>
+
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                  <th style={{ padding: '12px 8px', color: 'var(--text-secondary)', fontSize: '14px' }}>الدورة</th>
-                  <th style={{ padding: '12px 8px', color: 'var(--text-secondary)', fontSize: '14px' }}>المحاضر</th>
-                  <th style={{ padding: '12px 8px', color: 'var(--text-secondary)', fontSize: '14px' }}>القسم</th>
-                  <th style={{ padding: '12px 8px', color: 'var(--text-secondary)', fontSize: '14px', textAlign: 'center' }}>الطلاب</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الاسم</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الرقم القومي</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>رقم السجل</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>التخصص / المسمى</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>رقم الهاتف</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>جهة العمل / الوظيفة</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', textAlign: 'center' }}>الحالة</th>
                 </tr>
               </thead>
               <tbody>
-                {courses.length === 0 ? (
+                {admins.map(admin => (
+                  <tr key={admin.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{admin.name}</td>
+                    <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{admin.national_id || '—'}</td>
+                    <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{admin.record_no || '—'}</td>
+                    <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{admin.specialty || '—'}</td>
+                    <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{admin.phone}</td>
+                    <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{(admin.job_title || '—') + ' / ' + (admin.workplace || '—')}</td>
+                    <td style={{ padding: '14px 10px', textAlign: 'center' }}>
+                      <span style={{
+                        background: 'rgba(16, 185, 129, 0.15)',
+                        color: '#10b981',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: 'bold'
+                      }}>{admin.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 2. TAB: EXTERNAL ADMINS (مسؤولي الإدارات الخارجية) */}
+      {/* ========================================================================= */}
+      {activeTab === 'externalAdmins' && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+            <h2 style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <MapPin size={20} color="#3b82f6" />
+              مسؤولو الإدارات الخارجية ومنسقو أروقة المحافظات
+            </h2>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الاسم</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الرقم القومي</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>رقم السجل</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>التخصص / المسمى</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>رقم الهاتف</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الموقع / المحافظة</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>جهة العمل / الوظيفة</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', textAlign: 'center' }}>الحالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                {externalAdmins.filter(ea => selectedGov === 'الكل' || ea.governorate === selectedGov).map(admin => (
+                  <tr key={admin.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                    <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{admin.name}</td>
+                    <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{admin.national_id || '—'}</td>
+                    <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{admin.record_no || '—'}</td>
+                    <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{admin.specialty || '—'}</td>
+                    <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{admin.phone}</td>
+                    <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <MapPin size={14} color="#3b82f6" />
+                        {admin.governorate}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{(admin.job_title || '—') + ' / ' + (admin.workplace || '—')}</td>
+                    <td style={{ padding: '14px 10px', textAlign: 'center' }}>
+                      <span style={{
+                        background: 'rgba(16, 185, 129, 0.15)',
+                        color: '#10b981',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: 'bold'
+                      }}>{admin.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 3. TAB: COURSES & SUBJECTS (المقررات والمواد الدراسية) */}
+      {/* ========================================================================= */}
+      {activeTab === 'courses' && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+            <div>
+              <h2 style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <BookOpen size={20} color="#10b981" />
+                المقررات والمواد الدراسية للعلوم الشرعية والعربية
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>قم باختيار المستوى الدراسي لتصفية المواد الدراسية أو إضافة مادة جديدة له</p>
+            </div>
+          </div>
+
+          {/* Level Selector Widget */}
+          <div style={{
+            background: 'var(--bg-main)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '25px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px'
+          }}>
+            {isShariaStudent ? (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+                <div style={{ fontSize: '15px', color: 'var(--text-primary)', fontWeight: 'bold' }}>
+                  مرحلتك ومستواك الدراسي الحالي: <strong style={{ color: 'var(--accent-gold)' }}>
+                    المرحلة {selectedCourseStage} {selectedCourseStage === 'متقدمة' && `(${[
+                      { id: 'fiqh', name: 'فقه وأصوله' },
+                      { id: 'tafsir', name: 'تفسير وحديث' },
+                      { id: 'aqeedah', name: 'عقيدة' },
+                      { id: 'arabic', name: 'لغة عربية' },
+                      { id: 'general', name: 'عامة' }
+                    ].find(d => d.id === selectedCourseDiscipline)?.name})`} - {selectedCourseLevel}
+                  </strong>
+                </div>
+                <div style={{
+                  padding: '6px 14px',
+                  borderRadius: '6px',
+                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                  color: '#10b981',
+                  fontSize: '12px',
+                  fontWeight: 'bold'
+                }}>
+                  تم تصفية المقررات تلقائياً لمرحلتك
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Stage Selector Row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-secondary)', minWidth: '100px' }}>المرحلة الدراسية:</span>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {[
+                      { key: 'تمهيدية', label: 'المرحلة التمهيدية' },
+                      { key: 'متوسطة', label: 'المرحلة المتوسطة' },
+                      { key: 'متقدمة', label: 'المرحلة المتقدمة' }
+                    ].map(stage => (
+                      <button
+                        key={stage.key}
+                        onClick={() => {
+                          setSelectedCourseStage(stage.key);
+                          // Reset level if moving to prep/intermediate from level 3/4
+                          if ((stage.key === 'تمهيدية' || stage.key === 'متوسطة') && 
+                              (selectedCourseLevel === 'المستوى الثالث' || selectedCourseLevel === 'المستوى الرابع')) {
+                            setSelectedCourseLevel('المستوى الأول');
+                          }
+                        }}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          border: '1px solid',
+                          borderColor: selectedCourseStage === stage.key ? 'var(--accent-gold)' : 'var(--border-subtle)',
+                          backgroundColor: selectedCourseStage === stage.key ? 'rgba(214, 175, 55, 0.15)' : 'rgba(255, 255, 255, 0.02)',
+                          color: selectedCourseStage === stage.key ? 'var(--accent-gold)' : 'var(--text-secondary)',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {stage.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Specialization/Discipline Row - Only visible for Advanced Stage */}
+                {selectedCourseStage === 'متقدمة' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', borderTop: '1px dashed var(--border-subtle)', paddingTop: '12px' }}>
+                    <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-secondary)', minWidth: '100px' }}>التخصص الدراسي:</span>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {[
+                        { id: 'fiqh', name: 'فقه وأصوله' },
+                        { id: 'tafsir', name: 'تفسير وحديث' },
+                        { id: 'aqeedah', name: 'عقيدة' },
+                        { id: 'arabic', name: 'لغة عربية' },
+                        { id: 'general', name: 'عامة' }
+                      ].map(disc => (
+                        <button
+                          key={disc.id}
+                          onClick={() => setSelectedCourseDiscipline(disc.id)}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            border: '1px solid',
+                            borderColor: selectedCourseDiscipline === disc.id ? '#f97316' : 'var(--border-subtle)',
+                            backgroundColor: selectedCourseDiscipline === disc.id ? 'rgba(249, 115, 22, 0.12)' : 'transparent',
+                            color: selectedCourseDiscipline === disc.id ? '#f97316' : 'var(--text-secondary)',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            fontSize: '12px',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          {disc.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Level Selector Row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', borderTop: '1px dashed var(--border-subtle)', paddingTop: '12px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-secondary)', minWidth: '100px' }}>المستوى الدراسي:</span>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {(selectedCourseStage === 'متقدمة'
+                      ? ['المستوى الأول', 'المستوى الثاني', 'المستوى الثالث', 'المستوى الرابع']
+                      : ['المستوى الأول', 'المستوى الثاني']
+                    ).map(lvl => (
+                      <button
+                        key={lvl}
+                        onClick={() => setSelectedCourseLevel(lvl)}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          border: '1px solid',
+                          borderColor: selectedCourseLevel === lvl ? 'var(--accent-gold)' : 'var(--border-subtle)',
+                          backgroundColor: selectedCourseLevel === lvl ? 'rgba(214, 175, 55, 0.15)' : 'rgba(255, 255, 255, 0.02)',
+                          color: selectedCourseLevel === lvl ? 'var(--accent-gold)' : 'var(--text-secondary)',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {lvl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Selected Level Summary and Action Button */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '15px',
+                  borderTop: '1px solid var(--border-subtle)',
+                  paddingTop: '16px',
+                  marginTop: '4px'
+                }}>
+                  <div style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
+                    المستوى المحدد حالياً: <strong style={{ color: 'var(--accent-gold)' }}>
+                      المرحلة {selectedCourseStage} {selectedCourseStage === 'متقدمة' && `(${[
+                        { id: 'fiqh', name: 'فقه وأصوله' },
+                        { id: 'tafsir', name: 'تفسير وحديث' },
+                        { id: 'aqeedah', name: 'عقيدة' },
+                        { id: 'arabic', name: 'لغة عربية' },
+                        { id: 'general', name: 'عامة' }
+                      ].find(d => d.id === selectedCourseDiscipline)?.name})`} - {selectedCourseLevel}
+                    </strong>
+                  </div>
+                  
+                  {!isShariaStudent && (
+                    <button
+                      onClick={() => {
+                        setCourseForm({
+                          stage: selectedCourseStage,
+                          level: selectedCourseLevel,
+                          discipline: selectedCourseStage === 'متقدمة' ? selectedCourseDiscipline : 'fiqh',
+                          name: '',
+                          teacher: '',
+                          hours: 30
+                        });
+                        setShowAddModal('course');
+                      }}
+                      style={{
+                        backgroundColor: '#10b981',
+                        border: 'none',
+                        color: 'white',
+                        padding: '10px 20px',
+                        borderRadius: '8px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '14px',
+                        boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#059669'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#10b981'; }}
+                    >
+                      <Plus size={18} />
+                      إضافة مادة جديدة للمستوى المحدد
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Courses List */}
+          <div>
+            <h3 style={{ fontSize: '15px', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '16px' }}>
+              المقررات الدراسية المتاحة:
+            </h3>
+            
+            {(() => {
+              const filteredList = courses.filter(c => 
+                c.stage === selectedCourseStage &&
+                c.level === selectedCourseLevel &&
+                (selectedCourseStage !== 'متقدمة' || c.discipline === selectedCourseDiscipline)
+              );
+
+              if (filteredList.length === 0) {
+                return (
+                  <div style={{
+                    background: 'var(--bg-main)',
+                    border: '1px dashed var(--border-subtle)',
+                    borderRadius: '12px',
+                    padding: '40px',
+                    textAlign: 'center',
+                    color: 'var(--text-secondary)',
+                    fontSize: '14px'
+                  }}>
+                    لا توجد مواد دراسية مضافة لهذا المستوى بعد. اضغط على "إضافة مادة جديدة للمستوى المحدد" للبدء.
+                  </div>
+                );
+              }
+
+              return (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+                  gap: '20px'
+                }}>
+                  {filteredList.map(course => (
+                    <div
+                      key={course.id}
+                      style={{
+                        background: 'var(--bg-main)',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '12px',
+                        padding: '20px',
+                        position: 'relative',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--accent-gold)';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                        e.currentTarget.style.transform = 'none';
+                      }}
+                    >
+                      {!isShariaStudent && (
+                        <button
+                          onClick={() => handleDelete(course.id, 'courses')}
+                          style={{
+                            position: 'absolute',
+                            top: '12px',
+                            left: '12px',
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#ef4444',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                          title="حذف المادة"
+                        >
+                          <Trash size={16} />
+                        </button>
+                      )}
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                        <span style={{
+                          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                          color: '#10b981',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          fontWeight: 'bold'
+                        }}>
+                          {course.stage}
+                        </span>
+                        <span style={{
+                          backgroundColor: 'rgba(214, 175, 55, 0.1)',
+                          color: 'var(--accent-gold)',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          fontWeight: 'bold'
+                        }}>
+                          {course.level}
+                        </span>
+                      </div>
+
+                      <h4 style={{
+                        fontSize: '15px',
+                        color: 'var(--text-primary)',
+                        fontWeight: 'bold',
+                        marginBottom: '8px',
+                        maxWidth: '85%',
+                        lineHeight: '1.5'
+                      }}>
+                        {course.name}
+                      </h4>
+
+                      {course.teacher && (
+                        <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                          المحاضر: <strong style={{ color: 'var(--text-primary)' }}>{course.teacher}</strong>
+                        </div>
+                      )}
+
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        fontSize: '12px',
+                        borderTop: '1px solid var(--border-subtle)',
+                        paddingTop: '12px',
+                        color: 'var(--text-muted)'
+                      }}>
+                        {course.hours > 0 ? (
+                          <span>الساعات المعتمدة: <strong>{course.hours} ساعة</strong></span>
+                        ) : (
+                          <span>مقرر دراسي معتمد</span>
+                        )}
+                        <span style={{ color: '#10b981', fontWeight: 'bold' }}>{course.studentsCount} دارس مسجل</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 6. TAB: STUDENTS (قسم الدارسين) */}
+      {/* ========================================================================= */}
+      {activeTab === 'students' && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+            <div>
+              <h2 style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Users size={20} color="#ec4899" />
+                سجلات وجداول حضور الدارسين لـ [ {selectedGov === 'الكل' ? 'جميع المواقع والجامع الأزهر' : selectedGov} ]
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>يتم تصفية الدارسين وجداول حضورهم ونوع دراستهم (مباشر / عن بعد) حسب الموقع الجغرافي النشط</p>
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="text"
+                  placeholder="بحث بالاسم، الرقم القومي، أو الكود..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    padding: '8px 36px 8px 12px',
+                    borderRadius: '6px',
+                    backgroundColor: 'var(--bg-main)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-primary)',
+                    fontSize: '13px',
+                    width: '250px'
+                  }}
+                />
+                <Search size={14} color="var(--text-secondary)" style={{ position: 'absolute', right: '12px', top: '11px' }} />
+              </div>
+              <button 
+                onClick={() => {
+                  setStudentForm({ ...studentForm, governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov });
+                  setShowAddModal('student');
+                }}
+                style={{
+                  backgroundColor: '#ec4899',
+                  border: 'none',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '13px'
+                }}
+              >
+                <Plus size={16} />
+                تسجيل دارس جديد
+              </button>
+            </div>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الاسم</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>كود الطالب</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>رقم الجلوس</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الرقم القومي</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الإدارة (الموقع)</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>النوع</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>نوع الدراسة</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>المرحلة</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>المستوى</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>التخصص</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>المذهب الفقهي</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', textAlign: 'center' }}>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {getFilteredStudents().length === 0 ? (
                   <tr>
-                    <td colSpan="4" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
-                      لا توجد مقررات نشطة حالياً
+                    <td colSpan="12" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+                      لا يوجد دارسين مسجلين في {selectedGov === 'الكل' ? 'أي موقع' : selectedGov} حالياً.
                     </td>
                   </tr>
                 ) : (
-                  courses.map(c => (
-                    <tr key={c.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
-                      <td style={{ padding: '14px 8px', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{c.name}</td>
-                      <td style={{ padding: '14px 8px', fontSize: '13px', color: 'var(--text-secondary)' }}>{c.teacher}</td>
-                      <td style={{ padding: '14px 8px', fontSize: '13px' }}>
+                  getFilteredStudents().map(student => (
+                    <tr key={student.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                      <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{student.name}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: '#10b981', fontWeight: 'bold' }}>{student.code || '—'}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>{student.seatNumber || '—'}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{student.nationalId}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{student.governorate}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{student.gender}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px' }}>
+                        <span style={{
+                          background: student.studyType === 'مباشر' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)',
+                          color: student.studyType === 'مباشر' ? '#10b981' : '#3b82f6',
+                          padding: '3px 8px',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          fontWeight: 'bold'
+                        }}>{student.studyType}</span>
+                      </td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{student.stage}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{student.level}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{student.discipline}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px' }}>
                         <span style={{
                           background: 'rgba(214, 175, 55, 0.1)',
                           color: 'var(--accent-gold)',
                           padding: '4px 10px',
                           borderRadius: '6px',
-                          fontSize: '11px'
-                        }}>
-                          {c.category}
-                        </span>
+                          fontSize: '12px',
+                          fontWeight: 'bold'
+                        }}>{student.fiqhSchool}</span>
                       </td>
-                      <td style={{ padding: '14px 8px', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', textAlign: 'center' }}>{c.students}</td>
+                      <td style={{ padding: '14px 10px', textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+                        <button 
+                          onClick={() => setEditingStudent(student)}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--accent-gold)', cursor: 'pointer', padding: '4px' }}
+                          title="تعديل"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(student.id, 'students')}
+                          style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
+                          title="حذف"
+                        >
+                          <Trash size={16} />
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -163,53 +1361,1113 @@ function ShariaDashboard() {
             </table>
           </div>
         </div>
+      )}
 
-        {/* Schedule / Upcoming Lectures Card */}
-        <div style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: '16px',
-          padding: '24px',
-          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)'
-        }}>
-          <h2 style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Calendar size={20} color="#10b981" />
-            جدول المحاضرات القادمة اليوم
-          </h2>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{
-              padding: '30px 20px',
-              textAlign: 'center',
-              color: 'var(--text-muted)',
-              fontSize: '14px',
-              border: '1px dashed var(--border-subtle)',
-              borderRadius: '12px'
-            }}>
-              لا توجد محاضرات مجدولة اليوم
-            </div>
+      {/* ========================================================================= */}
+      {/* 7. TAB: EXAMS (قسم الاختبارات والامتحانات) */}
+      {/* ========================================================================= */}
+      {activeTab === 'exams' && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+            <h2 style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FileText size={20} color="#14b8a6" />
+              قسم الاختبارات وجدول الامتحانات المعتمدة (عالمي وثابت)
+            </h2>
+            {!isShariaStudent && (
+              <button 
+                onClick={() => setShowAddModal('exam')}
+                style={{
+                  backgroundColor: '#14b8a6',
+                  border: 'none',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '13px'
+                }}
+              >
+                <Plus size={16} />
+                جدولة امتحان جديد
+              </button>
+            )}
           </div>
 
-          <div style={{
-            marginTop: '25px',
-            background: 'linear-gradient(135deg, rgba(214,175,55,0.05), rgba(16,185,129,0.05))',
-            border: '1px solid rgba(214,175,55,0.15)',
-            borderRadius: '12px',
-            padding: '16px',
-            textAlign: 'center'
-          }}>
-            <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: 'bold' }}>أخبار هامة وقرارات</h4>
-            <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-              سيتم الإعلان عن المواعيد الدراسية وتوزيع المحاضرين فور اعتماد الفصل الدراسي الجديد.
-            </p>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>اسم الاختبار</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>المستوى المستهدف</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>تاريخ الاختبار</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>مدة الامتحان</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', textAlign: 'center' }}>عدد الأسئلة</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', textAlign: 'center' }}>الحالة</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', textAlign: 'center' }}>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {getFilteredExams().length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+                      لا توجد امتحانات مجدولة لمستواك الدراسي حالياً.
+                    </td>
+                  </tr>
+                ) : (
+                  getFilteredExams().map(exam => (
+                    <tr key={exam.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                      <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{exam.name}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{exam.level}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{exam.date}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{exam.duration}</td>
+                      <td style={{ padding: '14px 10px', textAlign: 'center', fontSize: '13px', color: 'var(--text-primary)' }}>{exam.totalQuestions} سؤال</td>
+                      <td style={{ padding: '14px 10px', textAlign: 'center' }}>
+                        <span style={{
+                          background: exam.status === 'نشط' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(214, 175, 55, 0.15)',
+                          color: exam.status === 'نشط' ? '#10b981' : 'var(--accent-gold)',
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: 'bold'
+                        }}>{exam.status}</span>
+                      </td>
+                      <td style={{ padding: '14px 10px', textAlign: 'center' }}>
+                        {!isShariaStudent && (
+                          <button 
+                            onClick={() => handleDelete(exam.id, 'exams')}
+                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
+                            title="حذف"
+                          >
+                            <Trash size={16} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
+      )}
 
-      </div>
+      {/* ========================================================================= */}
+      {/* 8. TAB: RESULTS (قسم النتائج) */}
+      {/* ========================================================================= */}
+      {activeTab === 'results' && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+            <div>
+              <h2 style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Award size={20} color="#06b6d4" />
+                قسم نتائج وتقديرات دارسي [ {selectedGov === 'الكل' ? 'جميع المواقع والجامع الأزهر' : selectedGov} ]
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>تصفية درجات الطلاب ورصد أرقام الجلوس والرموز بناء على الموقع المختار بالفلتر</p>
+            </div>
+            {!isShariaStudent && (
+              <button 
+                onClick={() => {
+                  setResultForm({ ...resultForm, governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov });
+                  setShowAddModal('result');
+                }}
+                style={{
+                  backgroundColor: '#06b6d4',
+                  border: 'none',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '13px'
+                }}
+              >
+                <Plus size={16} />
+                إدخال تقدير جديد
+              </button>
+            )}
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>اسم الدارس</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الموقع / المحافظة</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>اسم الامتحان والمقرر</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', textAlign: 'center' }}>الدرجة</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', textAlign: 'center' }}>التقدير العام</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', textAlign: 'center' }}>حالة النجاح</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', textAlign: 'center' }}>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {getFilteredResults().length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+                      لا توجد نتائج مسجلة لطلاب {selectedGov === 'الكل' ? 'أي موقع' : selectedGov} حالياً.
+                    </td>
+                  </tr>
+                ) : (
+                  getFilteredResults().map(res => (
+                    <tr key={res.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                      <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{res.studentName}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>{res.governorate}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{res.examName}</td>
+                      <td style={{ padding: '14px 10px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{res.score} / 100</td>
+                      <td style={{ padding: '14px 10px', textAlign: 'center', fontSize: '13px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>{res.grade}</td>
+                      <td style={{ padding: '14px 10px', textAlign: 'center' }}>
+                        <span style={{
+                          background: 'rgba(16, 185, 129, 0.15)',
+                          color: '#10b981',
+                          padding: '4px 10px',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: 'bold'
+                        }}>{res.status}</span>
+                      </td>
+                      <td style={{ padding: '14px 10px', textAlign: 'center' }}>
+                        {!isShariaStudent && (
+                          <button 
+                            onClick={() => handleDelete(res.id, 'results')}
+                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
+                            title="حذف"
+                          >
+                            <Trash size={16} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 9. TAB: NEWS (قسم الأخبار والإعلانات) */}
+      {/* ========================================================================= */}
+      {activeTab === 'news' && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+            <h2 style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Newspaper size={20} color="#84cc16" />
+              أحدث الأخبار والإعلانات لدارسي العلوم الشرعية (عامة لجميع الفروع)
+            </h2>
+            {!isShariaStudent && (
+              <button 
+                onClick={() => setShowAddModal('news')}
+                style={{
+                  backgroundColor: '#84cc16',
+                  border: 'none',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '13px'
+                }}
+              >
+                <Plus size={16} />
+                نشر خبر أو إعلان
+              </button>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {news.map(n => (
+              <div 
+                key={n.id} 
+                style={{ 
+                  background: 'var(--bg-main)', 
+                  border: '1px solid var(--border-subtle)', 
+                  borderRadius: '10px', 
+                  padding: '20px', 
+                  position: 'relative' 
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                  <span style={{
+                    background: 'rgba(132, 204, 22, 0.15)',
+                    color: '#84cc16',
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    fontSize: '11px',
+                    fontWeight: 'bold'
+                  }}>{n.category}</span>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{n.date}</span>
+                    {!isShariaStudent && (
+                      <button 
+                        onClick={() => handleDelete(n.id, 'news')}
+                        style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                      >
+                        <Trash size={15} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <h3 style={{ fontSize: '16px', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '8px' }}>{n.title}</h3>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.7', margin: 0 }}>{n.content}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 10. TAB: LIVE STREAMS (قسم البث المباشر) */}
+      {/* ========================================================================= */}
+      {activeTab === 'live' && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+            <div>
+              <h2 style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Radio size={20} color="#ef4444" />
+                البث المباشر والمحاضرات الرقمية لـ [ {selectedGov === 'الكل' ? 'جميع المواقع والجامع الأزهر' : selectedGov} ]
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>تتغير جداول ومواعيد المحاضرات الأونلاين للدارسين عن بعد من محافظة لأخرى ومن محافظة للجامع الأزهر</p>
+            </div>
+            {!isShariaStudent && (
+              <button 
+                onClick={() => {
+                  setLiveForm({ ...liveForm, governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov });
+                  setShowAddModal('live');
+                }}
+                style={{
+                  backgroundColor: '#ef4444',
+                  border: 'none',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '13px'
+                }}
+              >
+                <Plus size={16} />
+                جدولة بث مباشر
+              </button>
+            )}
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+            {getFilteredLiveLectures().length === 0 ? (
+              <div style={{
+                gridColumn: '1 / -1',
+                padding: '30px',
+                textAlign: 'center',
+                color: 'var(--text-muted)',
+                fontSize: '14px',
+                border: '1px dashed var(--border-subtle)',
+                borderRadius: '12px'
+              }}>
+                لا توجد محاضرات مجدولة أونلاين لـ {selectedGov === 'الكل' ? 'أي موقع' : selectedGov} حالياً.
+              </div>
+            ) : (
+              getFilteredLiveLectures().map(live => (
+                <div 
+                  key={live.id}
+                  style={{
+                    background: 'var(--bg-main)',
+                    border: live.status === 'بث مباشر الآن' ? '1px solid #ef4444' : '1px solid var(--border-subtle)',
+                    borderRadius: '12px',
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    boxShadow: live.status === 'بث مباشر الآن' ? '0 0 15px rgba(239, 68, 68, 0.15)' : 'none'
+                  }}
+                >
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', width: '100%' }}>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <span style={{
+                          backgroundColor: live.status === 'بث مباشر الآن' ? '#ef4444' : 'rgba(255,255,255,0.05)',
+                          color: live.status === 'بث مباشر الآن' ? 'white' : 'var(--text-secondary)',
+                          padding: '4px 10px',
+                          borderRadius: '20px',
+                          fontSize: '11px',
+                          fontWeight: 'bold',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}>
+                          {live.status === 'بث مباشر الآن' && <span className="pulse-indicator" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'white', display: 'inline-block' }}></span>}
+                          {live.status}
+                        </span>
+                        <span style={{
+                          backgroundColor: 'rgba(214, 175, 55, 0.1)',
+                          color: 'var(--accent-gold)',
+                          padding: '4px 10px',
+                          borderRadius: '20px',
+                          fontSize: '11px',
+                          fontWeight: 'bold'
+                        }}>
+                          {live.governorate}
+                        </span>
+                      </div>
+                      {!isShariaStudent && (
+                        <button 
+                          onClick={() => handleDelete(live.id, 'live')}
+                          style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', marginRight: 'auto' }}
+                        >
+                          <Trash size={14} />
+                        </button>
+                      )}
+                    </div>
+
+                    <h3 style={{ fontSize: '15px', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '8px', lineHeight: '1.6' }}>{live.title}</h3>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>المحاضر: <strong style={{ color: 'var(--text-primary)' }}>{live.teacher}</strong></div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '14px' }}>المستوى المستهدف: {live.stage}</div>
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingTop: '12px',
+                    borderTop: '1px solid var(--border-subtle)'
+                  }}>
+                    <span style={{ fontSize: '12px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>{live.scheduleTime}</span>
+                    <a 
+                      href={live.link} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      style={{
+                        backgroundColor: live.status === 'بث مباشر الآن' ? '#ef4444' : 'var(--border-subtle)',
+                        color: 'white',
+                        textDecoration: 'none',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      {live.status === 'بث مباشر الآن' ? <Play size={12} /> : <ExternalLink size={12} />}
+                      دخول المحاضرة
+                    </a>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* --- ALL POPUP MODALS / FORM VIEWS --- */}
+      {/* ========================================================================= */}
+
+      {/* Modal 3: Add Course */}
+      {showAddModal === 'course' && (
+        <div style={modalOverlayStyle}>
+          <div style={modalContentStyle}>
+            <div style={modalHeaderStyle}>
+              <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>إضافة مقرر دراسي جديد ({courseForm.stage})</h2>
+              <button onClick={() => setShowAddModal(null)} style={closeBtnStyle}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleAddCourse}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                
+                {/* Stage Selection */}
+                <div>
+                  <label style={labelStyle}>المرحلة الدراسية</label>
+                  <select 
+                    value={courseForm.stage} 
+                    onChange={(e) => {
+                      const stageVal = e.target.value;
+                      setCourseForm({ 
+                        ...courseForm, 
+                        stage: stageVal,
+                        level: (stageVal !== 'متقدمة' && (courseForm.level === 'المستوى الثالث' || courseForm.level === 'المستوى الرابع')) 
+                          ? 'المستوى الأول' 
+                          : courseForm.level,
+                        discipline: stageVal === 'متقدمة' ? 'fiqh' : '—'
+                      });
+                    }} 
+                    style={selectStyle}
+                  >
+                    <option value="تمهيدية">المرحلة التمهيدية</option>
+                    <option value="متوسطة">المرحلة المتوسطة</option>
+                    <option value="متقدمة">المرحلة المتقدمة</option>
+                  </select>
+                </div>
+
+                {/* Specialization / Discipline Selection - Only for Advanced Stage */}
+                {courseForm.stage === 'متقدمة' && (
+                  <div>
+                    <label style={labelStyle}>التخصص الدراسي</label>
+                    <select 
+                      value={courseForm.discipline} 
+                      onChange={(e) => setCourseForm({ ...courseForm, discipline: e.target.value })} 
+                      style={selectStyle}
+                    >
+                      <option value="fiqh">فقه وأصوله</option>
+                      <option value="tafsir">تفسير وحديث</option>
+                      <option value="aqeedah">عقيدة</option>
+                      <option value="arabic">لغة عربية</option>
+                      <option value="general">عامة</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* Level Selection */}
+                <div>
+                  <label style={labelStyle}>المستوى الدراسي</label>
+                  <select 
+                    value={courseForm.level} 
+                    onChange={(e) => setCourseForm({ ...courseForm, level: e.target.value })} 
+                    style={selectStyle}
+                  >
+                    <option value="المستوى الأول">المستوى الأول</option>
+                    <option value="المستوى الثاني">المستوى الثاني</option>
+                    {courseForm.stage === 'متقدمة' && (
+                      <>
+                        <option value="المستوى الثالث">المستوى الثالث</option>
+                        <option value="المستوى الرابع">المستوى الرابع</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                {/* Course Name */}
+                <div>
+                  <label style={labelStyle}>اسم المادة</label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="مثال: شرح متن قطر الندى" 
+                    value={courseForm.name} 
+                    onChange={(e) => setCourseForm({ ...courseForm, name: e.target.value })} 
+                    style={inputStyle} 
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
+                  <button type="button" onClick={() => setShowAddModal(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold' }}>حفظ المادة</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 4: Add Student */}
+      {showAddModal === 'student' && (
+        <div style={modalOverlayStyle}>
+          <div style={modalContentStyle}>
+            <div style={modalHeaderStyle}>
+              <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>تسجيل طالب / دارس جديد بموقع [ {studentForm.governorate} ]</h2>
+              <button onClick={() => setShowAddModal(null)} style={closeBtnStyle}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleAddStudent}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>اسم الطالب بالكامل</label>
+                    <input type="text" required value={studentForm.name} onChange={(e) => setStudentForm({ ...studentForm, name: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الإدارة (الموقع / المحافظة)</label>
+                    <select value={studentForm.governorate} onChange={(e) => setStudentForm({ ...studentForm, governorate: e.target.value })} style={selectStyle}>
+                      {GOVERNORATES.map(gov => (
+                        <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الرقم القومي (14 رقم)</label>
+                    <input type="text" required maxLength="14" value={studentForm.nationalId} onChange={(e) => setStudentForm({ ...studentForm, nationalId: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>رقم الجوال</label>
+                    <input type="text" required value={studentForm.phone} onChange={(e) => setStudentForm({ ...studentForm, phone: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>النوع</label>
+                    <select value={studentForm.gender} onChange={(e) => setStudentForm({ ...studentForm, gender: e.target.value })} style={selectStyle}>
+                      <option value="ذكر">ذكر</option>
+                      <option value="أنثى">أنثى</option>
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>نوع الدراسة</label>
+                    <select value={studentForm.studyType} onChange={(e) => setStudentForm({ ...studentForm, studyType: e.target.value })} style={selectStyle}>
+                      <option value="مباشر">مباشر (حضوري)</option>
+                      <option value="عن بعد">عن بعد (رقمي)</option>
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>المذهب الفقهي</label>
+                    <select value={studentForm.fiqhSchool} onChange={(e) => setStudentForm({ ...studentForm, fiqhSchool: e.target.value })} style={selectStyle}>
+                      <option value="شافعي">شافعي</option>
+                      <option value="مالكي">مالكي</option>
+                      <option value="حنفي">حنفي</option>
+                      <option value="حنبلي">حنبلي</option>
+                    </select>
+                  </div>
+                </div>
+
+                {studentForm.stage === 'متقدمة' ? (
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>المرحلة</label>
+                      <select 
+                        value={studentForm.stage} 
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setStudentForm({
+                            ...studentForm,
+                            stage: val,
+                            discipline: val === 'متقدمة' ? 'فقه وأصوله' : '—',
+                            level: 'المستوى الأول'
+                          });
+                        }} 
+                        style={selectStyle}
+                      >
+                        <option value="تمهيدية">تمهيدية</option>
+                        <option value="متوسطة">متوسطة</option>
+                        <option value="متقدمة">متقدمة</option>
+                      </select>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>التخصص</label>
+                      <select 
+                        value={studentForm.discipline} 
+                        onChange={(e) => setStudentForm({ ...studentForm, discipline: e.target.value })} 
+                        style={selectStyle}
+                      >
+                        <option value="فقه وأصوله">فقه وأصوله</option>
+                        <option value="تفسير وحديث">تفسير وحديث</option>
+                        <option value="عقيدة">عقيدة</option>
+                        <option value="لغة عربية">لغة عربية</option>
+                        <option value="عامة">عامة</option>
+                      </select>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>المستوى</label>
+                      <select 
+                        value={studentForm.level} 
+                        onChange={(e) => setStudentForm({ ...studentForm, level: e.target.value })} 
+                        style={selectStyle}
+                      >
+                        <option value="المستوى الأول">المستوى الأول</option>
+                        <option value="المستوى الثاني">المستوى الثاني</option>
+                        <option value="المستوى الثالث">المستوى الثالث</option>
+                        <option value="المستوى الرابع">المستوى الرابع</option>
+                      </select>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>المرحلة</label>
+                      <select 
+                        value={studentForm.stage} 
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setStudentForm({
+                            ...studentForm,
+                            stage: val,
+                            discipline: val === 'متقدمة' ? 'فقه وأصوله' : '—',
+                            level: 'المستوى الأول'
+                          });
+                        }} 
+                        style={selectStyle}
+                      >
+                        <option value="تمهيدية">تمهيدية</option>
+                        <option value="متوسطة">متوسطة</option>
+                        <option value="متقدمة">متقدمة</option>
+                      </select>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>المستوى</label>
+                      <select 
+                        value={studentForm.level} 
+                        onChange={(e) => setStudentForm({ ...studentForm, level: e.target.value })} 
+                        style={selectStyle}
+                      >
+                        <option value="المستوى الأول">المستوى الأول</option>
+                        <option value="المستوى الثاني">المستوى الثاني</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>كود الطالب (اختياري - للضبط مستقبلاً)</label>
+                    <input type="text" placeholder="مثال: SH-10045" value={studentForm.code} onChange={(e) => setStudentForm({ ...studentForm, code: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>رقم الجلوس (اختياري - للامتحانات)</label>
+                    <input type="text" placeholder="مثال: GL-9014" value={studentForm.seatNumber} onChange={(e) => setStudentForm({ ...studentForm, seatNumber: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
+                  <button type="button" onClick={() => setShowAddModal(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#ec4899', border: 'none', color: 'white' }}>حفظ بيانات الطالب</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 4-Edit: Edit Student */}
+      {editingStudent && (
+        <div style={modalOverlayStyle}>
+          <div style={modalContentStyle}>
+            <div style={modalHeaderStyle}>
+              <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>تعديل بيانات الدارس بموقع [ {editingStudent.governorate} ]</h2>
+              <button onClick={() => setEditingStudent(null)} style={closeBtnStyle}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleEditStudent}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>اسم الطالب بالكامل</label>
+                    <input type="text" required value={editingStudent.name} onChange={(e) => setEditingStudent({ ...editingStudent, name: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الإدارة (الموقع / المحافظة)</label>
+                    <select value={editingStudent.governorate} onChange={(e) => setEditingStudent({ ...editingStudent, governorate: e.target.value })} style={selectStyle}>
+                      {GOVERNORATES.map(gov => (
+                        <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الرقم القومي (14 رقم)</label>
+                    <input type="text" required maxLength="14" value={editingStudent.nationalId} onChange={(e) => setEditingStudent({ ...editingStudent, nationalId: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>رقم الجوال</label>
+                    <input type="text" required value={editingStudent.phone || ''} onChange={(e) => setEditingStudent({ ...editingStudent, phone: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>النوع</label>
+                    <select value={editingStudent.gender} onChange={(e) => setEditingStudent({ ...editingStudent, gender: e.target.value })} style={selectStyle}>
+                      <option value="ذكر">ذكر</option>
+                      <option value="أنثى">أنثى</option>
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>نوع الدراسة</label>
+                    <select value={editingStudent.studyType} onChange={(e) => setEditingStudent({ ...editingStudent, studyType: e.target.value })} style={selectStyle}>
+                      <option value="مباشر">مباشر (حضوري)</option>
+                      <option value="عن بعد">عن بعد (رقمي)</option>
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>المذهب الفقهي</label>
+                    <select value={editingStudent.fiqhSchool} onChange={(e) => setEditingStudent({ ...editingStudent, fiqhSchool: e.target.value })} style={selectStyle}>
+                      <option value="شافعي">شافعي</option>
+                      <option value="مالكي">مالكي</option>
+                      <option value="حنفي">حنفي</option>
+                      <option value="حنبلي">حنبلي</option>
+                    </select>
+                  </div>
+                </div>
+
+                {editingStudent.stage === 'متقدمة' ? (
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>المرحلة</label>
+                      <select 
+                        value={editingStudent.stage} 
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setEditingStudent({
+                            ...editingStudent,
+                            stage: val,
+                            discipline: val === 'متقدمة' ? 'فقه وأصوله' : '—',
+                            level: 'المستوى الأول'
+                          });
+                        }} 
+                        style={selectStyle}
+                      >
+                        <option value="تمهيدية">تمهيدية</option>
+                        <option value="متوسطة">متوسطة</option>
+                        <option value="متقدمة">متقدمة</option>
+                      </select>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>التخصص</label>
+                      <select 
+                        value={editingStudent.discipline} 
+                        onChange={(e) => setEditingStudent({ ...editingStudent, discipline: e.target.value })} 
+                        style={selectStyle}
+                      >
+                        <option value="فقه وأصوله">فقه وأصوله</option>
+                        <option value="تفسير وحديث">تفسير وحديث</option>
+                        <option value="عقيدة">عقيدة</option>
+                        <option value="لغة عربية">لغة عربية</option>
+                        <option value="عامة">عامة</option>
+                      </select>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>المستوى</label>
+                      <select 
+                        value={editingStudent.level} 
+                        onChange={(e) => setEditingStudent({ ...editingStudent, level: e.target.value })} 
+                        style={selectStyle}
+                      >
+                        <option value="المستوى الأول">المستوى الأول</option>
+                        <option value="المستوى الثاني">المستوى الثاني</option>
+                        <option value="المستوى الثالث">المستوى الثالث</option>
+                        <option value="المستوى الرابع">المستوى الرابع</option>
+                      </select>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>المرحلة</label>
+                      <select 
+                        value={editingStudent.stage} 
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setEditingStudent({
+                            ...editingStudent,
+                            stage: val,
+                            discipline: val === 'متقدمة' ? 'فقه وأصوله' : '—',
+                            level: 'المستوى الأول'
+                          });
+                        }} 
+                        style={selectStyle}
+                      >
+                        <option value="تمهيدية">تمهيدية</option>
+                        <option value="متوسطة">متوسطة</option>
+                        <option value="متقدمة">متقدمة</option>
+                      </select>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>المستوى</label>
+                      <select 
+                        value={editingStudent.level} 
+                        onChange={(e) => setEditingStudent({ ...editingStudent, level: e.target.value })} 
+                        style={selectStyle}
+                      >
+                        <option value="المستوى الأول">المستوى الأول</option>
+                        <option value="المستوى الثاني">المستوى الثاني</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>كود الطالب (اختياري)</label>
+                    <input type="text" placeholder="مثال: SH-10045" value={editingStudent.code || ''} onChange={(e) => setEditingStudent({ ...editingStudent, code: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>رقم الجلوس (اختياري)</label>
+                    <input type="text" placeholder="مثال: GL-9014" value={editingStudent.seatNumber || ''} onChange={(e) => setEditingStudent({ ...editingStudent, seatNumber: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
+                  <button type="button" onClick={() => setEditingStudent(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#ec4899', border: 'none', color: 'white' }}>حفظ التعديلات</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 5: Add Exam */}
+      {showAddModal === 'exam' && (
+        <div style={modalOverlayStyle}>
+          <div style={modalContentStyle}>
+            <div style={modalHeaderStyle}>
+              <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>جدولة وجدولة امتحان جديد</h2>
+              <button onClick={() => setShowAddModal(null)} style={closeBtnStyle}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleAddExam}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                <div>
+                  <label style={labelStyle}>اسم الاختبار</label>
+                  <input type="text" required placeholder="مثال: امتحان مبادئ التفسير" value={examForm.name} onChange={(e) => setExamForm({ ...examForm, name: e.target.value })} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>المستوى المستهدف</label>
+                  <input type="text" required placeholder="مثال: تمهيدية - المستوى الأول" value={examForm.level} onChange={(e) => setExamForm({ ...examForm, level: e.target.value })} style={inputStyle} />
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>تاريخ الاختبار</label>
+                    <input type="date" required value={examForm.date} onChange={(e) => setExamForm({ ...examForm, date: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>مدة الامتحان</label>
+                    <input type="text" required placeholder="مثال: 90 دقيقة" value={examForm.duration} onChange={(e) => setExamForm({ ...examForm, duration: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>عدد الأسئلة</label>
+                    <input type="number" required value={examForm.totalQuestions} onChange={(e) => setExamForm({ ...examForm, totalQuestions: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
+                  <button type="button" onClick={() => setShowAddModal(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#14b8a6', border: 'none', color: 'white' }}>جدولة الامتحان</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 6: Add Result */}
+      {showAddModal === 'result' && (
+        <div style={modalOverlayStyle}>
+          <div style={modalContentStyle}>
+            <div style={modalHeaderStyle}>
+              <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>رصد تقدير ونتيجة دارس</h2>
+              <button onClick={() => setShowAddModal(null)} style={closeBtnStyle}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleAddResult}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                <div>
+                  <label style={labelStyle}>اسم الطالب</label>
+                  <input type="text" required placeholder="أدخل اسم الطالب المسجل" value={resultForm.studentName} onChange={(e) => setResultForm({ ...resultForm, studentName: e.target.value })} style={inputStyle} />
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الموقع / المحافظة للدارس</label>
+                    <select value={resultForm.governorate} onChange={(e) => setResultForm({ ...resultForm, governorate: e.target.value })} style={selectStyle}>
+                      {GOVERNORATES.map(gov => (
+                        <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الدرجة (من 100)</label>
+                    <input type="number" required max="100" value={resultForm.score} onChange={(e) => setResultForm({ ...resultForm, score: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>اسم الاختبار والمقرر</label>
+                  <input type="text" required placeholder="مثال: امتحان مبادئ الفقه" value={resultForm.examName} onChange={(e) => setResultForm({ ...resultForm, examName: e.target.value })} style={inputStyle} />
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>التقدير العام</label>
+                    <select value={resultForm.grade} onChange={(e) => setResultForm({ ...resultForm, grade: e.target.value })} style={selectStyle}>
+                      <option value="ممتاز">ممتاز</option>
+                      <option value="جيد جداً">جيد جداً</option>
+                      <option value="جيد">جيد</option>
+                      <option value="مقبول">مقبول</option>
+                      <option value="ضعيف">ضعيف</option>
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>حالة النجاح</label>
+                    <select value={resultForm.status} onChange={(e) => setResultForm({ ...resultForm, status: e.target.value })} style={selectStyle}>
+                      <option value="ناجح">ناجح</option>
+                      <option value="راسب">راسب</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
+                  <button type="button" onClick={() => setShowAddModal(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#06b6d4', border: 'none', color: 'white' }}>رصد وحفظ النتيجة</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 7: Add News */}
+      {showAddModal === 'news' && (
+        <div style={modalOverlayStyle}>
+          <div style={modalContentStyle}>
+            <div style={modalHeaderStyle}>
+              <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>نشر إعلان أو خبر للرواق</h2>
+              <button onClick={() => setShowAddModal(null)} style={closeBtnStyle}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleAddNews}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                <div>
+                  <label style={labelStyle}>عنوان الخبر / الإعلان</label>
+                  <input type="text" required placeholder="عنوان جاذب وواضح" value={newsForm.title} onChange={(e) => setNewsForm({ ...newsForm, title: e.target.value })} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>نوع الإعلان</label>
+                  <select value={newsForm.category} onChange={(e) => setNewsForm({ ...newsForm, category: e.target.value })} style={selectStyle}>
+                    <option value="إعلان عام">إعلان عام</option>
+                    <option value="تعديل جدول">تعديل جدول</option>
+                    <option value="نتائج امتحانات">نتائج امتحانات</option>
+                    <option value="فعالية علمية">فعالية علمية</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>محتوى الخبر بالكامل</label>
+                  <textarea required rows="4" value={newsForm.content} onChange={(e) => setNewsForm({ ...newsForm, content: e.target.value })} style={{ ...inputStyle, fontFamily: 'inherit', resize: 'vertical' }}></textarea>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
+                  <button type="button" onClick={() => setShowAddModal(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#84cc16', border: 'none', color: 'white' }}>نشر الآن</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 8: Add Live */}
+      {showAddModal === 'live' && (
+        <div style={modalOverlayStyle}>
+          <div style={modalContentStyle}>
+            <div style={modalHeaderStyle}>
+              <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>جدولة بث مباشر ومحاضرة رقمية لموقع [ {liveForm.governorate} ]</h2>
+              <button onClick={() => setShowAddModal(null)} style={closeBtnStyle}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleAddLive}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                <div>
+                  <label style={labelStyle}>عنوان المحاضرة المباشرة</label>
+                  <input type="text" required placeholder="مثال: شرح متن قطر الندى" value={liveForm.title} onChange={(e) => setLiveForm({ ...liveForm, title: e.target.value })} style={inputStyle} />
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>المحاضر</label>
+                    <input type="text" required placeholder="اسم الأستاذ المحاضر" value={liveForm.teacher} onChange={(e) => setLiveForm({ ...liveForm, teacher: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الموقع التابع له البث</label>
+                    <select value={liveForm.governorate} onChange={(e) => setLiveForm({ ...liveForm, governorate: e.target.value })} style={selectStyle}>
+                      {GOVERNORATES.map(gov => (
+                        <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>المرحلة المستهدفة</label>
+                    <input type="text" required placeholder="مثال: تمهيدي - مستوى أول" value={liveForm.stage} onChange={(e) => setLiveForm({ ...liveForm, stage: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>وقت البث</label>
+                    <input type="text" required placeholder="مثال: اليوم 08:00 مساءً" value={liveForm.scheduleTime} onChange={(e) => setLiveForm({ ...liveForm, scheduleTime: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>رابط البث (زووم أو تيمز)</label>
+                  <input type="url" required placeholder="https://zoom.us/..." value={liveForm.link} onChange={(e) => setLiveForm({ ...liveForm, link: e.target.value })} style={inputStyle} />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
+                  <button type="button" onClick={() => setShowAddModal(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#ef4444', border: 'none', color: 'white' }}>جدولة المحاضرة</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>
   );
 }
+
+// --- Inline styles for modals ---
+const modalOverlayStyle = {
+  position: 'fixed',
+  top: 0, left: 0, right: 0, bottom: 0,
+  backgroundColor: 'rgba(0,0,0,0.6)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 1000,
+  direction: 'rtl'
+};
+
+const modalContentStyle = {
+  background: 'var(--bg-card)',
+  border: '1px solid var(--border-subtle)',
+  borderRadius: '16px',
+  width: '95%',
+  maxWidth: '550px',
+  padding: '24px',
+  boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+  color: 'var(--text-primary)'
+};
+
+const modalHeaderStyle = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  borderBottom: '1px solid var(--border-subtle)',
+  paddingBottom: '12px'
+};
+
+const closeBtnStyle = {
+  background: 'transparent',
+  border: 'none',
+  color: 'var(--text-secondary)',
+  cursor: 'pointer'
+};
+
+const labelStyle = {
+  fontSize: '12px',
+  color: 'var(--text-secondary)',
+  display: 'block',
+  marginBottom: '6px'
+};
+
+const inputStyle = {
+  width: '100%',
+  padding: '10px',
+  borderRadius: '6px',
+  backgroundColor: 'var(--bg-main)',
+  border: '1px solid var(--border-subtle)',
+  color: 'var(--text-primary)',
+  fontSize: '13px'
+};
+
+const selectStyle = {
+  width: '100%',
+  padding: '10px',
+  borderRadius: '6px',
+  backgroundColor: 'var(--bg-main)',
+  border: '1px solid var(--border-subtle)',
+  color: 'var(--text-primary)',
+  fontSize: '13px'
+};
 
 export default ShariaDashboard;
