@@ -429,8 +429,6 @@ function ShariaDashboard() {
   const getTotalCourses = () => courses.length;
 
   const dynamicStats = [
-    { id: 1, title: 'البرامج والدورات', value: getTotalCourses(), iconColor: '#10b981', iconType: 'book', tab: 'courses' },
-    { id: 2, title: 'أعضاء هيئة التدريس', value: getTotalTeachers(), iconColor: '#a855f7', iconType: 'graduation-cap', tab: 'admins' },
     { id: 3, title: 'الدارسين بالموقع المختار', value: getTotalStudents(), iconColor: '#f97316', iconType: 'users', tab: 'students' },
     { id: 4, title: 'البثوث بالموقع المختار', value: getFilteredLiveLectures().length, iconColor: '#3b82f6', iconType: 'book-open', tab: 'live' }
   ];
