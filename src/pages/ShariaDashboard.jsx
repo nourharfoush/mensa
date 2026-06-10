@@ -519,7 +519,7 @@ function ShariaDashboard() {
       
       {/* Banner */}
       <div style={{
-        background: 'linear-gradient(135deg, #11141D 0%, #1c202b 100%)',
+        background: 'linear-gradient(135deg, var(--bg-sidebar) 0%, var(--bg-card) 100%)',
         border: '1px solid var(--border-subtle)',
         borderRadius: '16px',
         padding: '30px',
