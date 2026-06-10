@@ -146,9 +146,9 @@ function ShariaDashboard() {
       if (stored) return JSON.parse(stored);
     } catch (e) {}
     return [
-      { id: 1, name: 'أ.د/ خالد عبد العزيز', nationalId: '27501019999991', phone: '01012345678', jobGrade: 'أستاذ ورئيس قسم', university: 'جامعة الأزهر', department: 'اللغويات', governorate: 'الجامع الأزهر' },
-      { id: 2, name: 'أ.د/ إبراهيم الهدهد', nationalId: '27005129999992', phone: '01198765432', jobGrade: 'أستاذ متفرغ (رئيس الجامعة الأسبق)', university: 'جامعة الأزهر', department: 'البلاغة والنقد', governorate: 'الجامع الأزهر' },
-      { id: 3, name: 'الشيخ/ أحمد معبد عبد الكريم', nationalId: '26508209999993', phone: '01234567890', jobGrade: 'أستاذ الحديث', university: 'جامعة الأزهر', department: 'الحديث وعلومه', governorate: 'الجامع الأزهر' }
+      { id: 1, name: 'أ.د/ خالد عبد العزيز', nationalId: '27501019999991', phone: '01012345678', jobGrade: 'أستاذ ورئيس قسم', university: 'جامعة الأزهر', college: 'كلية اللغة العربية بالقاهرة', department: 'اللغويات', governorate: 'الجامع الأزهر' },
+      { id: 2, name: 'أ.د/ إبراهيم الهدهد', nationalId: '27005129999992', phone: '01198765432', jobGrade: 'أستاذ متفرغ (رئيس الجامعة الأسبق)', university: 'جامعة الأزهر', college: 'كلية اللغة العربية بالقاهرة', department: 'البلاغة والنقد', governorate: 'الجامع الأزهر' },
+      { id: 3, name: 'الشيخ/ أحمد معبد عبد الكريم', nationalId: '26508209999993', phone: '01234567890', jobGrade: 'أستاذ الحديث', university: 'جامعة الأزهر', college: 'كلية أصول الدين بالقاهرة', department: 'الحديث وعلومه', governorate: 'الجامع الأزهر' }
     ];
   });
 
@@ -203,6 +203,7 @@ function ShariaDashboard() {
     phone: '',
     jobGrade: '',
     university: '',
+    college: '',
     department: '',
     governorate: 'الجامع الأزهر'
   });
@@ -386,6 +387,7 @@ function ShariaDashboard() {
       phone: '',
       jobGrade: '',
       university: '',
+      college: '',
       department: '',
       governorate: 'الجامع الأزهر'
     });
@@ -988,6 +990,7 @@ function ShariaDashboard() {
                   <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الإدارة (الموقع)</th>
                   <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الدرجة الوظيفية</th>
                   <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الجامعة</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الكلية</th>
                   <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>القسم</th>
                   <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', textAlign: 'center' }}>إجراءات</th>
                 </tr>
@@ -1008,6 +1011,7 @@ function ShariaDashboard() {
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.governorate}</td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.jobGrade}</td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.university}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.college || '—'}</td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>{teacher.department}</td>
                       <td style={{ padding: '14px 10px', textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
                         <button 
@@ -2616,6 +2620,10 @@ function ShariaDashboard() {
                     <input type="text" required placeholder="مثال: جامعة الأزهر" value={teacherForm.university} onChange={(e) => setTeacherForm({ ...teacherForm, university: e.target.value })} style={inputStyle} />
                   </div>
                   <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الكلية</label>
+                    <input type="text" required placeholder="مثال: كلية اللغة العربية" value={teacherForm.college} onChange={(e) => setTeacherForm({ ...teacherForm, college: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
                     <label style={labelStyle}>القسم التخصصي</label>
                     <input type="text" required placeholder="مثال: أصول الفقه" value={teacherForm.department} onChange={(e) => setTeacherForm({ ...teacherForm, department: e.target.value })} style={inputStyle} />
                   </div>
@@ -2675,6 +2683,10 @@ function ShariaDashboard() {
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>الجامعة</label>
                     <input type="text" required placeholder="مثال: جامعة الأزهر" value={editingTeacher.university || ''} onChange={(e) => setEditingTeacher({ ...editingTeacher, university: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الكلية</label>
+                    <input type="text" required placeholder="مثال: كلية اللغة العربية" value={editingTeacher.college || ''} onChange={(e) => setEditingTeacher({ ...editingTeacher, college: e.target.value })} style={inputStyle} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>القسم التخصصي</label>
