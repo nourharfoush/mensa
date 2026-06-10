@@ -173,7 +173,34 @@ function ShariaDashboard() {
   const [news, setNews] = useState([]);
 
   // Live stream lectures change per location/governorate
-  const [liveLectures, setLiveLectures] = useState([]);
+  const [liveLectures, setLiveLectures] = useState(() => {
+    try {
+      const stored = localStorage.getItem('sharia_live');
+      return stored ? JSON.parse(stored) : [
+        {
+          id: 1,
+          title: 'شرح كتاب التوحيد من صحيح البخاري',
+          governorate: 'الجامع الأزهر',
+          stage: 'تمهيدية',
+          level: 'المستوى الأول',
+          discipline: '—',
+          teacher: 'أ.د. أحمد المعتز بالله',
+          day: 'الأحد',
+          timeStart: '18:00',
+          timeEnd: '20:00',
+          link: 'https://zoom.us/j/123456789',
+          isWeekly: true,
+          status: 'بث مباشر الآن'
+        }
+      ];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sharia_live', JSON.stringify(liveLectures));
+  }, [liveLectures]);
 
   // --- NEW ITEM FORM STATES ---
   const [adminForm, setAdminForm] = useState({ 
@@ -204,7 +231,20 @@ function ShariaDashboard() {
   const [examForm, setExamForm] = useState({ name: '', level: 'تمهيدية - المستوى الأول', date: '', duration: '90 دقيقة', totalQuestions: 40, status: 'مجدول' });
   const [resultForm, setResultForm] = useState({ studentName: '', examName: '', score: 85, grade: 'جيد جداً', status: 'ناجح', governorate: 'الجامع الأزهر' });
   const [newsForm, setNewsForm] = useState({ title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'إعلان عام', status: 'منشور' });
-  const [liveForm, setLiveForm] = useState({ title: '', teacher: '', stage: 'تمهيدية - مستوى أول', scheduleTime: '', link: '', status: 'مجدول', governorate: 'الجامع الأزهر' });
+  const [liveForm, setLiveForm] = useState({
+    title: '',
+    governorate: 'الجامع الأزهر',
+    stage: 'تمهيدية',
+    level: 'المستوى الأول',
+    discipline: '—',
+    teacher: '',
+    day: 'الأحد',
+    timeStart: '',
+    timeEnd: '',
+    link: '',
+    isWeekly: true,
+    status: 'مجدول'
+  });
   const [teacherForm, setTeacherForm] = useState({
     name: '',
     nationalId: '',
@@ -384,7 +424,20 @@ function ShariaDashboard() {
     e.preventDefault();
     setLiveLectures([...liveLectures, { ...liveForm, id: Date.now() }]);
     setShowAddModal(null);
-    setLiveForm({ title: '', teacher: '', stage: 'تمهيدية - مستوى أول', scheduleTime: '', link: '', status: 'مجدول', governorate: 'الجامع الأزهر' });
+    setLiveForm({
+      title: '',
+      governorate: 'الجامع الأزهر',
+      stage: 'تمهيدية',
+      level: 'المستوى الأول',
+      discipline: '—',
+      teacher: '',
+      day: 'الأحد',
+      timeStart: '',
+      timeEnd: '',
+      link: '',
+      isWeekly: true,
+      status: 'مجدول'
+    });
   };
 
   const handleAddTeacher = (e) => {
@@ -494,8 +547,7 @@ function ShariaDashboard() {
       });
     } else {
       filtered = filtered.filter(l => 
-        (selectedGov === 'الكل' || l.governorate === selectedGov) &&
-        (selectedBranch === 'الكل' || l.branch === selectedBranch)
+        (selectedGov === 'الكل' || l.governorate === selectedGov)
       );
     }
     return filtered;
@@ -2037,94 +2089,125 @@ function ShariaDashboard() {
                 لا توجد محاضرات مجدولة أونلاين لـ {selectedGov === 'الكل' ? 'أي موقع' : selectedGov} حالياً.
               </div>
             ) : (
-              getFilteredLiveLectures().map(live => (
-                <div 
-                  key={live.id}
-                  style={{
-                    background: 'var(--bg-main)',
-                    border: live.status === 'بث مباشر الآن' ? '1px solid #ef4444' : '1px solid var(--border-subtle)',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    boxShadow: live.status === 'بث مباشر الآن' ? '0 0 15px rgba(239, 68, 68, 0.15)' : 'none'
-                  }}
-                >
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', width: '100%' }}>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <span style={{
-                          backgroundColor: live.status === 'بث مباشر الآن' ? '#ef4444' : 'rgba(255,255,255,0.05)',
-                          color: live.status === 'بث مباشر الآن' ? 'white' : 'var(--text-secondary)',
-                          padding: '4px 10px',
-                          borderRadius: '20px',
+              getFilteredLiveLectures().map(live => {
+                const formattedSchedule = live.day 
+                  ? `${live.day} (من ${live.timeStart} إلى ${live.timeEnd})` 
+                  : live.scheduleTime;
+
+                return (
+                  <div 
+                    key={live.id}
+                    style={{
+                      background: 'var(--bg-main)',
+                      border: live.status === 'بث مباشر الآن' ? '1px solid #ef4444' : '1px solid var(--border-subtle)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      boxShadow: live.status === 'بث مباشر الآن' ? '0 0 15px rgba(239, 68, 68, 0.15)' : 'none'
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', width: '100%' }}>
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          <span style={{
+                            backgroundColor: live.status === 'بث مباشر الآن' ? '#ef4444' : 'rgba(255,255,255,0.05)',
+                            color: live.status === 'بث مباشر الآن' ? 'white' : 'var(--text-secondary)',
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            fontSize: '11px',
+                            fontWeight: 'bold',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px'
+                          }}>
+                            {live.status === 'بث مباشر الآن' && <span className="pulse-indicator" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'white', display: 'inline-block' }}></span>}
+                            {live.status}
+                          </span>
+                          <span style={{
+                            backgroundColor: 'rgba(214, 175, 55, 0.1)',
+                            color: 'var(--accent-gold)',
+                            padding: '4px 10px',
+                            borderRadius: '20px',
+                            fontSize: '11px',
+                            fontWeight: 'bold'
+                          }}>
+                            {live.governorate}
+                          </span>
+                          {live.isWeekly && (
+                            <span style={{
+                              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                              color: '#10b981',
+                              padding: '4px 10px',
+                              borderRadius: '20px',
+                              fontSize: '11px',
+                              fontWeight: 'bold'
+                            }}>
+                              يتجدد أسبوعياً
+                            </span>
+                          )}
+                        </div>
+                        {!isShariaStudent && (
+                          <button 
+                            onClick={() => handleDelete(live.id, 'live')}
+                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', marginRight: 'auto' }}
+                          >
+                            <Trash size={14} />
+                          </button>
+                        )}
+                      </div>
+
+                      <h3 style={{ fontSize: '15px', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '10px', lineHeight: '1.6' }}>{live.title}</h3>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>المحاضر: <strong style={{ color: 'var(--text-primary)' }}>{live.teacher}</strong></div>
+                      
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '14px' }}>
+                        <span style={{ fontSize: '11px', backgroundColor: 'var(--border-subtle)', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '4px' }}>
+                          المرحلة: {live.stage}
+                        </span>
+                        <span style={{ fontSize: '11px', backgroundColor: 'var(--border-subtle)', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '4px' }}>
+                          المستوى: {live.level || 'الأول'}
+                        </span>
+                        {live.stage === 'متقدمة' && live.discipline && live.discipline !== '—' && (
+                          <span style={{ fontSize: '11px', backgroundColor: 'rgba(249, 115, 22, 0.1)', color: '#f97316', padding: '2px 8px', borderRadius: '4px' }}>
+                            التخصص: {live.discipline}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      paddingTop: '12px',
+                      borderTop: '1px solid var(--border-subtle)'
+                    }}>
+                      <span style={{ fontSize: '12px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>{formattedSchedule}</span>
+                      <a 
+                        href={live.link} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        style={{
+                          backgroundColor: live.status === 'بث مباشر الآن' ? '#ef4444' : 'var(--border-subtle)',
+                          color: 'white',
+                          textDecoration: 'none',
+                          padding: '6px 12px',
+                          borderRadius: '6px',
                           fontSize: '11px',
                           fontWeight: 'bold',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '5px'
-                        }}>
-                          {live.status === 'بث مباشر الآن' && <span className="pulse-indicator" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'white', display: 'inline-block' }}></span>}
-                          {live.status}
-                        </span>
-                        <span style={{
-                          backgroundColor: 'rgba(214, 175, 55, 0.1)',
-                          color: 'var(--accent-gold)',
-                          padding: '4px 10px',
-                          borderRadius: '20px',
-                          fontSize: '11px',
-                          fontWeight: 'bold'
-                        }}>
-                          {live.governorate}
-                        </span>
-                      </div>
-                      {!isShariaStudent && (
-                        <button 
-                          onClick={() => handleDelete(live.id, 'live')}
-                          style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', marginRight: 'auto' }}
-                        >
-                          <Trash size={14} />
-                        </button>
-                      )}
+                          gap: '4px'
+                        }}
+                      >
+                        {live.status === 'بث مباشر الآن' ? <Play size={12} /> : <ExternalLink size={12} />}
+                        دخول المحاضرة
+                      </a>
                     </div>
-
-                    <h3 style={{ fontSize: '15px', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '8px', lineHeight: '1.6' }}>{live.title}</h3>
-                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>المحاضر: <strong style={{ color: 'var(--text-primary)' }}>{live.teacher}</strong></div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '14px' }}>المستوى المستهدف: {live.stage}</div>
                   </div>
-
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    paddingTop: '12px',
-                    borderTop: '1px solid var(--border-subtle)'
-                  }}>
-                    <span style={{ fontSize: '12px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>{live.scheduleTime}</span>
-                    <a 
-                      href={live.link} 
-                      target="_blank" 
-                      rel="noreferrer"
-                      style={{
-                        backgroundColor: live.status === 'بث مباشر الآن' ? '#ef4444' : 'var(--border-subtle)',
-                        color: 'white',
-                        textDecoration: 'none',
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        fontSize: '11px',
-                        fontWeight: 'bold',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}
-                    >
-                      {live.status === 'بث مباشر الآن' ? <Play size={12} /> : <ExternalLink size={12} />}
-                      دخول المحاضرة
-                    </a>
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -2731,43 +2814,180 @@ function ShariaDashboard() {
         <div style={modalOverlayStyle}>
           <div style={modalContentStyle}>
             <div style={modalHeaderStyle}>
-              <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>جدولة بث مباشر ومحاضرة رقمية لموقع [ {liveForm.governorate} ]</h2>
+              <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>جدولة بث مباشر ومحاضرة رقمية للإدارة</h2>
               <button onClick={() => setShowAddModal(null)} style={closeBtnStyle}><X size={18} /></button>
             </div>
             <form onSubmit={handleAddLive}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                
+                {/* Title */}
                 <div>
-                  <label style={labelStyle}>عنوان المحاضرة المباشرة</label>
-                  <input type="text" required placeholder="مثال: شرح متن قطر الندى" value={liveForm.title} onChange={(e) => setLiveForm({ ...liveForm, title: e.target.value })} style={inputStyle} />
+                  <label style={labelStyle}>عنوان المحاضرة المباشرة / المادة</label>
+                  <input type="text" required placeholder="مثال: شرح كتاب التوحيد من صحيح البخاري" value={liveForm.title} onChange={(e) => setLiveForm({ ...liveForm, title: e.target.value })} style={inputStyle} />
                 </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={labelStyle}>المحاضر</label>
-                    <input type="text" required placeholder="اسم الأستاذ المحاضر" value={liveForm.teacher} onChange={(e) => setLiveForm({ ...liveForm, teacher: e.target.value })} style={inputStyle} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={labelStyle}>الموقع التابع له البث</label>
-                    <select value={liveForm.governorate} onChange={(e) => setLiveForm({ ...liveForm, governorate: e.target.value })} style={selectStyle}>
-                      {GOVERNORATES.map(gov => (
-                        <option key={gov} value={gov}>{gov}</option>
-                      ))}
+
+                {/* Administration (Governorate) */}
+                <div>
+                  <label style={labelStyle}>الإدارة / المحافظة</label>
+                  <select 
+                    value={liveForm.governorate} 
+                    onChange={(e) => setLiveForm({ ...liveForm, governorate: e.target.value, teacher: '' })} 
+                    style={selectStyle}
+                  >
+                    {GOVERNORATES.map(gov => (
+                      <option key={gov} value={gov}>{gov}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Stage & Level & Specialty */}
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: '120px' }}>
+                    <label style={labelStyle}>المرحلة</label>
+                    <select 
+                      value={liveForm.stage} 
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setLiveForm({
+                          ...liveForm,
+                          stage: val,
+                          level: 'المستوى الأول',
+                          discipline: val === 'متقدمة' ? 'فقه وأصوله' : '—'
+                        });
+                      }} 
+                      style={selectStyle}
+                    >
+                      <option value="تمهيدية">تمهيدية</option>
+                      <option value="متوسطة">متوسطة</option>
+                      <option value="متقدمة">متقدمة</option>
                     </select>
                   </div>
-                </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={labelStyle}>المرحلة المستهدفة</label>
-                    <input type="text" required placeholder="مثال: تمهيدي - مستوى أول" value={liveForm.stage} onChange={(e) => setLiveForm({ ...liveForm, stage: e.target.value })} style={inputStyle} />
+
+                  <div style={{ flex: 1, minWidth: '120px' }}>
+                    <label style={labelStyle}>المستوى</label>
+                    <select 
+                      value={liveForm.level} 
+                      onChange={(e) => setLiveForm({ ...liveForm, level: e.target.value })} 
+                      style={selectStyle}
+                    >
+                      <option value="المستوى الأول">المستوى الأول</option>
+                      <option value="المستوى الثاني">المستوى الثاني</option>
+                      {liveForm.stage === 'متقدمة' && (
+                        <>
+                          <option value="المستوى الثالث">المستوى الثالث</option>
+                          <option value="المستوى الرابع">المستوى الرابع</option>
+                        </>
+                      )}
+                    </select>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={labelStyle}>وقت البث</label>
-                    <input type="text" required placeholder="مثال: اليوم 08:00 مساءً" value={liveForm.scheduleTime} onChange={(e) => setLiveForm({ ...liveForm, scheduleTime: e.target.value })} style={inputStyle} />
-                  </div>
+
+                  {liveForm.stage === 'متقدمة' && (
+                    <div style={{ flex: 1, minWidth: '120px' }}>
+                      <label style={labelStyle}>التخصص الدراسي</label>
+                      <select 
+                        value={liveForm.discipline} 
+                        onChange={(e) => setLiveForm({ ...liveForm, discipline: e.target.value })} 
+                        style={selectStyle}
+                      >
+                        <option value="فقه وأصوله">فقه وأصوله</option>
+                        <option value="تفسير وحديث">تفسير وحديث</option>
+                        <option value="عقيدة">عقيدة</option>
+                        <option value="لغة عربية">لغة عربية</option>
+                        <option value="عامة">عامة</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
+
+                {/* Lecturer (Teacher) filtered by Governorate */}
                 <div>
-                  <label style={labelStyle}>رابط البث (زووم أو تيمز)</label>
-                  <input type="url" required placeholder="https://zoom.us/..." value={liveForm.link} onChange={(e) => setLiveForm({ ...liveForm, link: e.target.value })} style={inputStyle} />
+                  <label style={labelStyle}>المحاضر (من قائمة المحاضرين بالإدارة)</label>
+                  <select 
+                    required 
+                    value={liveForm.teacher} 
+                    onChange={(e) => setLiveForm({ ...liveForm, teacher: e.target.value })} 
+                    style={selectStyle}
+                  >
+                    {teachers.filter(t => t.governorate === liveForm.governorate).length === 0 ? (
+                      <option value="">لا يوجد محاضرين مسجلين في هذه الإدارة حالياً</option>
+                    ) : (
+                      <>
+                        <option value="">اختر الأستاذ المحاضر...</option>
+                        {teachers.filter(t => t.governorate === liveForm.governorate).map(t => (
+                          <option key={t.id} value={t.name}>{t.name}</option>
+                        ))}
+                      </>
+                    )}
+                  </select>
+                  {teachers.filter(t => t.governorate === liveForm.governorate).length === 0 && (
+                    <span style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px', display: 'block' }}>
+                      * يرجى إضافة محاضرين لهذه الإدارة أولاً من تبويب "أعضاء هيئة التدريس".
+                    </span>
+                  )}
                 </div>
+
+                {/* Day and Time Range */}
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: '120px' }}>
+                    <label style={labelStyle}>اليوم</label>
+                    <select 
+                      value={liveForm.day} 
+                      onChange={(e) => setLiveForm({ ...liveForm, day: e.target.value })} 
+                      style={selectStyle}
+                    >
+                      <option value="السبت">السبت</option>
+                      <option value="الأحد">الأحد</option>
+                      <option value="الإثنين">الإثنين</option>
+                      <option value="الثلاثاء">الثلاثاء</option>
+                      <option value="الأربعاء">الأربعاء</option>
+                      <option value="الخميس">الخميس</option>
+                      <option value="الجمعة">الجمعة</option>
+                    </select>
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: '100px' }}>
+                    <label style={labelStyle}>الوقت من</label>
+                    <input 
+                      type="time" 
+                      required 
+                      value={liveForm.timeStart} 
+                      onChange={(e) => setLiveForm({ ...liveForm, timeStart: e.target.value })} 
+                      style={inputStyle} 
+                    />
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: '100px' }}>
+                    <label style={labelStyle}>الوقت إلى</label>
+                    <input 
+                      type="time" 
+                      required 
+                      value={liveForm.timeEnd} 
+                      onChange={(e) => setLiveForm({ ...liveForm, timeEnd: e.target.value })} 
+                      style={inputStyle} 
+                    />
+                  </div>
+                </div>
+
+                {/* Link */}
+                <div>
+                  <label style={labelStyle}>رابط المحاضرة (زووم، تيمز، إلخ)</label>
+                  <input type="url" required placeholder="https://zoom.us/j/..." value={liveForm.link} onChange={(e) => setLiveForm({ ...liveForm, link: e.target.value })} style={inputStyle} />
+                </div>
+
+                {/* Weekly Renewal */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' }}>
+                  <input 
+                    type="checkbox" 
+                    id="isWeekly" 
+                    checked={liveForm.isWeekly} 
+                    onChange={(e) => setLiveForm({ ...liveForm, isWeekly: e.target.checked })} 
+                    style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="isWeekly" style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer', userSelect: 'none' }}>
+                    يتجدد البث تلقائياً في نفس التوقيت أسبوعياً
+                  </label>
+                </div>
+
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
                   <button type="button" onClick={() => setShowAddModal(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
                   <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#ef4444', border: 'none', color: 'white' }}>جدولة المحاضرة</button>
