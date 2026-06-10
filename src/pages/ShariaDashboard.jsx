@@ -2049,29 +2049,6 @@ function ShariaDashboard() {
                   />
                 </div>
 
-                {/* Teacher Name */}
-                <div>
-                  <label style={labelStyle}>المحاضر</label>
-                  <input 
-                    type="text" 
-                    placeholder="اسم المحاضر" 
-                    value={courseForm.teacher || ''} 
-                    onChange={(e) => setCourseForm({ ...courseForm, teacher: e.target.value })} 
-                    style={inputStyle} 
-                  />
-                </div>
-
-                {/* Hours */}
-                <div>
-                  <label style={labelStyle}>الساعات المعتمدة</label>
-                  <input 
-                    type="number" 
-                    placeholder="عدد الساعات" 
-                    value={courseForm.hours} 
-                    onChange={(e) => setCourseForm({ ...courseForm, hours: Number(e.target.value) })} 
-                    style={inputStyle} 
-                  />
-                </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
                   <button type="button" onClick={() => setShowAddModal(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
@@ -2827,29 +2804,6 @@ function ShariaDashboard() {
                   />
                 </div>
 
-                {/* Teacher Name */}
-                <div>
-                  <label style={labelStyle}>المحاضر</label>
-                  <input 
-                    type="text" 
-                    placeholder="اسم المحاضر" 
-                    value={editingCourse.teacher || ''} 
-                    onChange={(e) => setEditingCourse({ ...editingCourse, teacher: e.target.value })} 
-                    style={inputStyle} 
-                  />
-                </div>
-
-                {/* Hours */}
-                <div>
-                  <label style={labelStyle}>الساعات المعتمدة</label>
-                  <input 
-                    type="number" 
-                    placeholder="عدد الساعات" 
-                    value={editingCourse.hours || 0} 
-                    onChange={(e) => setEditingCourse({ ...editingCourse, hours: Number(e.target.value) })} 
-                    style={inputStyle} 
-                  />
-                </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
                   <button type="button" onClick={() => setEditingCourse(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>

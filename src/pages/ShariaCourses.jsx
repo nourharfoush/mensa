@@ -5,18 +5,17 @@ function ShariaCourses() {
   const [searchTerm, setSearchTerm] = useState('');
   const [courses, setCourses] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newCourse, setNewCourse] = useState({ name: '', teacher: '', category: 'الفقه وأصوله', hours: '', level: 'المستوى الأول', code: '' });
+  const [newCourse, setNewCourse] = useState({ name: '', category: 'الفقه وأصوله', level: 'المستوى الأول', code: '' });
 
   const handleAddCourse = (e) => {
     e.preventDefault();
-    setCourses([...courses, { ...newCourse, id: Date.now(), students: 0, hours: Number(newCourse.hours) }]);
+    setCourses([...courses, { ...newCourse, id: Date.now(), students: 0, teacher: '', hours: 20 }]);
     setShowAddModal(false);
-    setNewCourse({ name: '', teacher: '', category: 'الفقه وأصوله', hours: '', level: 'المستوى الأول', code: '' });
+    setNewCourse({ name: '', category: 'الفقه وأصوله', level: 'المستوى الأول', code: '' });
   };
 
   const filteredCourses = courses.filter(c => 
     c.name.includes(searchTerm) || 
-    c.teacher.includes(searchTerm) || 
     c.code.includes(searchTerm)
   );
 
@@ -59,7 +58,7 @@ function ShariaCourses() {
         <div style={{ position: 'relative', flex: 1, minWidth: '260px' }}>
           <input
             type="text"
-            placeholder="البحث باسم المقرر، المحاضر أو الرمز..."
+            placeholder="البحث باسم المقرر أو الرمز..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
@@ -138,9 +137,6 @@ function ShariaCourses() {
                 {c.name}
               </h3>
               
-              <div style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '16px' }}>
-                المحاضر: <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>{c.teacher}</span>
-              </div>
   
               <hr style={{ border: 'none', borderTop: '1px solid var(--border-subtle)', margin: '14px 0' }} />
   
@@ -216,17 +212,6 @@ function ShariaCourses() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>أستاذ المادة (المحاضر)</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="اسم المحاضر"
-                    value={newCourse.teacher}
-                    onChange={(e) => setNewCourse({ ...newCourse, teacher: e.target.value })}
-                    style={{ width: '100%', padding: '10px', borderRadius: '8px', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
-                  />
-                </div>
-                <div>
                   <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>القسم التخصصي</label>
                   <select
                     value={newCourse.category}
@@ -240,31 +225,18 @@ function ShariaCourses() {
                     <option value="الحديث الشريف">الحديث الشريف</option>
                   </select>
                 </div>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>عدد ساعات المادة</label>
-                    <input
-                      type="number"
-                      required
-                      placeholder="مثال: 30"
-                      value={newCourse.hours}
-                      onChange={(e) => setNewCourse({ ...newCourse, hours: e.target.value })}
-                      style={{ width: '100%', padding: '10px', borderRadius: '8px', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
-                    />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>المستوى الدراسي</label>
-                    <select
-                      value={newCourse.level}
-                      onChange={(e) => setNewCourse({ ...newCourse, level: e.target.value })}
-                      style={{ width: '100%', padding: '10px', borderRadius: '8px', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
-                    >
-                      <option value="المستوى التمهيدي">المستوى التمهيدي</option>
-                      <option value="المستوى الأول">المستوى الأول</option>
-                      <option value="المستوى الثاني">المستوى الثاني</option>
-                      <option value="المستوى الثالث">المستوى الثالث</option>
-                    </select>
-                  </div>
+                <div>
+                  <label style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>المستوى الدراسي</label>
+                  <select
+                    value={newCourse.level}
+                    onChange={(e) => setNewCourse({ ...newCourse, level: e.target.value })}
+                    style={{ width: '100%', padding: '10px', borderRadius: '8px', backgroundColor: 'var(--bg-main)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}
+                  >
+                    <option value="المستوى التمهيدي">المستوى التمهيدي</option>
+                    <option value="المستوى الأول">المستوى الأول</option>
+                    <option value="المستوى الثاني">المستوى الثاني</option>
+                    <option value="المستوى الثالث">المستوى الثالث</option>
+                  </select>
                 </div>
               </div>
               
