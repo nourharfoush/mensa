@@ -667,7 +667,7 @@ function ShariaDashboard() {
           textAlign: 'center'
         }}>
           <div style={{ color: 'var(--accent-gold)', fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }}>حالة الفصل الدراسي الحالي</div>
-          <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--text-primary)' }}>فصل الصيف 2026</div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--text-primary)' }}>دفعة يونيو 2026</div>
           <div style={{ color: '#10b981', fontSize: '13px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center' }}>
             <span className="pulse-indicator" style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }}></span>
             نشط وتفاعلي
