@@ -43,7 +43,19 @@ function ShariaDashboard() {
     }
   }, [tabParam, isShariaStudent]);
 
-  const { managers = [], addManager, deleteManager, addUser, updateUser, users = [], branches = [] } = useAppData();
+  const {
+    managers = [], addManager, deleteManager, addUser, updateUser, users = [], branches = [],
+    shariaCourses = [], addShariaCourse, updateShariaCourse, deleteShariaCourse,
+    shariaBranches = [], addShariaBranch, updateShariaBranch, deleteShariaBranch,
+    shariaStudents = [], addShariaStudent, updateShariaStudent, deleteShariaStudent,
+    shariaTeachers = [], addShariaTeacher, updateShariaTeacher, deleteShariaTeacher,
+    shariaLiveLectures = [], addShariaLive, updateShariaLive, deleteShariaLive
+  } = useAppData();
+
+  const courses = shariaCourses;
+  const students = shariaStudents;
+  const teachers = shariaTeachers;
+  const liveLectures = shariaLiveLectures;
 
   const targetSpecialties = [
     'مدير الإدارة',
@@ -84,59 +96,13 @@ function ShariaDashboard() {
     status: m.status || 'نشط'
   }));
 
-  // Stages, Levels, Courses (Subjects) are static/global
-  const [courses, setCourses] = useState(() => {
-    try {
-      const stored = localStorage.getItem('sharia_courses');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return parsed.map(c => c.hours === 30 ? { ...c, hours: 20 } : c);
-      }
-    } catch (e) {}
-    return [];
-  });
-
-  useEffect(() => {
-    localStorage.setItem('sharia_courses', JSON.stringify(courses));
-  }, [courses]);
-
-  const [shariaBranches, setShariaBranches] = useState(() => {
-    try {
-      const stored = localStorage.getItem('sharia_branches');
-      return stored ? JSON.parse(stored) : [
-        { id: 'sb-1', name: 'فرع معهد تفهنا الأشراف الشرعي', governorate: 'الدقهلية', code: 'SH-DK01', address: 'معهد فتيات تفهنا الأشراف' },
-        { id: 'sb-2', name: 'فرع الجامع الأزهر الرئيسي', governorate: 'الجامع الأزهر', code: 'SH-AZ01', address: 'مقر الجامع الأزهر الشريف بالقاهرة' }
-      ];
-    } catch (e) {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem('sharia_branches', JSON.stringify(shariaBranches));
-  }, [shariaBranches]);
-
   const [selectedCourseStage, setSelectedCourseStage] = useState('تمهيدية');
   const [selectedCourseLevel, setSelectedCourseLevel] = useState('المستوى الأول');
   const [selectedCourseDiscipline, setSelectedCourseDiscipline] = useState('fiqh');
 
-  // Students list changes per location/governorate with the new fields
-  const [students, setStudents] = useState(() => {
-    try {
-      const stored = localStorage.getItem('sharia_students');
-      return stored ? JSON.parse(stored) : [];
-    } catch {
-      return [];
-    }
-  });
-
   const loggedInStudent = isShariaStudent 
     ? students.find(s => String(s.nationalId || '').trim() === String(currentUser?.national_id || '').trim())
     : null;
-
-  useEffect(() => {
-    localStorage.setItem('sharia_students', JSON.stringify(students));
-  }, [students]);
 
   useEffect(() => {
     if (isShariaStudent && loggedInStudent) {
@@ -148,60 +114,15 @@ function ShariaDashboard() {
   }, [isShariaStudent, loggedInStudent]);
 
   const [editingStudent, setEditingStudent] = useState(null);
-
-  const [teachers, setTeachers] = useState(() => {
-    try {
-      const stored = localStorage.getItem('sharia_teachers');
-      if (stored) return JSON.parse(stored);
-    } catch (e) {}
-    return [];
-  });
-
   const [editingTeacher, setEditingTeacher] = useState(null);
   const [editingCourse, setEditingCourse] = useState(null);
   const [editingShariaBranch, setEditingShariaBranch] = useState(null);
   const [editingLive, setEditingLive] = useState(null);
 
-  useEffect(() => {
-    localStorage.setItem('sharia_teachers', JSON.stringify(teachers));
-  }, [teachers]);
-
   const [exams, setExams] = useState([]);
-
   const [results, setResults] = useState([]);
-
-  // News is static/global
   const [news, setNews] = useState([]);
 
-  // Live stream lectures change per location/governorate
-  const [liveLectures, setLiveLectures] = useState(() => {
-    try {
-      const stored = localStorage.getItem('sharia_live');
-      return stored ? JSON.parse(stored) : [
-        {
-          id: 1,
-          title: 'شرح كتاب التوحيد من صحيح البخاري',
-          governorate: 'الجامع الأزهر',
-          stage: 'تمهيدية',
-          level: 'المستوى الأول',
-          discipline: '—',
-          teacher: 'أ.د. أحمد المعتز بالله',
-          day: 'الأحد',
-          timeStart: '18:00',
-          timeEnd: '20:00',
-          link: 'https://zoom.us/j/123456789',
-          isWeekly: true,
-          status: 'بث مباشر الآن'
-        }
-      ];
-    } catch {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem('sharia_live', JSON.stringify(liveLectures));
-  }, [liveLectures]);
 
   // --- NEW ITEM FORM STATES ---
   const [adminForm, setAdminForm] = useState({ 
@@ -296,7 +217,6 @@ function ShariaDashboard() {
   const handleAddCourse = (e) => {
     e.preventDefault();
     const formattedCourse = {
-      id: Date.now(),
       stage: courseForm.stage,
       level: courseForm.level,
       discipline: courseForm.stage === 'متقدمة' ? courseForm.discipline : '—',
@@ -305,18 +225,14 @@ function ShariaDashboard() {
       studentsCount: 0,
       hours: 20
     };
-    setCourses([...courses, formattedCourse]);
+    addShariaCourse(formattedCourse);
     setShowAddModal(null);
     setCourseForm({ stage: 'تمهيدية', level: 'المستوى الأول', discipline: 'fiqh', name: '', teacher: '', hours: 20 });
   };
 
   const handleAddStudent = (e) => {
     e.preventDefault();
-    const studentId = Date.now();
-    const newStudent = { ...studentForm, id: studentId };
-    
-    // Add to local state
-    setStudents([...students, newStudent]);
+    addShariaStudent(studentForm);
     
     // Auto-create user account
     if (studentForm.nationalId) {
@@ -355,15 +271,12 @@ function ShariaDashboard() {
     e.preventDefault();
     if (!editingStudent) return;
     
-    // Find the original student before editing
     const originalStudent = students.find(s => s.id === editingStudent.id);
     const oldNationalId = originalStudent ? originalStudent.nationalId : null;
     const newNationalId = editingStudent.nationalId;
     
-    // Update student in list
-    setStudents(students.map(s => s.id === editingStudent.id ? editingStudent : s));
+    updateShariaStudent(editingStudent.id, editingStudent);
     
-    // Update or create user credentials
     if (newNationalId) {
       const targetOld = oldNationalId ? String(oldNationalId).trim() : '';
       const associatedUser = users.find(u => {
@@ -381,7 +294,6 @@ function ShariaDashboard() {
           email: newNationalId
         });
       } else {
-        // Fallback: If no associated user was found, create one now
         const studentUser = {
           name: editingStudent.name,
           national_id: newNationalId,
@@ -468,7 +380,7 @@ function ShariaDashboard() {
       alert(conflictError);
       return;
     }
-    setLiveLectures([...liveLectures, { ...liveForm, id: Date.now() }]);
+    addShariaLive(liveForm);
     setShowAddModal(null);
     setLiveForm({
       title: '',
@@ -488,8 +400,7 @@ function ShariaDashboard() {
 
   const handleAddTeacher = (e) => {
     e.preventDefault();
-    const newTeacher = { ...teacherForm, id: Date.now() };
-    setTeachers([...teachers, newTeacher]);
+    addShariaTeacher(teacherForm);
     setShowAddModal(null);
     setTeacherForm({
       name: '',
@@ -507,29 +418,24 @@ function ShariaDashboard() {
   const handleEditTeacher = (e) => {
     e.preventDefault();
     if (!editingTeacher) return;
-    setTeachers(teachers.map(t => t.id === editingTeacher.id ? editingTeacher : t));
+    updateShariaTeacher(editingTeacher.id, editingTeacher);
     setEditingTeacher(null);
   };
 
   const handleEditCourse = (e) => {
     e.preventDefault();
     if (!editingCourse) return;
-    setCourses(courses.map(c => c.id === editingCourse.id ? {
-      ...c,
-      stage: editingCourse.stage,
-      level: editingCourse.level,
+    updateShariaCourse(editingCourse.id, {
+      ...editingCourse,
       discipline: editingCourse.stage === 'متقدمة' ? editingCourse.discipline : '—',
-      name: editingCourse.name,
-      teacher: '',
       hours: 20
-    } : c));
+    });
     setEditingCourse(null);
   };
 
   const handleAddShariaBranch = (e) => {
     e.preventDefault();
-    const newBranch = { ...shariaBranchForm, id: 'sb-' + Date.now() };
-    setShariaBranches([...shariaBranches, newBranch]);
+    addShariaBranch(shariaBranchForm);
     setShowAddModal(null);
     setShariaBranchForm({ name: '', governorate: 'الجامع الأزهر', code: '', address: '' });
   };
@@ -537,7 +443,7 @@ function ShariaDashboard() {
   const handleEditShariaBranch = (e) => {
     e.preventDefault();
     if (!editingShariaBranch) return;
-    setShariaBranches(shariaBranches.map(b => b.id === editingShariaBranch.id ? editingShariaBranch : b));
+    updateShariaBranch(editingShariaBranch.id, editingShariaBranch);
     setEditingShariaBranch(null);
   };
 
@@ -549,27 +455,34 @@ function ShariaDashboard() {
       alert(conflictError);
       return;
     }
-    setLiveLectures(liveLectures.map(l => l.id === editingLive.id ? editingLive : l));
+    updateShariaLive(editingLive.id, editingLive);
     setEditingLive(null);
   };
 
   // --- ACTIONS ---
   const handleDelete = (id, listName) => {
-    if (confirm('هل أنت متأكد من رغبتك في حذف هذا السجل؟')) {
-      if (listName === 'admins') deleteManager(id);
-      if (listName === 'externalAdmins') deleteManager(id);
-      if (listName === 'shariaBranches') setShariaBranches(shariaBranches.filter(x => x.id !== id));
-      if (listName === 'courses') setCourses(courses.filter(x => x.id !== id));
-      if (listName === 'preparatory') setCourses(courses.filter(x => x.id !== id));
-      if (listName === 'intermediate') setCourses(courses.filter(x => x.id !== id));
-      if (listName === 'advanced') setCourses(courses.filter(x => x.id !== id));
-      if (listName === 'students') setStudents(students.filter(x => x.id !== id));
-      if (listName === 'exams') setExams(exams.filter(x => x.id !== id));
-      if (listName === 'results') setResults(results.filter(x => x.id !== id));
-      if (listName === 'news') setNews(news.filter(x => x.id !== id));
-      if (listName === 'live') setLiveLectures(liveLectures.filter(x => x.id !== id));
-      if (listName === 'teachers') setTeachers(teachers.filter(x => x.id !== id));
+    if (listName === 'admins') deleteManager(id);
+    if (listName === 'externalAdmins') deleteManager(id);
+    if (listName === 'shariaBranches') deleteShariaBranch(id);
+    if (listName === 'courses' || listName === 'preparatory' || listName === 'intermediate' || listName === 'advanced') deleteShariaCourse(id);
+    if (listName === 'students') deleteShariaStudent(id);
+    if (listName === 'exams') {
+      if (confirm('هل أنت متأكد من رغبتك في حذف هذا السجل؟')) {
+        setExams(exams.filter(x => x.id !== id));
+      }
     }
+    if (listName === 'results') {
+      if (confirm('هل أنت متأكد من رغبتك في حذف هذا السجل؟')) {
+        setResults(results.filter(x => x.id !== id));
+      }
+    }
+    if (listName === 'news') {
+      if (confirm('هل أنت متأكد من رغبتك في حذف هذا السجل؟')) {
+        setNews(news.filter(x => x.id !== id));
+      }
+    }
+    if (listName === 'live') deleteShariaLive(id);
+    if (listName === 'teachers') deleteShariaTeacher(id);
   };
 
   // --- FILTERED DATA FOR ACTIVE GOVERNORATE ---

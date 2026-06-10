@@ -5,7 +5,8 @@ import {
   monthlyReportsAPI, followUpReportsAPI, applicantsAPI, rowaqsAPI, applicantBranchesAPI,
   sessionReportsAPI, platformTopManagementAPI, platformSupervisorsAPI, platformCoordinatorsAPI,
   platformMohfezsAPI, platformSessionsAPI, platformStudentsAPI, platformApplicantsAPI,
-  platformRowaqsAPI, administrationsAPI, rolePermissionsAPI
+  platformRowaqsAPI, administrationsAPI, rolePermissionsAPI,
+  shariaCoursesAPI, shariaBranchesAPI, shariaStudentsAPI, shariaTeachersAPI, shariaLivesAPI
 } from '../utils/apiService';
 
 const AppDataContext = createContext(null);
@@ -263,6 +264,32 @@ export function AppDataProvider({ children }) {
     return loaded;
   });
 
+  // Sharia Dashboard States
+  const [shariaCourses, setShariaCourses] = useState(() => getFromLocalStorage('sharia_courses', []));
+  const [shariaBranches, setShariaBranches] = useState(() => getFromLocalStorage('sharia_branches', [
+    { id: 'sb-1', name: 'فرع معهد تفهنا الأشراف الشرعي', governorate: 'الدقهلية', code: 'SH-DK01', address: 'معهد فتيات تفهنا الأشراف' },
+    { id: 'sb-2', name: 'فرع الجامع الأزهر الرئيسي', governorate: 'الجامع الأزهر', code: 'SH-AZ01', address: 'مقر الجامع الأزهر الشريف بالقاهرة' }
+  ]));
+  const [shariaStudents, setShariaStudents] = useState(() => getFromLocalStorage('sharia_students', []));
+  const [shariaTeachers, setShariaTeachers] = useState(() => getFromLocalStorage('sharia_teachers', []));
+  const [shariaLiveLectures, setShariaLiveLectures] = useState(() => getFromLocalStorage('sharia_live', [
+    {
+      id: 1,
+      title: 'شرح كتاب التوحيد من صحيح البخاري',
+      governorate: 'الجامع الأزهر',
+      stage: 'تمهيدية',
+      level: 'المستوى الأول',
+      discipline: '—',
+      teacher: 'أ.د. أحمد المعتز بالله',
+      day: 'الأحد',
+      timeStart: '18:00',
+      timeEnd: '20:00',
+      link: 'https://zoom.us/j/123456789',
+      isWeekly: true,
+      status: 'بث مباشر الآن'
+    }
+  ]));
+
   // Save permissions to localStorage
   useEffect(() => {
     saveToLocalStorage('rolePermissions', rolePermissions);
@@ -285,6 +312,25 @@ export function AppDataProvider({ children }) {
         const syncCollection = async (api, state, setState, key) => {
           const remoteData = await api.getAll().catch(() => null);
           if (remoteData) {
+            const localData = getFromLocalStorage(key, []);
+            // Auto-migrate if remote is empty but local has records
+            if (remoteData.length === 0 && localData.length > 0) {
+              console.log(`🚀 Auto-migrating ${localData.length} items for ${key} to MongoDB...`);
+              try {
+                const sanitizedLocal = localData.map(({ _id, id, ...rest }) => rest);
+                await api.bulkImport(sanitizedLocal);
+                const refetched = await api.getAll().catch(() => null);
+                if (refetched) {
+                  const normalized = refetched.map(item => ({ ...item, id: item.id || item._id }));
+                  setState(normalized);
+                  saveToLocalStorage(key, normalized);
+                  return;
+                }
+              } catch (migrateErr) {
+                console.error(`✗ Migration failed for ${key}:`, migrateErr);
+              }
+            }
+
             const normalizedData = remoteData.map(item => ({
               ...item,
               id: item.id || item._id
@@ -293,8 +339,6 @@ export function AppDataProvider({ children }) {
             saveToLocalStorage(key, normalizedData);
             if (remoteData.length > 0) {
               console.log(`✓ Fetched ${normalizedData.length} items for ${key} from MongoDB`);
-            } else {
-              console.log(`✓ Collection ${key} is empty in MongoDB; synced local state to empty.`);
             }
           }
         };
@@ -335,6 +379,13 @@ export function AppDataProvider({ children }) {
 
         await syncCollection(administrationsAPI, administrations, setAdministrations, 'administrations');
         await syncCollection(rolePermissionsAPI, rolePermissions, setRolePermissions, 'rolePermissions');
+
+        // Sync Sharia Collections
+        await syncCollection(shariaCoursesAPI, shariaCourses, setShariaCourses, 'sharia_courses');
+        await syncCollection(shariaBranchesAPI, shariaBranches, setShariaBranches, 'sharia_branches');
+        await syncCollection(shariaStudentsAPI, shariaStudents, setShariaStudents, 'sharia_students');
+        await syncCollection(shariaTeachersAPI, shariaTeachers, setShariaTeachers, 'sharia_teachers');
+        await syncCollection(shariaLivesAPI, shariaLiveLectures, setShariaLiveLectures, 'sharia_live');
 
         setDbSynced(true);
         console.log('✓ Database synchronization complete!');
@@ -1254,6 +1305,87 @@ export function AppDataProvider({ children }) {
     }
   };
 
+  // --- Sharia CRUD Operations ---
+  const addShariaCourse = (course) => {
+    const newCourse = { ...course, id: String(Date.now() + Math.random()) };
+    setShariaCourses(prev => [...prev, newCourse]);
+    shariaCoursesAPI.create(newCourse).catch(err => console.error(err));
+  };
+  const updateShariaCourse = (id, updatedCourse) => {
+    setShariaCourses(prev => prev.map(c => String(c.id) === String(id) ? { ...c, ...updatedCourse } : c));
+    shariaCoursesAPI.update(id, updatedCourse).catch(err => console.error(err));
+  };
+  const deleteShariaCourse = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setShariaCourses(prev => prev.filter(c => String(c.id) !== String(id)));
+      shariaCoursesAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addShariaBranch = (branch) => {
+    const newBranch = { ...branch, id: String(Date.now() + Math.random()) };
+    setShariaBranches(prev => [...prev, newBranch]);
+    shariaBranchesAPI.create(newBranch).catch(err => console.error(err));
+  };
+  const updateShariaBranch = (id, updatedBranch) => {
+    setShariaBranches(prev => prev.map(b => String(b.id) === String(id) ? { ...b, ...updatedBranch } : b));
+    shariaBranchesAPI.update(id, updatedBranch).catch(err => console.error(err));
+  };
+  const deleteShariaBranch = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setShariaBranches(prev => prev.filter(b => String(b.id) !== String(id)));
+      shariaBranchesAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addShariaStudent = (student) => {
+    const newStudent = { ...student, id: String(Date.now() + Math.random()) };
+    setShariaStudents(prev => [...prev, newStudent]);
+    shariaStudentsAPI.create(newStudent).catch(err => console.error(err));
+  };
+  const updateShariaStudent = (id, updatedStudent) => {
+    setShariaStudents(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...updatedStudent } : s));
+    shariaStudentsAPI.update(id, updatedStudent).catch(err => console.error(err));
+  };
+  const deleteShariaStudent = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setShariaStudents(prev => prev.filter(s => String(s.id) !== String(id)));
+      shariaStudentsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addShariaTeacher = (teacher) => {
+    const newTeacher = { ...teacher, id: String(Date.now() + Math.random()) };
+    setShariaTeachers(prev => [...prev, newTeacher]);
+    shariaTeachersAPI.create(newTeacher).catch(err => console.error(err));
+  };
+  const updateShariaTeacher = (id, updatedTeacher) => {
+    setShariaTeachers(prev => prev.map(t => String(t.id) === String(id) ? { ...t, ...updatedTeacher } : t));
+    shariaTeachersAPI.update(id, updatedTeacher).catch(err => console.error(err));
+  };
+  const deleteShariaTeacher = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setShariaTeachers(prev => prev.filter(t => String(t.id) !== String(id)));
+      shariaTeachersAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
+  const addShariaLive = (live) => {
+    const newLive = { ...live, id: String(Date.now() + Math.random()) };
+    setShariaLiveLectures(prev => [...prev, newLive]);
+    shariaLivesAPI.create(newLive).catch(err => console.error(err));
+  };
+  const updateShariaLive = (id, updatedLive) => {
+    setShariaLiveLectures(prev => prev.map(l => String(l.id) === String(id) ? { ...l, ...updatedLive } : l));
+    shariaLivesAPI.update(id, updatedLive).catch(err => console.error(err));
+  };
+  const deleteShariaLive = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setShariaLiveLectures(prev => prev.filter(l => String(l.id) !== String(id)));
+      shariaLivesAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
   const updateRolePermissions = (newPermissions) => {
     setRolePermissions(newPermissions);
   };
@@ -1299,6 +1431,12 @@ export function AppDataProvider({ children }) {
       platformStudents, addPlatformStudent, updatePlatformStudent, deletePlatformStudent, deleteAllPlatformStudents, bulkImportPlatformStudents,
       platformApplicants, addPlatformApplicant, updatePlatformApplicant, deletePlatformApplicant, deleteAllPlatformApplicants,
       platformRowaqs, addPlatformRowaq, updatePlatformRowaq, deletePlatformRowaq,
+
+      shariaCourses, addShariaCourse, updateShariaCourse, deleteShariaCourse,
+      shariaBranches, addShariaBranch, updateShariaBranch, deleteShariaBranch,
+      shariaStudents, addShariaStudent, updateShariaStudent, deleteShariaStudent,
+      shariaTeachers, addShariaTeacher, updateShariaTeacher, deleteShariaTeacher,
+      shariaLiveLectures, addShariaLive, updateShariaLive, deleteShariaLive,
 
       theme, toggleTheme,
       rolePermissions, updateRolePermissions, hasPermission,

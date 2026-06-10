@@ -266,3 +266,54 @@ export const rolePermissionsAPI = {
   delete: (id) => apiCall(`/rolepermissions/${id}`, { method: 'DELETE' }),
   bulkImport: (items) => apiCall('/rolepermissions/bulk-import', { method: 'POST', body: { items } })
 };
+
+// Sharia Courses API
+export const shariaCoursesAPI = {
+  getAll: () => apiCall('/shariacourses'),
+  create: (data) => apiCall('/shariacourses', { method: 'POST', body: data }),
+  update: (id, data) => apiCall(`/shariacourses/${id}`, { method: 'PUT', body: data }),
+  delete: (id) => apiCall(`/shariacourses/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/shariacourses/all', { method: 'DELETE' }),
+  bulkImport: (items) => apiCall('/shariacourses/bulk-import', { method: 'POST', body: { items } })
+};
+
+// Sharia Branches API
+export const shariaBranchesAPI = {
+  getAll: () => apiCall('/shariabranches'),
+  create: (data) => apiCall('/shariabranches', { method: 'POST', body: data }),
+  update: (id, data) => apiCall(`/shariabranches/${id}`, { method: 'PUT', body: data }),
+  delete: (id) => apiCall(`/shariabranches/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/shariabranches/all', { method: 'DELETE' }),
+  bulkImport: (items) => apiCall('/shariabranches/bulk-import', { method: 'POST', body: { items } })
+};
+
+// Sharia Students API
+export const shariaStudentsAPI = {
+  getAll: () => apiCall('/shariastudents'),
+  create: (data) => apiCall('/shariastudents', { method: 'POST', body: data }),
+  update: (id, data) => apiCall(`/shariastudents/${id}`, { method: 'PUT', body: data }),
+  delete: (id) => apiCall(`/shariastudents/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/shariastudents/all', { method: 'DELETE' }),
+  bulkImport: (items) => apiCall('/shariastudents/bulk-import', { method: 'POST', body: { items } })
+};
+
+// Sharia Teachers API
+export const shariaTeachersAPI = {
+  getAll: () => apiCall('/shariateachers'),
+  create: (data) => apiCall('/shariateachers', { method: 'POST', body: data }),
+  update: (id, data) => apiCall(`/shariateachers/${id}`, { method: 'PUT', body: data }),
+  delete: (id) => apiCall(`/shariateachers/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/shariateachers/all', { method: 'DELETE' }),
+  bulkImport: (items) => apiCall('/shariateachers/bulk-import', { method: 'POST', body: { items } })
+};
+
+// Sharia Lives API
+export const shariaLivesAPI = {
+  getAll: () => apiCall('/sharialives'),
+  create: (data) => apiCall('/sharialives', { method: 'POST', body: data }),
+  update: (id, data) => apiCall(`/sharialives/${id}`, { method: 'PUT', body: data }),
+  delete: (id) => apiCall(`/sharialives/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/sharialives/all', { method: 'DELETE' }),
+  bulkImport: (items) => apiCall('/sharialives/bulk-import', { method: 'POST', body: { items } })
+};
+

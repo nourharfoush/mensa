@@ -49,6 +49,12 @@ import platformRowaqRoutes from './routes/platformrowaqs.js';
 import administrationRoutes from './routes/administrations.js';
 import rolePermissionRoutes from './routes/rolepermissions.js';
 
+import shariaCourseRoutes from './routes/shariacourses.js';
+import shariaBranchRoutes from './routes/shariabranches.js';
+import shariaStudentRoutes from './routes/shariastudents.js';
+import shariaTeacherRoutes from './routes/shariateachers.js';
+import shariaLiveRoutes from './routes/sharialives.js';
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -97,6 +103,11 @@ app.delete('/api/:collection/all', async (req, res) => {
       case 'platformrowaqs': modelName = 'PlatformRowaq'; break;
       case 'administrations': modelName = 'Administration'; break;
       case 'rolepermissions': modelName = 'RolePermission'; break;
+      case 'shariacourses': modelName = 'ShariaCourse'; break;
+      case 'shariabranches': modelName = 'ShariaBranch'; break;
+      case 'shariastudents': modelName = 'ShariaStudent'; break;
+      case 'shariateachers': modelName = 'ShariaTeacher'; break;
+      case 'sharialives': modelName = 'ShariaLive'; break;
       default:
         return res.status(400).json({ message: 'Invalid collection name' });
     }
@@ -134,6 +145,12 @@ app.use('/api/platformapplicants', platformApplicantRoutes);
 app.use('/api/platformrowaqs', platformRowaqRoutes);
 app.use('/api/administrations', administrationRoutes);
 app.use('/api/rolepermissions', rolePermissionRoutes);
+
+app.use('/api/shariacourses', shariaCourseRoutes);
+app.use('/api/shariabranches', shariaBranchRoutes);
+app.use('/api/shariastudents', shariaStudentRoutes);
+app.use('/api/shariateachers', shariaTeacherRoutes);
+app.use('/api/sharialives', shariaLiveRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
