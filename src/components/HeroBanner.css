@@ -106,3 +106,27 @@
   }
 }
 
+/* Light theme overrides */
+[data-theme='light'] .hero-banner {
+  background-color: var(--bg-sidebar);
+  background-image: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.15) 0%, transparent 60%);
+}
+
+[data-theme='light'] .welcome-tag {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: var(--accent-gold);
+}
+
+[data-theme='light'] .hero-overlay {
+  opacity: 0.08;
+  filter: sepia(0.3) contrast(1);
+}
+
+[data-theme='light'] .main-title h1 {
+  text-shadow: none;
+}
+
+[data-theme='light'] .main-title h2 {
+  text-shadow: none;
+}
+
