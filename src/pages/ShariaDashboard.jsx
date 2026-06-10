@@ -160,6 +160,7 @@ function ShariaDashboard() {
   const [editingTeacher, setEditingTeacher] = useState(null);
   const [editingCourse, setEditingCourse] = useState(null);
   const [editingShariaBranch, setEditingShariaBranch] = useState(null);
+  const [editingLive, setEditingLive] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('sharia_teachers', JSON.stringify(teachers));
@@ -493,6 +494,13 @@ function ShariaDashboard() {
     if (!editingShariaBranch) return;
     setShariaBranches(shariaBranches.map(b => b.id === editingShariaBranch.id ? editingShariaBranch : b));
     setEditingShariaBranch(null);
+  };
+
+  const handleEditLive = (e) => {
+    e.preventDefault();
+    if (!editingLive) return;
+    setLiveLectures(liveLectures.map(l => l.id === editingLive.id ? editingLive : l));
+    setEditingLive(null);
   };
 
   // --- ACTIONS ---
@@ -2149,12 +2157,22 @@ function ShariaDashboard() {
                           )}
                         </div>
                         {!isShariaStudent && (
-                          <button 
-                            onClick={() => handleDelete(live.id, 'live')}
-                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', marginRight: 'auto' }}
-                          >
-                            <Trash size={14} />
-                          </button>
+                          <div style={{ display: 'flex', gap: '8px', marginRight: 'auto', alignItems: 'center' }}>
+                            <button 
+                              onClick={() => setEditingLive(live)}
+                              style={{ background: 'transparent', border: 'none', color: 'var(--accent-gold)', cursor: 'pointer', padding: '4px' }}
+                              title="تعديل"
+                            >
+                              <Edit size={14} />
+                            </button>
+                            <button 
+                              onClick={() => handleDelete(live.id, 'live')}
+                              style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
+                              title="حذف"
+                            >
+                              <Trash size={14} />
+                            </button>
+                          </div>
                         )}
                       </div>
 
@@ -2810,21 +2828,58 @@ function ShariaDashboard() {
       )}
 
       {/* Modal 8: Add Live */}
-      {showAddModal === 'live' && (
-        <div style={modalOverlayStyle}>
-          <div style={modalContentStyle}>
-            <div style={modalHeaderStyle}>
-              <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>جدولة بث مباشر ومحاضرة رقمية للإدارة</h2>
-              <button onClick={() => setShowAddModal(null)} style={closeBtnStyle}><X size={18} /></button>
-            </div>
-            <form onSubmit={handleAddLive}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
-                
-                {/* Title */}
-                <div>
-                  <label style={labelStyle}>عنوان المحاضرة المباشرة / المادة</label>
-                  <input type="text" required placeholder="مثال: شرح كتاب التوحيد من صحيح البخاري" value={liveForm.title} onChange={(e) => setLiveForm({ ...liveForm, title: e.target.value })} style={inputStyle} />
-                </div>
+      {showAddModal === 'live' && (() => {
+        const getDisciplineKey = (arabicVal) => {
+          if (arabicVal === 'فقه وأصوله') return 'fiqh';
+          if (arabicVal === 'تفسير وحديث') return 'tafsir';
+          if (arabicVal === 'عقيدة') return 'aqeedah';
+          if (arabicVal === 'لغة عربية') return 'arabic';
+          if (arabicVal === 'عامة') return 'general';
+          return arabicVal;
+        };
+
+        const filteredCoursesForAddLive = courses.filter(c => 
+          c.stage === liveForm.stage && 
+          c.level === liveForm.level &&
+          (liveForm.stage !== 'متقدمة' || c.discipline === getDisciplineKey(liveForm.discipline))
+        );
+
+        return (
+          <div style={modalOverlayStyle}>
+            <div style={modalContentStyle}>
+              <div style={modalHeaderStyle}>
+                <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>جدولة بث مباشر ومحاضرة رقمية للإدارة</h2>
+                <button onClick={() => setShowAddModal(null)} style={closeBtnStyle}><X size={18} /></button>
+              </div>
+              <form onSubmit={handleAddLive}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                  
+                  {/* Title */}
+                  <div>
+                    <label style={labelStyle}>المادة المسجلة (عنوان البث)</label>
+                    <select 
+                      required 
+                      value={liveForm.title} 
+                      onChange={(e) => setLiveForm({ ...liveForm, title: e.target.value })} 
+                      style={selectStyle}
+                    >
+                      {filteredCoursesForAddLive.length === 0 ? (
+                        <option value="">لا توجد مواد مسجلة لهذه المرحلة والمستوى حالياً</option>
+                      ) : (
+                        <>
+                          <option value="">اختر المادة...</option>
+                          {filteredCoursesForAddLive.map(c => (
+                            <option key={c.id} value={c.name}>{c.name}</option>
+                          ))}
+                        </>
+                      )}
+                    </select>
+                    {filteredCoursesForAddLive.length === 0 && (
+                      <span style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px', display: 'block' }}>
+                        * يرجى إضافة مادة أولاً لهذا المستوى من تبويب "المقررات والمواد الدراسية".
+                      </span>
+                    )}
+                  </div>
 
                 {/* Administration (Governorate) */}
                 <div>
@@ -2996,7 +3051,237 @@ function ShariaDashboard() {
             </form>
           </div>
         </div>
-      )}
+      );
+    })()}
+
+      {/* Modal 8-Edit: Edit Live */}
+      {editingLive && (() => {
+        const getDisciplineKey = (arabicVal) => {
+          if (arabicVal === 'فقه وأصوله') return 'fiqh';
+          if (arabicVal === 'تفسير وحديث') return 'tafsir';
+          if (arabicVal === 'عقيدة') return 'aqeedah';
+          if (arabicVal === 'لغة عربية') return 'arabic';
+          if (arabicVal === 'عامة') return 'general';
+          return arabicVal;
+        };
+
+        const filteredCoursesForEditLive = courses.filter(c => 
+          c.stage === editingLive.stage && 
+          c.level === editingLive.level &&
+          (editingLive.stage !== 'متقدمة' || c.discipline === getDisciplineKey(editingLive.discipline))
+        );
+
+        return (
+          <div style={modalOverlayStyle}>
+            <div style={modalContentStyle}>
+              <div style={modalHeaderStyle}>
+                <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>تعديل البث المباشر والمحاضرة الرقمية</h2>
+                <button onClick={() => setEditingLive(null)} style={closeBtnStyle}><X size={18} /></button>
+              </div>
+              <form onSubmit={handleEditLive}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                  
+                  {/* Title */}
+                  <div>
+                    <label style={labelStyle}>المادة المسجلة (عنوان البث)</label>
+                    <select 
+                      required 
+                      value={editingLive.title} 
+                      onChange={(e) => setEditingLive({ ...editingLive, title: e.target.value })} 
+                      style={selectStyle}
+                    >
+                      {filteredCoursesForEditLive.length === 0 ? (
+                        <option value="">لا توجد مواد مسجلة لهذه المرحلة والمستوى حالياً</option>
+                      ) : (
+                        <>
+                          <option value="">اختر المادة...</option>
+                          {filteredCoursesForEditLive.map(c => (
+                            <option key={c.id} value={c.name}>{c.name}</option>
+                          ))}
+                        </>
+                      )}
+                    </select>
+                    {filteredCoursesForEditLive.length === 0 && (
+                      <span style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px', display: 'block' }}>
+                        * يرجى إضافة مادة أولاً لهذا المستوى من تبويب "المقررات والمواد الدراسية".
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Administration (Governorate) */}
+                  <div>
+                    <label style={labelStyle}>الإدارة / المحافظة</label>
+                    <select 
+                      value={editingLive.governorate} 
+                      onChange={(e) => setEditingLive({ ...editingLive, governorate: e.target.value, teacher: '' })} 
+                      style={selectStyle}
+                    >
+                      {GOVERNORATES.map(gov => (
+                        <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Stage & Level & Specialty */}
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: '120px' }}>
+                      <label style={labelStyle}>المرحلة</label>
+                      <select 
+                        value={editingLive.stage} 
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setEditingLive({
+                            ...editingLive,
+                            stage: val,
+                            level: 'المستوى الأول',
+                            discipline: val === 'متقدمة' ? 'فقه وأصوله' : '—',
+                            title: ''
+                          });
+                        }} 
+                        style={selectStyle}
+                      >
+                        <option value="تمهيدية">تمهيدية</option>
+                        <option value="متوسطة">متوسطة</option>
+                        <option value="متقدمة">متقدمة</option>
+                      </select>
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: '120px' }}>
+                      <label style={labelStyle}>المستوى</label>
+                      <select 
+                        value={editingLive.level} 
+                        onChange={(e) => setEditingLive({ ...editingLive, level: e.target.value, title: '' })} 
+                        style={selectStyle}
+                      >
+                        <option value="المستوى الأول">المستوى الأول</option>
+                        <option value="المستوى الثاني">المستوى الثاني</option>
+                        {editingLive.stage === 'متقدمة' && (
+                          <>
+                            <option value="المستوى الثالث">المستوى الثالث</option>
+                            <option value="المستوى الرابع">المستوى الرابع</option>
+                          </>
+                        )}
+                      </select>
+                    </div>
+
+                    {editingLive.stage === 'متقدمة' && (
+                      <div style={{ flex: 1, minWidth: '120px' }}>
+                        <label style={labelStyle}>التخصص الدراسي</label>
+                        <select 
+                          value={editingLive.discipline} 
+                          onChange={(e) => setEditingLive({ ...editingLive, discipline: e.target.value, title: '' })} 
+                          style={selectStyle}
+                        >
+                          <option value="فقه وأصوله">فقه وأصوله</option>
+                          <option value="تفسير وحديث">تفسير وحديث</option>
+                          <option value="عقيدة">عقيدة</option>
+                          <option value="لغة عربية">لغة عربية</option>
+                          <option value="عامة">عامة</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Lecturer (Teacher) filtered by Governorate */}
+                  <div>
+                    <label style={labelStyle}>المحاضر (من قائمة المحاضرين بالإدارة)</label>
+                    <select 
+                      required 
+                      value={editingLive.teacher} 
+                      onChange={(e) => setEditingLive({ ...editingLive, teacher: e.target.value })} 
+                      style={selectStyle}
+                    >
+                      {teachers.filter(t => t.governorate === editingLive.governorate).length === 0 ? (
+                        <option value="">لا يوجد محاضرين مسجلين في هذه الإدارة حالياً</option>
+                      ) : (
+                        <>
+                          <option value="">اختر الأستاذ المحاضر...</option>
+                          {teachers.filter(t => t.governorate === editingLive.governorate).map(t => (
+                            <option key={t.id} value={t.name}>{t.name}</option>
+                          ))}
+                        </>
+                      )}
+                    </select>
+                    {teachers.filter(t => t.governorate === editingLive.governorate).length === 0 && (
+                      <span style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px', display: 'block' }}>
+                        * يرجى إضافة محاضرين لهذه الإدارة أولاً من تبويب "أعضاء هيئة التدريس".
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Day and Time Range */}
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: '120px' }}>
+                      <label style={labelStyle}>اليوم</label>
+                      <select 
+                        value={editingLive.day} 
+                        onChange={(e) => setEditingLive({ ...editingLive, day: e.target.value })} 
+                        style={selectStyle}
+                      >
+                        <option value="السبت">السبت</option>
+                        <option value="الأحد">الأحد</option>
+                        <option value="الإثنين">الإثنين</option>
+                        <option value="الثلاثاء">الثلاثاء</option>
+                        <option value="الأربعاء">الأربعاء</option>
+                        <option value="الخميس">الخميس</option>
+                        <option value="الجمعة">الجمعة</option>
+                      </select>
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: '100px' }}>
+                      <label style={labelStyle}>الوقت من</label>
+                      <input 
+                        type="time" 
+                        required 
+                        value={editingLive.timeStart || ''} 
+                        onChange={(e) => setEditingLive({ ...editingLive, timeStart: e.target.value })} 
+                        style={inputStyle} 
+                      />
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: '100px' }}>
+                      <label style={labelStyle}>الوقت إلى</label>
+                      <input 
+                        type="time" 
+                        required 
+                        value={editingLive.timeEnd || ''} 
+                        onChange={(e) => setEditingLive({ ...editingLive, timeEnd: e.target.value })} 
+                        style={inputStyle} 
+                      />
+                    </div>
+                  </div>
+
+                  {/* Link */}
+                  <div>
+                    <label style={labelStyle}>رابط المحاضرة (زووم، تيمز، إلخ)</label>
+                    <input type="url" required placeholder="https://zoom.us/j/..." value={editingLive.link} onChange={(e) => setEditingLive({ ...editingLive, link: e.target.value })} style={inputStyle} />
+                  </div>
+
+                  {/* Weekly Renewal */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' }}>
+                    <input 
+                      type="checkbox" 
+                      id="isWeeklyEdit" 
+                      checked={editingLive.isWeekly} 
+                      onChange={(e) => setEditingLive({ ...editingLive, isWeekly: e.target.checked })} 
+                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
+                    <label htmlFor="isWeeklyEdit" style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer', userSelect: 'none' }}>
+                      يتجدد البث تلقائياً في نفس التوقيت أسبوعياً
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
+                    <button type="button" onClick={() => setEditingLive(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
+                    <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#ef4444', border: 'none', color: 'white' }}>حفظ التعديلات</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Modal: Add Teacher */}
       {showAddModal === 'teacher' && (
         <div style={modalOverlayStyle}>
