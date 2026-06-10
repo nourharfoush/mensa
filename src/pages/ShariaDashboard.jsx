@@ -84,28 +84,38 @@ function ShariaDashboard() {
   }));
 
   // Stages, Levels, Courses (Subjects) are static/global
-  const [courses, setCourses] = useState([
-    // تمهيدية - المستوى الأول
-    { id: 1, stage: 'تمهيدية', level: 'المستوى الأول', discipline: '—', name: 'مدخل إلى العلوم الشرعية', teacher: 'الشيخ أحمد البهتيمي', hours: 30, studentsCount: 120 },
-    { id: 2, stage: 'تمهيدية', level: 'المستوى الأول', discipline: '—', name: 'النحو التطبيقي (مبادئ التأسيس)', teacher: 'الأستاذ الدكتور خالد عبد العزيز', hours: 40, studentsCount: 110 },
-    // تمهيدية - المستوى الثاني
-    { id: 3, stage: 'تمهيدية', level: 'المستوى الثاني', discipline: '—', name: 'تيسير مصطلح الحديث', teacher: 'الشيخ الدكتور حسن الشافعي', hours: 35, studentsCount: 95 },
-    { id: 4, stage: 'تمهيدية', level: 'المستوى الثاني', discipline: '—', name: 'تفسير جزء عم', teacher: 'الشيخ أحمد الطيب', hours: 30, studentsCount: 140 },
-    // متوسطة - المستوى الأول
-    { id: 5, stage: 'متوسطة', level: 'المستوى الأول', discipline: '—', name: 'شرح متن أبي شجاع في الفقه الشافعي', teacher: 'الشيخ محمد مصطفى', hours: 45, studentsCount: 85 },
-    { id: 6, stage: 'متوسطة', level: 'المستوى الأول', discipline: '—', name: 'العقيدة الطحاوية وشرحها الكافي', teacher: 'الشيخ علي جمعة', hours: 40, studentsCount: 90 },
-    // متوسطة - المستوى الثاني
-    { id: 7, stage: 'متوسطة', level: 'المستوى الثاني', discipline: '—', name: 'متن قطر الندى وبل الصدى', teacher: 'الأستاذ يسري جبر', hours: 50, studentsCount: 78 },
-    // متقدمة - فقه وأصوله
-    { id: 8, stage: 'متقدمة', level: 'المستوى الأول', discipline: 'fiqh', name: 'شرح فتح القدير على الهداية (حنفي)', teacher: 'الشيخ أحمد معبد', hours: 60, studentsCount: 65 },
-    { id: 9, stage: 'متقدمة', level: 'المستوى الثاني', discipline: 'fiqh', name: 'شرح جمع الجوامع في أصول الفقه', teacher: 'الشيخ إبراهيم الهدهد', hours: 55, studentsCount: 50 },
-    // متقدمة - تفسير وحديث
-    { id: 10, stage: 'متقدمة', level: 'المستوى الأول', discipline: 'tafsir', name: 'علوم الحديث ومناهج المحدثين', teacher: 'الشيخ عبد الحليم محمود', hours: 48, studentsCount: 72 },
-    // متقدمة - عقيدة
-    { id: 11, stage: 'متقدمة', level: 'المستوى الثالث', discipline: 'aqeedah', name: 'المواقف في علم الكلام وعضد الدين الإيجي', teacher: 'الشيخ عبد الفضيل القوصي', hours: 60, studentsCount: 40 },
-    // متقدمة - لغة عربية
-    { id: 12, stage: 'متقدمة', level: 'المستوى الرابع', discipline: 'arabic', name: 'دلائل الإعجاز لعبد القاهر الجرجاني', teacher: 'الشيخ محمد أبو موسى', hours: 50, studentsCount: 35 }
-  ]);
+  const [courses, setCourses] = useState(() => {
+    try {
+      const stored = localStorage.getItem('sharia_courses');
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return [
+      // تمهيدية - المستوى الأول
+      { id: 1, stage: 'تمهيدية', level: 'المستوى الأول', discipline: '—', name: 'مدخل إلى العلوم الشرعية', teacher: 'الشيخ أحمد البهتيمي', hours: 30, studentsCount: 120 },
+      { id: 2, stage: 'تمهيدية', level: 'المستوى الأول', discipline: '—', name: 'النحو التطبيقي (مبادئ التأسيس)', teacher: 'الأستاذ الدكتور خالد عبد العزيز', hours: 40, studentsCount: 110 },
+      // تمهيدية - المستوى الثاني
+      { id: 3, stage: 'تمهيدية', level: 'المستوى الثاني', discipline: '—', name: 'تيسير مصطلح الحديث', teacher: 'الشيخ الدكتور حسن الشافعي', hours: 35, studentsCount: 95 },
+      { id: 4, stage: 'تمهيدية', level: 'المستوى الثاني', discipline: '—', name: 'تفسير جزء عم', teacher: 'الشيخ أحمد الطيب', hours: 30, studentsCount: 140 },
+      // متوسطة - المستوى الأول
+      { id: 5, stage: 'متوسطة', level: 'المستوى الأول', discipline: '—', name: 'شرح متن أبي شجاع في الفقه الشافعي', teacher: 'الشيخ محمد مصطفى', hours: 45, studentsCount: 85 },
+      { id: 6, stage: 'متوسطة', level: 'المستوى الأول', discipline: '—', name: 'العقيدة الطحاوية وشرحها الكافي', teacher: 'الشيخ علي جمعة', hours: 40, studentsCount: 90 },
+      // متوسطة - المستوى الثاني
+      { id: 7, stage: 'متوسطة', level: 'المستوى الثاني', discipline: '—', name: 'متن قطر الندى وبل الصدى', teacher: 'الأستاذ يسري جبر', hours: 50, studentsCount: 78 },
+      // متقدمة - فقه وأصوله
+      { id: 8, stage: 'متقدمة', level: 'المستوى الأول', discipline: 'fiqh', name: 'شرح فتح القدير على الهداية (حنفي)', teacher: 'الشيخ أحمد معبد', hours: 60, studentsCount: 65 },
+      { id: 9, stage: 'متقدمة', level: 'المستوى الثاني', discipline: 'fiqh', name: 'شرح جمع الجوامع في أصول الفقه', teacher: 'الشيخ إبراهيم الهدهد', hours: 55, studentsCount: 50 },
+      // متقدمة - تفسير وحديث
+      { id: 10, stage: 'متقدمة', level: 'المستوى الأول', discipline: 'tafsir', name: 'علوم الحديث ومناهج المحدثين', teacher: 'الشيخ عبد الحليم محمود', hours: 48, studentsCount: 72 },
+      // متقدمة - عقيدة
+      { id: 11, stage: 'متقدمة', level: 'المستوى الثالث', discipline: 'aqeedah', name: 'المواقف في علم الكلام وعضد الدين الإيجي', teacher: 'الشيخ عبد الفضيل القوصي', hours: 60, studentsCount: 40 },
+      // متقدمة - لغة عربية
+      { id: 12, stage: 'متقدمة', level: 'المستوى الرابع', discipline: 'arabic', name: 'دلائل الإعجاز لعبد القاهر الجرجاني', teacher: 'الشيخ محمد أبو موسى', hours: 50, studentsCount: 35 }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sharia_courses', JSON.stringify(courses));
+  }, [courses]);
 
   const [selectedCourseStage, setSelectedCourseStage] = useState('تمهيدية');
   const [selectedCourseLevel, setSelectedCourseLevel] = useState('المستوى الأول');
@@ -153,6 +163,7 @@ function ShariaDashboard() {
   });
 
   const [editingTeacher, setEditingTeacher] = useState(null);
+  const [editingCourse, setEditingCourse] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('sharia_teachers', JSON.stringify(teachers));
@@ -398,6 +409,21 @@ function ShariaDashboard() {
     if (!editingTeacher) return;
     setTeachers(teachers.map(t => t.id === editingTeacher.id ? editingTeacher : t));
     setEditingTeacher(null);
+  };
+
+  const handleEditCourse = (e) => {
+    e.preventDefault();
+    if (!editingCourse) return;
+    setCourses(courses.map(c => c.id === editingCourse.id ? {
+      ...c,
+      stage: editingCourse.stage,
+      level: editingCourse.level,
+      discipline: editingCourse.stage === 'متقدمة' ? editingCourse.discipline : '—',
+      name: editingCourse.name,
+      teacher: editingCourse.teacher,
+      hours: Number(editingCourse.hours)
+    } : c));
+    setEditingCourse(null);
   };
 
   // --- ACTIONS ---
@@ -1312,26 +1338,40 @@ function ShariaDashboard() {
                       }}
                     >
                       {!isShariaStudent && (
-                        <button
-                          onClick={() => handleDelete(course.id, 'courses')}
-                          style={{
-                            position: 'absolute',
-                            top: '12px',
-                            left: '12px',
-                            background: 'transparent',
-                            border: 'none',
-                            color: '#ef4444',
-                            cursor: 'pointer',
-                            padding: '4px',
-                            borderRadius: '4px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
-                          title="حذف المادة"
-                        >
-                          <Trash size={16} />
-                        </button>
+                        <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', gap: '8px' }}>
+                          <button
+                            onClick={() => setEditingCourse(course)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: 'var(--accent-gold)',
+                              cursor: 'pointer',
+                              padding: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            title="تعديل المادة"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(course.id, 'courses')}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#ef4444',
+                              cursor: 'pointer',
+                              padding: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            title="حذف المادة"
+                          >
+                            <Trash size={16} />
+                          </button>
+                        </div>
                       )}
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
@@ -2697,6 +2737,125 @@ function ShariaDashboard() {
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
                   <button type="button" onClick={() => setEditingTeacher(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
                   <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#f59e0b', border: 'none', color: 'white' }}>حفظ التعديلات</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit Course */}
+      {editingCourse && (
+        <div style={modalOverlayStyle}>
+          <div style={modalContentStyle}>
+            <div style={modalHeaderStyle}>
+              <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>تعديل مقرر دراسي</h2>
+              <button onClick={() => setEditingCourse(null)} style={closeBtnStyle}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleEditCourse}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                
+                {/* Stage Selection */}
+                <div>
+                  <label style={labelStyle}>المرحلة الدراسية</label>
+                  <select 
+                    value={editingCourse.stage} 
+                    onChange={(e) => {
+                      const stageVal = e.target.value;
+                      setEditingCourse({ 
+                        ...editingCourse, 
+                        stage: stageVal,
+                        level: (stageVal !== 'متقدمة' && (editingCourse.level === 'المستوى الثالث' || editingCourse.level === 'المستوى الرابع')) 
+                          ? 'المستوى الأول' 
+                          : editingCourse.level,
+                        discipline: stageVal === 'متقدمة' ? 'fiqh' : '—'
+                      });
+                    }} 
+                    style={selectStyle}
+                  >
+                    <option value="تمهيدية">المرحلة التمهيدية</option>
+                    <option value="متوسطة">المرحلة المتوسطة</option>
+                    <option value="متقدمة">المرحلة المتقدمة</option>
+                  </select>
+                </div>
+
+                {/* Specialization / Discipline Selection - Only for Advanced Stage */}
+                {editingCourse.stage === 'متقدمة' && (
+                  <div>
+                    <label style={labelStyle}>التخصص الدراسي</label>
+                    <select 
+                      value={editingCourse.discipline} 
+                      onChange={(e) => setEditingCourse({ ...editingCourse, discipline: e.target.value })} 
+                      style={selectStyle}
+                    >
+                      <option value="fiqh">فقه وأصوله</option>
+                      <option value="tafsir">تفسير وحديث</option>
+                      <option value="aqeedah">عقيدة</option>
+                      <option value="arabic">لغة عربية</option>
+                      <option value="general">عامة</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* Level Selection */}
+                <div>
+                  <label style={labelStyle}>المستوى الدراسي</label>
+                  <select 
+                    value={editingCourse.level} 
+                    onChange={(e) => setEditingCourse({ ...editingCourse, level: e.target.value })} 
+                    style={selectStyle}
+                  >
+                    <option value="المستوى الأول">المستوى الأول</option>
+                    <option value="المستوى الثاني">المستوى الثاني</option>
+                    {editingCourse.stage === 'متقدمة' && (
+                      <>
+                        <option value="المستوى الثالث">المستوى الثالث</option>
+                        <option value="المستوى الرابع">المستوى الرابع</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                {/* Course Name */}
+                <div>
+                  <label style={labelStyle}>اسم المادة</label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="مثال: شرح متن قطر الندى" 
+                    value={editingCourse.name} 
+                    onChange={(e) => setEditingCourse({ ...editingCourse, name: e.target.value })} 
+                    style={inputStyle} 
+                  />
+                </div>
+
+                {/* Teacher Name */}
+                <div>
+                  <label style={labelStyle}>المحاضر</label>
+                  <input 
+                    type="text" 
+                    placeholder="اسم المحاضر" 
+                    value={editingCourse.teacher || ''} 
+                    onChange={(e) => setEditingCourse({ ...editingCourse, teacher: e.target.value })} 
+                    style={inputStyle} 
+                  />
+                </div>
+
+                {/* Hours */}
+                <div>
+                  <label style={labelStyle}>الساعات المعتمدة</label>
+                  <input 
+                    type="number" 
+                    placeholder="عدد الساعات" 
+                    value={editingCourse.hours || 0} 
+                    onChange={(e) => setEditingCourse({ ...editingCourse, hours: Number(e.target.value) })} 
+                    style={inputStyle} 
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
+                  <button type="button" onClick={() => setEditingCourse(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold' }}>حفظ التعديلات</button>
                 </div>
               </div>
             </form>
