@@ -140,6 +140,24 @@ function ShariaDashboard() {
 
   const [editingStudent, setEditingStudent] = useState(null);
 
+  const [teachers, setTeachers] = useState(() => {
+    try {
+      const stored = localStorage.getItem('sharia_teachers');
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return [
+      { id: 1, name: 'أ.د/ خالد عبد العزيز', nationalId: '27501019999991', phone: '01012345678', jobGrade: 'أستاذ ورئيس قسم', university: 'جامعة الأزهر', department: 'اللغويات', governorate: 'الجامع الأزهر' },
+      { id: 2, name: 'أ.د/ إبراهيم الهدهد', nationalId: '27005129999992', phone: '01198765432', jobGrade: 'أستاذ متفرغ (رئيس الجامعة الأسبق)', university: 'جامعة الأزهر', department: 'البلاغة والنقد', governorate: 'الجامع الأزهر' },
+      { id: 3, name: 'الشيخ/ أحمد معبد عبد الكريم', nationalId: '26508209999993', phone: '01234567890', jobGrade: 'أستاذ الحديث', university: 'جامعة الأزهر', department: 'الحديث وعلومه', governorate: 'الجامع الأزهر' }
+    ];
+  });
+
+  const [editingTeacher, setEditingTeacher] = useState(null);
+
+  useEffect(() => {
+    localStorage.setItem('sharia_teachers', JSON.stringify(teachers));
+  }, [teachers]);
+
   const [exams, setExams] = useState([]);
 
   const [results, setResults] = useState([]);
@@ -179,6 +197,15 @@ function ShariaDashboard() {
   const [resultForm, setResultForm] = useState({ studentName: '', examName: '', score: 85, grade: 'جيد جداً', status: 'ناجح', governorate: 'الجامع الأزهر' });
   const [newsForm, setNewsForm] = useState({ title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'إعلان عام', status: 'منشور' });
   const [liveForm, setLiveForm] = useState({ title: '', teacher: '', stage: 'تمهيدية - مستوى أول', scheduleTime: '', link: '', status: 'مجدول', governorate: 'الجامع الأزهر' });
+  const [teacherForm, setTeacherForm] = useState({
+    name: '',
+    nationalId: '',
+    phone: '',
+    jobGrade: '',
+    university: '',
+    department: '',
+    governorate: 'الجامع الأزهر'
+  });
 
   // --- HANDLERS FOR ADDING ITEMS ---
   const handleAddAdmin = (e) => {
@@ -348,6 +375,29 @@ function ShariaDashboard() {
     setLiveForm({ title: '', teacher: '', stage: 'تمهيدية - مستوى أول', scheduleTime: '', link: '', status: 'مجدول', governorate: 'الجامع الأزهر' });
   };
 
+  const handleAddTeacher = (e) => {
+    e.preventDefault();
+    const newTeacher = { ...teacherForm, id: Date.now() };
+    setTeachers([...teachers, newTeacher]);
+    setShowAddModal(null);
+    setTeacherForm({
+      name: '',
+      nationalId: '',
+      phone: '',
+      jobGrade: '',
+      university: '',
+      department: '',
+      governorate: 'الجامع الأزهر'
+    });
+  };
+
+  const handleEditTeacher = (e) => {
+    e.preventDefault();
+    if (!editingTeacher) return;
+    setTeachers(teachers.map(t => t.id === editingTeacher.id ? editingTeacher : t));
+    setEditingTeacher(null);
+  };
+
   // --- ACTIONS ---
   const handleDelete = (id, listName) => {
     if (confirm('هل أنت متأكد من رغبتك في حذف هذا السجل؟')) {
@@ -362,6 +412,7 @@ function ShariaDashboard() {
       if (listName === 'results') setResults(results.filter(x => x.id !== id));
       if (listName === 'news') setNews(news.filter(x => x.id !== id));
       if (listName === 'live') setLiveLectures(liveLectures.filter(x => x.id !== id));
+      if (listName === 'teachers') setTeachers(teachers.filter(x => x.id !== id));
     }
   };
 
@@ -370,6 +421,13 @@ function ShariaDashboard() {
     return students.filter(s => 
       (selectedGov === 'الكل' || s.governorate === selectedGov) &&
       (s.name.includes(searchTerm) || s.nationalId.includes(searchTerm) || (s.code && s.code.includes(searchTerm)))
+    );
+  };
+
+  const getFilteredTeachers = () => {
+    return teachers.filter(t => 
+      (selectedGov === 'الكل' || t.governorate === selectedGov) &&
+      (t.name.includes(searchTerm) || t.department.includes(searchTerm) || t.university.includes(searchTerm))
     );
   };
 
@@ -430,6 +488,7 @@ function ShariaDashboard() {
 
   const dynamicStats = [
     { id: 3, title: 'الدارسين بالموقع المختار', value: getTotalStudents(), iconColor: '#f97316', iconType: 'users', tab: 'students' },
+    { id: 5, title: 'أعضاء هيئة التدريس بالموقع', value: getFilteredTeachers().length, iconColor: '#f59e0b', iconType: 'users', tab: 'teachers' },
     { id: 4, title: 'البثوث بالموقع المختار', value: getFilteredLiveLectures().length, iconColor: '#3b82f6', iconType: 'book-open', tab: 'live' }
   ];
 
@@ -437,6 +496,7 @@ function ShariaDashboard() {
   const allSectionGridItems = [
     { key: 'admins', name: 'الادارة العليا الادمن', desc: 'إدارة مدراء الرواق ومستشاري المواد وصلاحياتهم العلمية والإدارية.', icon: Shield, color: '#a855f7' },
     { key: 'externalAdmins', name: 'مسؤولو الادارات الخارجية', desc: 'متابعة مسؤولي الأروقة الخارجية ومنسقي المحافظات وعدد فروعهم.', icon: MapPin, color: '#3b82f6' },
+    { key: 'teachers', name: 'أعضاء هيئة التدريس', desc: 'إدارة وتتبع المحاضرين والأساتذة، وتحديث درجاتهم الوظيفية وجامعاتهم وأقسامهم التخصصية.', icon: Users, color: '#f59e0b' },
     { key: 'courses', name: 'المقررات والمواد الدراسية', desc: 'عرض وإدارة المقررات والمواد الدراسية والتحكم في إضافة المواد حسب المرحلة والمستوى الدراسي.', icon: BookOpen, color: '#10b981' },
     { key: 'students', name: 'قسم الدارسين', desc: 'متابعة شؤون الطلاب المسجلين بالمحافظة ومستوياتهم ونسب حضورهم وجداولهم.', icon: Users, color: '#ec4899' },
     { key: 'exams', name: 'قسم الاختبارات والامتحانات', desc: 'تنظيم وجدولة الامتحانات، وتصميم أوراق الاختبارات الفترية والنهائية.', icon: FileText, color: '#14b8a6' },
@@ -446,7 +506,7 @@ function ShariaDashboard() {
   ];
 
   const sectionGridItems = isShariaStudent
-    ? allSectionGridItems.filter(item => !['admins', 'externalAdmins', 'students'].includes(item.key))
+    ? allSectionGridItems.filter(item => !['admins', 'externalAdmins', 'students', 'teachers'].includes(item.key))
     : allSectionGridItems;
 
   return (
@@ -855,6 +915,119 @@ function ShariaDashboard() {
                     </td>
                   </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB: TEACHERS (أعضاء هيئة التدريس) */}
+      {/* ========================================================================= */}
+      {activeTab === 'teachers' && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+            <div>
+              <h2 style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Users size={20} color="#f59e0b" />
+                أعضاء هيئة التدريس والمحاضرين لـ [ {selectedGov === 'الكل' ? 'جميع المواقع والجامع الأزهر' : selectedGov} ]
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>تصفية أعضاء هيئة التدريس وبياناتهم الأكاديمية والوظيفية حسب الموقع الجغرافي النشط</p>
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="text"
+                  placeholder="بحث بالاسم، القسم، أو الجامعة..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    padding: '8px 36px 8px 12px',
+                    borderRadius: '6px',
+                    backgroundColor: 'var(--bg-main)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-primary)',
+                    fontSize: '13px',
+                    width: '250px'
+                  }}
+                />
+                <Search size={14} color="var(--text-secondary)" style={{ position: 'absolute', right: '12px', top: '11px' }} />
+              </div>
+              <button 
+                onClick={() => {
+                  setTeacherForm({ ...teacherForm, governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov });
+                  setShowAddModal('teacher');
+                }}
+                style={{
+                  backgroundColor: '#f59e0b',
+                  border: 'none',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '13px'
+                }}
+              >
+                <Plus size={16} />
+                تسجيل عضو هيئة تدريس جديد
+              </button>
+            </div>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الاسم (المحاضر)</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الرقم القومي</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>رقم الهاتف</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الإدارة (الموقع)</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الدرجة الوظيفية</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الجامعة</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>القسم</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', textAlign: 'center' }}>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {getFilteredTeachers().length === 0 ? (
+                  <tr>
+                    <td colSpan="8" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+                      لا يوجد أعضاء هيئة تدريس مسجلين في {selectedGov === 'الكل' ? 'أي موقع' : selectedGov} حالياً.
+                    </td>
+                  </tr>
+                ) : (
+                  getFilteredTeachers().map(teacher => (
+                    <tr key={teacher.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                      <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{teacher.name}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.nationalId}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.phone}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.governorate}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.jobGrade}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.university}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>{teacher.department}</td>
+                      <td style={{ padding: '14px 10px', textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+                        <button 
+                          onClick={() => setEditingTeacher(teacher)}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--accent-gold)', cursor: 'pointer', padding: '4px' }}
+                          title="تعديل"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(teacher.id, 'teachers')}
+                          style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
+                          title="حذف"
+                        >
+                          <Trash size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -2391,6 +2564,127 @@ function ShariaDashboard() {
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
                   <button type="button" onClick={() => setShowAddModal(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
                   <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#ef4444', border: 'none', color: 'white' }}>جدولة المحاضرة</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Modal: Add Teacher */}
+      {showAddModal === 'teacher' && (
+        <div style={modalOverlayStyle}>
+          <div style={modalContentStyle}>
+            <div style={modalHeaderStyle}>
+              <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>تسجيل عضو هيئة تدريس جديد بموقع [ {teacherForm.governorate} ]</h2>
+              <button onClick={() => setShowAddModal(null)} style={closeBtnStyle}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleAddTeacher}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>اسم المحاضر بالكامل</label>
+                    <input type="text" required value={teacherForm.name} onChange={(e) => setTeacherForm({ ...teacherForm, name: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الإدارة (الموقع / المحافظة)</label>
+                    <select value={teacherForm.governorate} onChange={(e) => setTeacherForm({ ...teacherForm, governorate: e.target.value })} style={selectStyle}>
+                      {GOVERNORATES.map(gov => (
+                        <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الرقم القومي (14 رقم)</label>
+                    <input type="text" required maxLength="14" value={teacherForm.nationalId} onChange={(e) => setTeacherForm({ ...teacherForm, nationalId: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>رقم الهاتف</label>
+                    <input type="text" required value={teacherForm.phone} onChange={(e) => setTeacherForm({ ...teacherForm, phone: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الدرجة الوظيفية</label>
+                    <input type="text" required placeholder="مثال: أستاذ مساعد" value={teacherForm.jobGrade} onChange={(e) => setTeacherForm({ ...teacherForm, jobGrade: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الجامعة</label>
+                    <input type="text" required placeholder="مثال: جامعة الأزهر" value={teacherForm.university} onChange={(e) => setTeacherForm({ ...teacherForm, university: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>القسم التخصصي</label>
+                    <input type="text" required placeholder="مثال: أصول الفقه" value={teacherForm.department} onChange={(e) => setTeacherForm({ ...teacherForm, department: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
+                  <button type="button" onClick={() => setShowAddModal(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#f59e0b', border: 'none', color: 'white' }}>حفظ البيانات</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit Teacher */}
+      {editingTeacher && (
+        <div style={modalOverlayStyle}>
+          <div style={modalContentStyle}>
+            <div style={modalHeaderStyle}>
+              <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>تعديل بيانات عضو هيئة التدريس بموقع [ {editingTeacher.governorate} ]</h2>
+              <button onClick={() => setEditingTeacher(null)} style={closeBtnStyle}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleEditTeacher}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>اسم المحاضر بالكامل</label>
+                    <input type="text" required value={editingTeacher.name} onChange={(e) => setEditingTeacher({ ...editingTeacher, name: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الإدارة (الموقع / المحافظة)</label>
+                    <select value={editingTeacher.governorate} onChange={(e) => setEditingTeacher({ ...editingTeacher, governorate: e.target.value })} style={selectStyle}>
+                      {GOVERNORATES.map(gov => (
+                        <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الرقم القومي (14 رقم)</label>
+                    <input type="text" required maxLength="14" value={editingTeacher.nationalId} onChange={(e) => setEditingTeacher({ ...editingTeacher, nationalId: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>رقم الهاتف</label>
+                    <input type="text" required value={editingTeacher.phone || ''} onChange={(e) => setEditingTeacher({ ...editingTeacher, phone: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الدرجة الوظيفية</label>
+                    <input type="text" required placeholder="مثال: أستاذ مساعد" value={editingTeacher.jobGrade || ''} onChange={(e) => setEditingTeacher({ ...editingTeacher, jobGrade: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الجامعة</label>
+                    <input type="text" required placeholder="مثال: جامعة الأزهر" value={editingTeacher.university || ''} onChange={(e) => setEditingTeacher({ ...editingTeacher, university: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>القسم التخصصي</label>
+                    <input type="text" required placeholder="مثال: أصول الفقه" value={editingTeacher.department || ''} onChange={(e) => setEditingTeacher({ ...editingTeacher, department: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
+                  <button type="button" onClick={() => setEditingTeacher(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#f59e0b', border: 'none', color: 'white' }}>حفظ التعديلات</button>
                 </div>
               </div>
             </form>

@@ -68,6 +68,7 @@ const menuGroups = [
     items: [
       { name: 'الإدارة العليا (الادمن)', icon: Shield, path: '/sharia-dashboard?tab=admins' },
       { name: 'مسؤولو الإدارات الخارجية', icon: MapPin, path: '/sharia-dashboard?tab=externalAdmins' },
+      { name: 'أعضاء هيئة التدريس', icon: Users, path: '/sharia-dashboard?tab=teachers' },
       { name: 'المقررات والمواد الدراسية', icon: BookIcon, path: '/sharia-dashboard?tab=courses' },
       { name: 'قسم الدارسين والطلاب', icon: Users, path: '/sharia-dashboard?tab=students' },
       { name: 'الاختبارات والامتحانات', icon: FileText, path: '/sharia-dashboard?tab=exams' },
