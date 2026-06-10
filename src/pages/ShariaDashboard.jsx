@@ -2954,11 +2954,6 @@ function ShariaDashboard() {
                       </span>
                     )}
                   </div>
-                        <option value="عامة">عامة</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
 
                 {/* Lecturer (Teacher) filtered by Governorate */}
                 <div>
