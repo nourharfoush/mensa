@@ -2854,7 +2854,81 @@ function ShariaDashboard() {
               <form onSubmit={handleAddLive}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
                   
-                  {/* Title */}
+                  {/* Administration (Governorate) */}
+                  <div>
+                    <label style={labelStyle}>الإدارة / المحافظة</label>
+                    <select 
+                      value={liveForm.governorate} 
+                      onChange={(e) => setLiveForm({ ...liveForm, governorate: e.target.value, teacher: '' })} 
+                      style={selectStyle}
+                    >
+                      {GOVERNORATES.map(gov => (
+                        <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Stage & Level & Specialty */}
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: '120px' }}>
+                      <label style={labelStyle}>المرحلة</label>
+                      <select 
+                        value={liveForm.stage} 
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setLiveForm({
+                            ...liveForm,
+                            stage: val,
+                            level: 'المستوى الأول',
+                            discipline: val === 'متقدمة' ? 'فقه وأصوله' : '—',
+                            title: ''
+                          });
+                        }} 
+                        style={selectStyle}
+                      >
+                        <option value="تمهيدية">تمهيدية</option>
+                        <option value="متوسطة">متوسطة</option>
+                        <option value="متقدمة">متقدمة</option>
+                      </select>
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: '120px' }}>
+                      <label style={labelStyle}>المستوى</label>
+                      <select 
+                        value={liveForm.level} 
+                        onChange={(e) => setLiveForm({ ...liveForm, level: e.target.value, title: '' })} 
+                        style={selectStyle}
+                      >
+                        <option value="المستوى الأول">المستوى الأول</option>
+                        <option value="المستوى الثاني">المستوى الثاني</option>
+                        {liveForm.stage === 'متقدمة' && (
+                          <>
+                            <option value="المستوى الثالث">المستوى الثالث</option>
+                            <option value="المستوى الرابع">المستوى الرابع</option>
+                          </>
+                        )}
+                      </select>
+                    </div>
+
+                    {liveForm.stage === 'متقدمة' && (
+                      <div style={{ flex: 1, minWidth: '120px' }}>
+                        <label style={labelStyle}>التخصص الدراسي</label>
+                        <select 
+                          value={liveForm.discipline} 
+                          onChange={(e) => setLiveForm({ ...liveForm, discipline: e.target.value, title: '' })} 
+                          style={selectStyle}
+                        >
+                          <option value="فقه وأصوله">فقه وأصوله</option>
+                          <option value="تفسير وحديث">تفسير وحديث</option>
+                          <option value="عقيدة">عقيدة</option>
+                          <option value="لغة عربية">لغة عربية</option>
+                          <option value="عامة">عامة</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Title / Subject */}
                   <div>
                     <label style={labelStyle}>المادة المسجلة (عنوان البث)</label>
                     <select 
@@ -2880,74 +2954,6 @@ function ShariaDashboard() {
                       </span>
                     )}
                   </div>
-
-                {/* Administration (Governorate) */}
-                <div>
-                  <label style={labelStyle}>الإدارة / المحافظة</label>
-                  <select 
-                    value={liveForm.governorate} 
-                    onChange={(e) => setLiveForm({ ...liveForm, governorate: e.target.value, teacher: '' })} 
-                    style={selectStyle}
-                  >
-                    {GOVERNORATES.map(gov => (
-                      <option key={gov} value={gov}>{gov}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Stage & Level & Specialty */}
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                  <div style={{ flex: 1, minWidth: '120px' }}>
-                    <label style={labelStyle}>المرحلة</label>
-                    <select 
-                      value={liveForm.stage} 
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setLiveForm({
-                          ...liveForm,
-                          stage: val,
-                          level: 'المستوى الأول',
-                          discipline: val === 'متقدمة' ? 'فقه وأصوله' : '—'
-                        });
-                      }} 
-                      style={selectStyle}
-                    >
-                      <option value="تمهيدية">تمهيدية</option>
-                      <option value="متوسطة">متوسطة</option>
-                      <option value="متقدمة">متقدمة</option>
-                    </select>
-                  </div>
-
-                  <div style={{ flex: 1, minWidth: '120px' }}>
-                    <label style={labelStyle}>المستوى</label>
-                    <select 
-                      value={liveForm.level} 
-                      onChange={(e) => setLiveForm({ ...liveForm, level: e.target.value })} 
-                      style={selectStyle}
-                    >
-                      <option value="المستوى الأول">المستوى الأول</option>
-                      <option value="المستوى الثاني">المستوى الثاني</option>
-                      {liveForm.stage === 'متقدمة' && (
-                        <>
-                          <option value="المستوى الثالث">المستوى الثالث</option>
-                          <option value="المستوى الرابع">المستوى الرابع</option>
-                        </>
-                      )}
-                    </select>
-                  </div>
-
-                  {liveForm.stage === 'متقدمة' && (
-                    <div style={{ flex: 1, minWidth: '120px' }}>
-                      <label style={labelStyle}>التخصص الدراسي</label>
-                      <select 
-                        value={liveForm.discipline} 
-                        onChange={(e) => setLiveForm({ ...liveForm, discipline: e.target.value })} 
-                        style={selectStyle}
-                      >
-                        <option value="فقه وأصوله">فقه وأصوله</option>
-                        <option value="تفسير وحديث">تفسير وحديث</option>
-                        <option value="عقيدة">عقيدة</option>
-                        <option value="لغة عربية">لغة عربية</option>
                         <option value="عامة">عامة</option>
                       </select>
                     </div>
@@ -3081,33 +3087,6 @@ function ShariaDashboard() {
               <form onSubmit={handleEditLive}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
                   
-                  {/* Title */}
-                  <div>
-                    <label style={labelStyle}>المادة المسجلة (عنوان البث)</label>
-                    <select 
-                      required 
-                      value={editingLive.title} 
-                      onChange={(e) => setEditingLive({ ...editingLive, title: e.target.value })} 
-                      style={selectStyle}
-                    >
-                      {filteredCoursesForEditLive.length === 0 ? (
-                        <option value="">لا توجد مواد مسجلة لهذه المرحلة والمستوى حالياً</option>
-                      ) : (
-                        <>
-                          <option value="">اختر المادة...</option>
-                          {filteredCoursesForEditLive.map(c => (
-                            <option key={c.id} value={c.name}>{c.name}</option>
-                          ))}
-                        </>
-                      )}
-                    </select>
-                    {filteredCoursesForEditLive.length === 0 && (
-                      <span style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px', display: 'block' }}>
-                        * يرجى إضافة مادة أولاً لهذا المستوى من تبويب "المقررات والمواد الدراسية".
-                      </span>
-                    )}
-                  </div>
-
                   {/* Administration (Governorate) */}
                   <div>
                     <label style={labelStyle}>الإدارة / المحافظة</label>
@@ -3179,6 +3158,33 @@ function ShariaDashboard() {
                           <option value="عامة">عامة</option>
                         </select>
                       </div>
+                    )}
+                  </div>
+
+                  {/* Title */}
+                  <div>
+                    <label style={labelStyle}>المادة المسجلة (عنوان البث)</label>
+                    <select 
+                      required 
+                      value={editingLive.title} 
+                      onChange={(e) => setEditingLive({ ...editingLive, title: e.target.value })} 
+                      style={selectStyle}
+                    >
+                      {filteredCoursesForEditLive.length === 0 ? (
+                        <option value="">لا توجد مواد مسجلة لهذه المرحلة والمستوى حالياً</option>
+                      ) : (
+                        <>
+                          <option value="">اختر المادة...</option>
+                          {filteredCoursesForEditLive.map(c => (
+                            <option key={c.id} value={c.name}>{c.name}</option>
+                          ))}
+                        </>
+                      )}
+                    </select>
+                    {filteredCoursesForEditLive.length === 0 && (
+                      <span style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px', display: 'block' }}>
+                        * يرجى إضافة مادة أولاً لهذا المستوى من تبويب "المقررات والمواد الدراسية".
+                      </span>
                     )}
                   </div>
 
