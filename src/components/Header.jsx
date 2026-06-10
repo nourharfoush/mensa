@@ -139,68 +139,7 @@ function Header({ toggleSidebar }) {
           )}
         </div>
 
-        {/* Notifications Bell */}
-        <div className="notifications-container" ref={notifRef} style={{ position: 'relative' }}>
-          <button 
-            className="icon-btn notification-btn" 
-            onClick={() => setShowNotifications(!showNotifications)}
-            title="الإشعارات"
-          >
-            <Bell size={20} />
-            {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
-          </button>
 
-          {showNotifications && (
-            <div className="dropdown-menu notifications-dropdown" style={{
-              position: 'absolute', top: '100%', left: '0', 
-              backgroundColor: 'var(--bg-lighter)', border: '1px solid var(--border-subtle)',
-              borderRadius: '8px', width: '320px', zIndex: 100,
-              boxShadow: '0 8px 24px rgba(0,0,0,0.2)', marginTop: '8px',
-              display: 'flex', flexDirection: 'column'
-            }}>
-              <div style={{
-                padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-              }}>
-                <span style={{ fontWeight: 'bold', fontSize: '14px', color: 'var(--text-primary)' }}>الإشعارات</span>
-                {unreadCount > 0 && (
-                  <button 
-                    onClick={markAllRead}
-                    style={{ background: 'none', border: 'none', color: 'var(--accent-gold)', cursor: 'pointer', fontSize: '12px' }}
-                  >
-                    تحديد الكل كمقروء
-                  </button>
-                )}
-              </div>
-              
-              <div style={{ maxHeight: '250px', overflowY: 'auto' }}>
-                {notifications.length === 0 ? (
-                  <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
-                    لا توجد إشعارات جديدة
-                  </div>
-                ) : (
-                  notifications.map(n => (
-                    <div 
-                      key={n.id} 
-                      style={{
-                        padding: '12px 16px', borderBottom: '1px solid var(--border-subtle)',
-                        backgroundColor: n.unread ? 'rgba(214, 175, 55, 0.05)' : 'transparent',
-                        transition: 'background 0.2s', textAlign: 'right'
-                      }}
-                    >
-                      <div style={{ fontSize: '13px', color: 'var(--text-primary)', marginBottom: '4px', lineHeight: '1.4' }}>
-                        {n.text}
-                      </div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                        {n.time}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* Settings Gear */}
         <Link to="/settings" className="icon-btn settings-btn" title="إعدادات النظام">
