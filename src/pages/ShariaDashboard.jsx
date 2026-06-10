@@ -165,7 +165,7 @@ function ShariaDashboard() {
     record_no: '', job_title: '', workplace: '', job_grade: '',
     qualification: '', decision_no: '', governorate: 'الجامع الأزهر', address: '', status: 'نشط', branchCount: 1
   });
-  const [courseForm, setCourseForm] = useState({ stage: 'تمهيدية', level: 'المستوى الأول', discipline: 'fiqh', name: '', teacher: '', hours: 30 });
+  const [courseForm, setCourseForm] = useState({ stage: 'تمهيدية', level: 'المستوى الأول', discipline: 'fiqh', name: '', teacher: '', hours: 20 });
   const [studentForm, setStudentForm] = useState({ 
     name: '', 
     nationalId: '', 
@@ -242,7 +242,7 @@ function ShariaDashboard() {
     };
     setCourses([...courses, formattedCourse]);
     setShowAddModal(null);
-    setCourseForm({ stage: 'تمهيدية', level: 'المستوى الأول', discipline: 'fiqh', name: '', teacher: '', hours: 30 });
+    setCourseForm({ stage: 'تمهيدية', level: 'المستوى الأول', discipline: 'fiqh', name: '', teacher: '', hours: 20 });
   };
 
   const handleAddStudent = (e) => {
@@ -1226,7 +1226,7 @@ function ShariaDashboard() {
                           discipline: selectedCourseStage === 'متقدمة' ? selectedCourseDiscipline : 'fiqh',
                           name: '',
                           teacher: '',
-                          hours: 30
+                          hours: 20
                         });
                         setShowAddModal('course');
                       }}
@@ -2046,6 +2046,30 @@ function ShariaDashboard() {
                     placeholder="مثال: شرح متن قطر الندى" 
                     value={courseForm.name} 
                     onChange={(e) => setCourseForm({ ...courseForm, name: e.target.value })} 
+                    style={inputStyle} 
+                  />
+                </div>
+
+                {/* Teacher Name */}
+                <div>
+                  <label style={labelStyle}>المحاضر</label>
+                  <input 
+                    type="text" 
+                    placeholder="اسم المحاضر" 
+                    value={courseForm.teacher || ''} 
+                    onChange={(e) => setCourseForm({ ...courseForm, teacher: e.target.value })} 
+                    style={inputStyle} 
+                  />
+                </div>
+
+                {/* Hours */}
+                <div>
+                  <label style={labelStyle}>الساعات المعتمدة</label>
+                  <input 
+                    type="number" 
+                    placeholder="عدد الساعات" 
+                    value={courseForm.hours} 
+                    onChange={(e) => setCourseForm({ ...courseForm, hours: Number(e.target.value) })} 
                     style={inputStyle} 
                   />
                 </div>
