@@ -177,7 +177,7 @@ function ShariaDashboard() {
     college: '',
     department: '',
     governorate: 'الجامع الأزهر',
-    branch: ''
+    branches: []
   });
   const [shariaBranchForm, setShariaBranchForm] = useState({ name: '', governorate: 'الجامع الأزهر', code: '', address: '' });
 
@@ -401,7 +401,11 @@ function ShariaDashboard() {
 
   const handleAddTeacher = (e) => {
     e.preventDefault();
-    addShariaTeacher(teacherForm);
+    const finalForm = {
+      ...teacherForm,
+      branch: (teacherForm.branches || []).join('، ')
+    };
+    addShariaTeacher(finalForm);
     setShowAddModal(null);
     setTeacherForm({
       name: '',
@@ -412,7 +416,7 @@ function ShariaDashboard() {
       college: '',
       department: '',
       governorate: 'الجامع الأزهر',
-      branch: ''
+      branches: []
     });
   };
 
@@ -1218,8 +1222,12 @@ function ShariaDashboard() {
                       <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{teacher.name}</td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.nationalId}</td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.phone}</td>
-                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                        {teacher.governorate} {teacher.branch && <span style={{ fontSize: '11px', color: 'var(--accent-gold)' }}>({teacher.branch})</span>}
+                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                        {teacher.governorate} {((Array.isArray(teacher.branches) && teacher.branches.length > 0) || teacher.branch) && (
+                          <span style={{ fontSize: '11px', color: 'var(--accent-gold)' }}>
+                            ({Array.isArray(teacher.branches) ? teacher.branches.join('، ') : teacher.branch})
+                          </span>
+                        )}
                       </td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.jobGrade}</td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.university}</td>
@@ -3402,20 +3410,50 @@ function ShariaDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>الإدارة (الموقع / المحافظة)</label>
-                    <select value={teacherForm.governorate} onChange={(e) => setTeacherForm({ ...teacherForm, governorate: e.target.value, branch: '' })} style={selectStyle}>
+                    <select value={teacherForm.governorate} onChange={(e) => setTeacherForm({ ...teacherForm, governorate: e.target.value, branches: [] })} style={selectStyle}>
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
                       ))}
                     </select>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <label style={labelStyle}>الفرع التعليمي</label>
-                    <select required value={teacherForm.branch} onChange={(e) => setTeacherForm({ ...teacherForm, branch: e.target.value })} style={selectStyle}>
-                      <option value="">اختر الفرع...</option>
-                      {shariaBranches.filter(b => b.governorate === teacherForm.governorate).map(b => (
-                        <option key={b.id || b._id} value={b.name}>{b.name}</option>
-                      ))}
-                    </select>
+                    <label style={labelStyle}>الفروع التعليمية</label>
+                    <div style={{
+                      maxHeight: '120px',
+                      overflowY: 'auto',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '6px',
+                      padding: '8px',
+                      backgroundColor: 'var(--bg-main)'
+                    }}>
+                      {shariaBranches.filter(b => b.governorate === teacherForm.governorate).length === 0 ? (
+                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>لا توجد فروع مسجلة لهذه المحافظة</span>
+                      ) : (
+                        shariaBranches.filter(b => b.governorate === teacherForm.governorate).map(b => (
+                          <div key={b.id || b._id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                            <input 
+                              type="checkbox" 
+                              id={`add-branch-${b.id || b._id}`}
+                              checked={teacherForm.branches?.includes(b.name) || false}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setTeacherForm(prev => {
+                                  const currentBranches = prev.branches || [];
+                                  const newBranches = checked 
+                                    ? [...currentBranches, b.name]
+                                    : currentBranches.filter(name => name !== b.name);
+                                  return { ...prev, branches: newBranches };
+                                });
+                              }}
+                              style={{ cursor: 'pointer' }}
+                            />
+                            <label htmlFor={`add-branch-${b.id || b._id}`} style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer' }}>
+                              {b.name}
+                            </label>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -3568,20 +3606,57 @@ function ShariaDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>الإدارة (الموقع / المحافظة)</label>
-                    <select value={editingTeacher.governorate} onChange={(e) => setEditingTeacher({ ...editingTeacher, governorate: e.target.value, branch: '' })} style={selectStyle}>
+                    <select value={editingTeacher.governorate} onChange={(e) => setEditingTeacher({ ...editingTeacher, governorate: e.target.value, branches: [], branch: '' })} style={selectStyle}>
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
                       ))}
                     </select>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <label style={labelStyle}>الفرع التعليمي</label>
-                    <select required value={editingTeacher.branch || ''} onChange={(e) => setEditingTeacher({ ...editingTeacher, branch: e.target.value })} style={selectStyle}>
-                      <option value="">اختر الفرع...</option>
-                      {shariaBranches.filter(b => b.governorate === editingTeacher.governorate).map(b => (
-                        <option key={b.id || b._id} value={b.name}>{b.name}</option>
-                      ))}
-                    </select>
+                    <label style={labelStyle}>الفروع التعليمية</label>
+                    <div style={{
+                      maxHeight: '120px',
+                      overflowY: 'auto',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: '6px',
+                      padding: '8px',
+                      backgroundColor: 'var(--bg-main)'
+                    }}>
+                      {shariaBranches.filter(b => b.governorate === editingTeacher.governorate).length === 0 ? (
+                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>لا توجد فروع مسجلة لهذه المحافظة</span>
+                      ) : (
+                        shariaBranches.filter(b => b.governorate === editingTeacher.governorate).map(b => {
+                          const currentBranches = Array.isArray(editingTeacher.branches) 
+                            ? editingTeacher.branches 
+                            : (editingTeacher.branch ? editingTeacher.branch.split('، ') : []);
+                          
+                          return (
+                            <div key={b.id || b._id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                              <input 
+                                type="checkbox" 
+                                id={`edit-branch-${b.id || b._id}`}
+                                checked={currentBranches.includes(b.name)}
+                                onChange={(e) => {
+                                  const checked = e.target.checked;
+                                  const newBranches = checked 
+                                    ? [...currentBranches, b.name]
+                                    : currentBranches.filter(name => name !== b.name);
+                                  setEditingTeacher({
+                                    ...editingTeacher,
+                                    branches: newBranches,
+                                    branch: newBranches.join('، ')
+                                  });
+                                }}
+                                style={{ cursor: 'pointer' }}
+                              />
+                              <label htmlFor={`edit-branch-${b.id || b._id}`} style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer' }}>
+                                {b.name}
+                              </label>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
                 </div>
 
