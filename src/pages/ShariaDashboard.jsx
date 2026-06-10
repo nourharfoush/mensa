@@ -421,8 +421,53 @@ function ShariaDashboard() {
     setNewsForm({ title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'إعلان عام', status: 'منشور' });
   };
 
+  const checkLiveConflict = (newLive, excludeId = null) => {
+    const timeToMinutes = (timeStr) => {
+      if (!timeStr) return 0;
+      const [h, m] = timeStr.split(':').map(Number);
+      return h * 60 + m;
+    };
+
+    const cleanDay = (d) => String(d || '').replace('أ', 'ا').replace('إ', 'ا');
+
+    const newStart = timeToMinutes(newLive.timeStart);
+    const newEnd = timeToMinutes(newLive.timeEnd);
+
+    for (const l of liveLectures) {
+      if (excludeId && l.id === excludeId) continue;
+      
+      // Check if same day
+      if (cleanDay(l.day) !== cleanDay(newLive.day)) continue;
+
+      // Check if time ranges overlap
+      const lStart = timeToMinutes(l.timeStart);
+      const lEnd = timeToMinutes(l.timeEnd);
+      const isOverlap = newStart < lEnd && lStart < newEnd;
+      if (!isOverlap) continue;
+
+      // Conflict Type A: Same teacher
+      if (l.teacher === newLive.teacher && newLive.teacher !== '') {
+        return `تعارض في جدول المحاضر: المحاضر "${newLive.teacher}" لديه محاضرة أخرى في هذا الوقت ("${l.title}")`;
+      }
+
+      // Conflict Type B: Same level (stage + level + discipline)
+      const sameStage = l.stage === newLive.stage;
+      const sameLevel = l.level === newLive.level;
+      const sameDiscipline = l.stage !== 'متقدمة' || l.discipline === newLive.discipline;
+      if (sameStage && sameLevel && sameDiscipline) {
+        return `تعارض في جدول المستوى: هذا المستوى لديه محاضرة أخرى مجدولة في نفس الوقت ("${l.title}")`;
+      }
+    }
+    return null;
+  };
+
   const handleAddLive = (e) => {
     e.preventDefault();
+    const conflictError = checkLiveConflict(liveForm);
+    if (conflictError) {
+      alert(conflictError);
+      return;
+    }
     setLiveLectures([...liveLectures, { ...liveForm, id: Date.now() }]);
     setShowAddModal(null);
     setLiveForm({
@@ -499,6 +544,11 @@ function ShariaDashboard() {
   const handleEditLive = (e) => {
     e.preventDefault();
     if (!editingLive) return;
+    const conflictError = checkLiveConflict(editingLive, editingLive.id);
+    if (conflictError) {
+      alert(conflictError);
+      return;
+    }
     setLiveLectures(liveLectures.map(l => l.id === editingLive.id ? editingLive : l));
     setEditingLive(null);
   };
