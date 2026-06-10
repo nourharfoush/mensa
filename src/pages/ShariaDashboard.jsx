@@ -100,6 +100,22 @@ function ShariaDashboard() {
     localStorage.setItem('sharia_courses', JSON.stringify(courses));
   }, [courses]);
 
+  const [shariaBranches, setShariaBranches] = useState(() => {
+    try {
+      const stored = localStorage.getItem('sharia_branches');
+      return stored ? JSON.parse(stored) : [
+        { id: 'sb-1', name: 'فرع معهد تفهنا الأشراف الشرعي', governorate: 'الدقهلية', code: 'SH-DK01', address: 'معهد فتيات تفهنا الأشراف' },
+        { id: 'sb-2', name: 'فرع الجامع الأزهر الرئيسي', governorate: 'الجامع الأزهر', code: 'SH-AZ01', address: 'مقر الجامع الأزهر الشريف بالقاهرة' }
+      ];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sharia_branches', JSON.stringify(shariaBranches));
+  }, [shariaBranches]);
+
   const [selectedCourseStage, setSelectedCourseStage] = useState('تمهيدية');
   const [selectedCourseLevel, setSelectedCourseLevel] = useState('المستوى الأول');
   const [selectedCourseDiscipline, setSelectedCourseDiscipline] = useState('fiqh');
@@ -143,6 +159,7 @@ function ShariaDashboard() {
 
   const [editingTeacher, setEditingTeacher] = useState(null);
   const [editingCourse, setEditingCourse] = useState(null);
+  const [editingShariaBranch, setEditingShariaBranch] = useState(null);
 
   useEffect(() => {
     localStorage.setItem('sharia_teachers', JSON.stringify(teachers));
@@ -199,6 +216,7 @@ function ShariaDashboard() {
     governorate: 'الجامع الأزهر',
     branch: ''
   });
+  const [shariaBranchForm, setShariaBranchForm] = useState({ name: '', governorate: 'الجامع الأزهر', code: '', address: '' });
 
   // --- HANDLERS FOR ADDING ITEMS ---
   const handleAddAdmin = (e) => {
@@ -409,11 +427,27 @@ function ShariaDashboard() {
     setEditingCourse(null);
   };
 
+  const handleAddShariaBranch = (e) => {
+    e.preventDefault();
+    const newBranch = { ...shariaBranchForm, id: 'sb-' + Date.now() };
+    setShariaBranches([...shariaBranches, newBranch]);
+    setShowAddModal(null);
+    setShariaBranchForm({ name: '', governorate: 'الجامع الأزهر', code: '', address: '' });
+  };
+
+  const handleEditShariaBranch = (e) => {
+    e.preventDefault();
+    if (!editingShariaBranch) return;
+    setShariaBranches(shariaBranches.map(b => b.id === editingShariaBranch.id ? editingShariaBranch : b));
+    setEditingShariaBranch(null);
+  };
+
   // --- ACTIONS ---
   const handleDelete = (id, listName) => {
     if (confirm('هل أنت متأكد من رغبتك في حذف هذا السجل؟')) {
       if (listName === 'admins') deleteManager(id);
       if (listName === 'externalAdmins') deleteManager(id);
+      if (listName === 'shariaBranches') setShariaBranches(shariaBranches.filter(x => x.id !== id));
       if (listName === 'courses') setCourses(courses.filter(x => x.id !== id));
       if (listName === 'preparatory') setCourses(courses.filter(x => x.id !== id));
       if (listName === 'intermediate') setCourses(courses.filter(x => x.id !== id));
@@ -514,6 +548,7 @@ function ShariaDashboard() {
     { key: 'externalAdmins', name: 'مسؤولو الادارات الخارجية', desc: 'متابعة مسؤولي الأروقة الخارجية ومنسقي المحافظات وعدد فروعهم.', icon: MapPin, color: '#3b82f6' },
     { key: 'teachers', name: 'أعضاء هيئة التدريس', desc: 'إدارة وتتبع المحاضرين والأساتذة، وتحديث درجاتهم الوظيفية وجامعاتهم وأقسامهم التخصصية.', icon: Users, color: '#f59e0b' },
     { key: 'courses', name: 'المقررات والمواد الدراسية', desc: 'عرض وإدارة المقررات والمواد الدراسية والتحكم في إضافة المواد حسب المرحلة والمستوى الدراسي.', icon: BookOpen, color: '#10b981' },
+    { key: 'shariaBranches', name: 'فروع العلوم الشرعية', desc: 'عرض وإدارة فروع قطاع العلوم الشرعية والعربية بمختلف المحافظات.', icon: Layers, color: '#eab308' },
     { key: 'students', name: 'قسم الدارسين', desc: 'متابعة شؤون الطلاب المسجلين بالمحافظة ومستوياتهم ونسب حضورهم وجداولهم.', icon: Users, color: '#ec4899' },
     { key: 'live', name: 'قسم البث المباشر والمحاضرات', desc: 'جدولة البثوث التفاعلية ومواعيد المحاضرات الاونلاين الخاصة بطلاب المحافظة.', icon: Radio, color: '#ef4444' },
     { key: 'exams', name: 'قسم الاختبارات والامتحانات', desc: 'تنظيم وجدولة الامتحانات، وتصميم أوراق الاختبارات الفترية والنهائية.', icon: FileText, color: '#14b8a6' },
@@ -680,7 +715,7 @@ function ShariaDashboard() {
                 }}
               >
                 <option value="الكل">الكل (جميع فروع المحافظة)</option>
-                {branches.filter(b => b.admin === selectedGov).map(b => (
+                {shariaBranches.filter(b => b.governorate === selectedGov).map(b => (
                   <option key={b.id || b._id} value={b.name}>{b.name}</option>
                 ))}
               </select>
@@ -1458,6 +1493,93 @@ function ShariaDashboard() {
       )}
 
       {/* ========================================================================= */}
+      {/* 5. TAB: SHARIA_BRANCHES (فروع العلوم الشرعية) */}
+      {/* ========================================================================= */}
+      {activeTab === 'shariaBranches' && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+            <div>
+              <h2 style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Layers size={20} color="#eab308" />
+                فروع دراسة العلوم الشرعية والعربية لـ [ {selectedGov === 'الكل' ? 'جميع الإدارات والمواقع' : selectedGov} ]
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>إدارة وتتبع مقرات وفروع الدراسة الشرعية المعتمدة وتفاصيلها الجغرافية.</p>
+            </div>
+            {!isShariaStudent && (
+              <button 
+                onClick={() => {
+                  setShariaBranchForm({ name: '', governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov, code: '', address: '' });
+                  setShowAddModal('shariaBranch');
+                }}
+                className="btn btn-primary" 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 20px',
+                  fontWeight: 'bold',
+                  fontSize: '13px'
+                }}
+              >
+                <Plus size={16} />
+                إضافة فرع دراسي جديد
+              </button>
+            )}
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>رمز الفرع</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>اسم الفرع الشرعي</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>الموقع / المحافظة</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>العنوان تفصيلياً</th>
+                  {!isShariaStudent && <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', textAlign: 'center' }}>إجراءات</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {shariaBranches.filter(b => selectedGov === 'الكل' || b.governorate === selectedGov).length === 0 ? (
+                  <tr>
+                    <td colSpan={isShariaStudent ? 4 : 5} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+                      لا توجد فروع علوم شرعية مسجلة حالياً في {selectedGov === 'الكل' ? 'أي موقع' : selectedGov}.
+                    </td>
+                  </tr>
+                ) : (
+                  shariaBranches.filter(b => selectedGov === 'الكل' || b.governorate === selectedGov).map(branch => (
+                    <tr key={branch.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: '#10b981', fontWeight: 'bold' }}>{branch.code || '—'}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{branch.name}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{branch.governorate}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-muted)' }}>{branch.address || '—'}</td>
+                      {!isShariaStudent && (
+                        <td style={{ padding: '14px 10px', textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
+                          <button 
+                            onClick={() => setEditingShariaBranch(branch)}
+                            style={{ background: 'transparent', border: 'none', color: 'var(--accent-gold)', cursor: 'pointer', padding: '4px' }}
+                            title="تعديل"
+                          >
+                            <Edit size={16} />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(branch.id, 'shariaBranches')}
+                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
+                            title="حذف"
+                          >
+                            <Trash size={16} />
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
       {/* 6. TAB: STUDENTS (قسم الدارسين) */}
       {/* ========================================================================= */}
       {activeTab === 'students' && (
@@ -2135,7 +2257,7 @@ function ShariaDashboard() {
                     <label style={labelStyle}>الفرع التعليمي</label>
                     <select required value={studentForm.branch} onChange={(e) => setStudentForm({ ...studentForm, branch: e.target.value })} style={selectStyle}>
                       <option value="">اختر الفرع...</option>
-                      {branches.filter(b => b.admin === studentForm.governorate).map(b => (
+                      {shariaBranches.filter(b => b.governorate === studentForm.governorate).map(b => (
                         <option key={b.id || b._id} value={b.name}>{b.name}</option>
                       ))}
                     </select>
@@ -2313,7 +2435,7 @@ function ShariaDashboard() {
                     <label style={labelStyle}>الفرع التعليمي</label>
                     <select required value={editingStudent.branch || ''} onChange={(e) => setEditingStudent({ ...editingStudent, branch: e.target.value })} style={selectStyle}>
                       <option value="">اختر الفرع...</option>
-                      {branches.filter(b => b.admin === editingStudent.governorate).map(b => (
+                      {shariaBranches.filter(b => b.governorate === editingStudent.governorate).map(b => (
                         <option key={b.id || b._id} value={b.name}>{b.name}</option>
                       ))}
                     </select>
@@ -2682,7 +2804,7 @@ function ShariaDashboard() {
                     <label style={labelStyle}>الفرع التعليمي</label>
                     <select required value={teacherForm.branch} onChange={(e) => setTeacherForm({ ...teacherForm, branch: e.target.value })} style={selectStyle}>
                       <option value="">اختر الفرع...</option>
-                      {branches.filter(b => b.admin === teacherForm.governorate).map(b => (
+                      {shariaBranches.filter(b => b.governorate === teacherForm.governorate).map(b => (
                         <option key={b.id || b._id} value={b.name}>{b.name}</option>
                       ))}
                     </select>
@@ -2729,6 +2851,98 @@ function ShariaDashboard() {
         </div>
       )}
 
+      {/* Modal: Add Sharia Branch */}
+      {showAddModal === 'shariaBranch' && (
+        <div style={modalOverlayStyle}>
+          <div style={modalContentStyle}>
+            <div style={modalHeaderStyle}>
+              <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>إضافة فرع علوم شرعية جديد</h2>
+              <button onClick={() => setShowAddModal(null)} style={closeBtnStyle}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleAddShariaBranch}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>اسم الفرع بالكامل</label>
+                    <input type="text" required placeholder="مثال: معهد تفهنا الأشراف الشرعي" value={shariaBranchForm.name} onChange={(e) => setShariaBranchForm({ ...shariaBranchForm, name: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الموقع / المحافظة</label>
+                    <select value={shariaBranchForm.governorate} onChange={(e) => setShariaBranchForm({ ...shariaBranchForm, governorate: e.target.value })} style={selectStyle}>
+                      {GOVERNORATES.map(gov => (
+                        <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>رمز الفرع</label>
+                    <input type="text" required placeholder="مثال: SH-DK01" value={shariaBranchForm.code} onChange={(e) => setShariaBranchForm({ ...shariaBranchForm, code: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 2 }}>
+                    <label style={labelStyle}>العنوان بالتفصيل</label>
+                    <input type="text" required placeholder="العنوان أو اسم المعهد/المسجد المستضيف" value={shariaBranchForm.address} onChange={(e) => setShariaBranchForm({ ...shariaBranchForm, address: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
+                  <button type="button" onClick={() => setShowAddModal(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#eab308', border: 'none', color: 'black' }}>حفظ الفرع</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Edit Sharia Branch */}
+      {editingShariaBranch && (
+        <div style={modalOverlayStyle}>
+          <div style={modalContentStyle}>
+            <div style={modalHeaderStyle}>
+              <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>تعديل بيانات فرع العلوم الشرعية</h2>
+              <button onClick={() => setEditingShariaBranch(null)} style={closeBtnStyle}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleEditShariaBranch}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>اسم الفرع بالكامل</label>
+                    <input type="text" required value={editingShariaBranch.name} onChange={(e) => setEditingShariaBranch({ ...editingShariaBranch, name: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الموقع / المحافظة</label>
+                    <select value={editingShariaBranch.governorate} onChange={(e) => setEditingShariaBranch({ ...editingShariaBranch, governorate: e.target.value })} style={selectStyle}>
+                      {GOVERNORATES.map(gov => (
+                        <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>رمز الفرع</label>
+                    <input type="text" required value={editingShariaBranch.code} onChange={(e) => setEditingShariaBranch({ ...editingShariaBranch, code: e.target.value })} style={inputStyle} />
+                  </div>
+                  <div style={{ flex: 2 }}>
+                    <label style={labelStyle}>العنوان بالتفصيل</label>
+                    <input type="text" required value={editingShariaBranch.address} onChange={(e) => setEditingShariaBranch({ ...editingShariaBranch, address: e.target.value })} style={inputStyle} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
+                  <button type="button" onClick={() => setEditingShariaBranch(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#eab308', border: 'none', color: 'black' }}>حفظ التعديلات</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Modal: Edit Teacher */}
       {editingTeacher && (
         <div style={modalOverlayStyle}>
@@ -2756,7 +2970,7 @@ function ShariaDashboard() {
                     <label style={labelStyle}>الفرع التعليمي</label>
                     <select required value={editingTeacher.branch || ''} onChange={(e) => setEditingTeacher({ ...editingTeacher, branch: e.target.value })} style={selectStyle}>
                       <option value="">اختر الفرع...</option>
-                      {branches.filter(b => b.admin === editingTeacher.governorate).map(b => (
+                      {shariaBranches.filter(b => b.governorate === editingTeacher.governorate).map(b => (
                         <option key={b.id || b._id} value={b.name}>{b.name}</option>
                       ))}
                     </select>

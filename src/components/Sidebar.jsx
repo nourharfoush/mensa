@@ -70,6 +70,7 @@ const menuGroups = [
       { name: 'مسؤولو الإدارات الخارجية', icon: MapPin, path: '/sharia-dashboard?tab=externalAdmins' },
       { name: 'أعضاء هيئة التدريس', icon: Users, path: '/sharia-dashboard?tab=teachers' },
       { name: 'المقررات والمواد الدراسية', icon: BookIcon, path: '/sharia-dashboard?tab=courses' },
+      { name: 'فروع العلوم الشرعية', icon: GitBranch, path: '/sharia-dashboard?tab=shariaBranches' },
       { name: 'قسم الدارسين والطلاب', icon: Users, path: '/sharia-dashboard?tab=students' },
       { name: 'البث المباشر والمحاضرات', icon: Video, path: '/sharia-dashboard?tab=live' },
       { name: 'الاختبارات والامتحانات', icon: FileText, path: '/sharia-dashboard?tab=exams' },
