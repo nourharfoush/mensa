@@ -239,9 +239,9 @@ function ShariaDashboard() {
       level: courseForm.level,
       discipline: courseForm.stage === 'متقدمة' ? courseForm.discipline : '—',
       name: courseForm.name,
-      teacher: courseForm.teacher,
+      teacher: '',
       studentsCount: 0,
-      hours: Number(courseForm.hours)
+      hours: 20
     };
     setCourses([...courses, formattedCourse]);
     setShowAddModal(null);
@@ -398,8 +398,8 @@ function ShariaDashboard() {
       level: editingCourse.level,
       discipline: editingCourse.stage === 'متقدمة' ? editingCourse.discipline : '—',
       name: editingCourse.name,
-      teacher: editingCourse.teacher,
-      hours: Number(editingCourse.hours)
+      teacher: '',
+      hours: 20
     } : c));
     setEditingCourse(null);
   };
@@ -1386,11 +1386,7 @@ function ShariaDashboard() {
                         {course.name}
                       </h4>
 
-                      {course.teacher && (
-                        <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-                          المحاضر: <strong style={{ color: 'var(--text-primary)' }}>{course.teacher}</strong>
-                        </div>
-                      )}
+
 
                       <div style={{
                         display: 'flex',
