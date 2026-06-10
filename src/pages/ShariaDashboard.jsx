@@ -87,7 +87,10 @@ function ShariaDashboard() {
   const [courses, setCourses] = useState(() => {
     try {
       const stored = localStorage.getItem('sharia_courses');
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.map(c => c.hours === 30 ? { ...c, hours: 20 } : c);
+      }
     } catch (e) {}
     return [];
   });
