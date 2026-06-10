@@ -597,6 +597,36 @@ function ShariaDashboard() {
   };
   const getTotalCourses = () => courses.length;
 
+  const isLectureActiveNow = (l) => {
+    if (l.status === 'بث مباشر الآن') return true;
+    const dayNamesMap = {
+      0: 'الأحد', 1: 'الإثنين', 2: 'الثلاثاء', 3: 'الأربعاء', 4: 'الخميس', 5: 'الجمعة', 6: 'السبت'
+    };
+    const currentDayName = dayNamesMap[new Date().getDay()];
+    const cleanDay = (d) => String(d || '').replace('أ', 'ا').replace('إ', 'ا');
+    
+    const timeToMinutes = (timeStr) => {
+      if (!timeStr) return 0;
+      const [h, m] = timeStr.split(':').map(Number);
+      return h * 60 + m;
+    };
+    
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    
+    const isTodayWorkday = cleanDay(l.day) === cleanDay(currentDayName);
+    if (!isTodayWorkday) return false;
+    if (!l.timeStart || !l.timeEnd) return false;
+    
+    const startMin = timeToMinutes(l.timeStart);
+    const endMin = timeToMinutes(l.timeEnd);
+    return currentMinutes >= startMin && currentMinutes <= endMin;
+  };
+
+  const getActiveLiveCount = () => {
+    return getFilteredLiveLectures().filter(isLectureActiveNow).length;
+  };
+
   const dynamicStats = [
     { id: 3, title: 'الدارسين بالموقع المختار', value: getTotalStudents(), iconColor: '#f97316', iconType: 'users', tab: 'students' },
     { id: 5, title: 'أعضاء هيئة التدريس بالموقع', value: getFilteredTeachers().length, iconColor: '#f59e0b', iconType: 'users', tab: 'teachers' },
@@ -835,6 +865,78 @@ function ShariaDashboard() {
       {/* ========================================================================= */}
       {activeTab === 'overview' && (
         <div>
+          {/* Real-time active lectures card */}
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(214,175,55,0.08), rgba(239,68,68,0.08))',
+            border: '1px solid rgba(214, 175, 55, 0.25)',
+            borderRadius: '16px',
+            padding: '20px 24px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '20px',
+            marginBottom: '25px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+            backdropFilter: 'blur(8px)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.15)',
+                color: '#ef4444',
+                padding: '14px',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative'
+              }}>
+                <Video size={26} />
+                <span style={{
+                  position: 'absolute',
+                  top: '4px',
+                  right: '4px',
+                  width: '8px',
+                  height: '8px',
+                  backgroundColor: '#ef4444',
+                  borderRadius: '50%',
+                  boxShadow: '0 0 8px #ef4444'
+                }} className="pulse-indicator"></span>
+              </div>
+              <div>
+                <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', color: 'var(--text-primary)', fontWeight: 'bold' }}>المحاضرات الجارية حالياً في الوقت الفعلي</h3>
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>تحديث تلقائي مستند إلى أوقات البث وجداول المحاضرات المسجلة</p>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+              <div style={{ textAlign: 'left' }}>
+                <span style={{ fontSize: '32px', fontWeight: 'bold', color: '#ef4444', fontFamily: 'inherit' }}>{getActiveLiveCount()}</span>
+                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', marginRight: '6px' }}>محاضرة نشطة الآن</span>
+              </div>
+              <button 
+                onClick={() => setActiveTab('live')}
+                className="btn btn-primary" 
+                style={{ 
+                  backgroundColor: '#ef4444',
+                  border: 'none',
+                  color: 'white',
+                  textDecoration: 'none', 
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  boxShadow: '0 4px 12px rgba(239,68,68,0.2)'
+                }}
+              >
+                متابعة المحاضرات الجارية
+              </button>
+            </div>
+          </div>
+
           {/* Quick Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '30px' }}>
             {dynamicStats.map(stat => (
@@ -2102,26 +2204,29 @@ function ShariaDashboard() {
                   ? `${live.day} (من ${live.timeStart} إلى ${live.timeEnd})` 
                   : live.scheduleTime;
 
+                const isActive = isLectureActiveNow(live);
+                const displayStatus = isActive ? 'بث مباشر الآن' : live.status;
+
                 return (
                   <div 
                     key={live.id}
                     style={{
                       background: 'var(--bg-main)',
-                      border: live.status === 'بث مباشر الآن' ? '1px solid #ef4444' : '1px solid var(--border-subtle)',
+                      border: isActive ? '1px solid #ef4444' : '1px solid var(--border-subtle)',
                       borderRadius: '12px',
                       padding: '20px',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',
-                      boxShadow: live.status === 'بث مباشر الآن' ? '0 0 15px rgba(239, 68, 68, 0.15)' : 'none'
+                      boxShadow: isActive ? '0 0 15px rgba(239, 68, 68, 0.15)' : 'none'
                     }}
                   >
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', width: '100%' }}>
                         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                           <span style={{
-                            backgroundColor: live.status === 'بث مباشر الآن' ? '#ef4444' : 'rgba(255,255,255,0.05)',
-                            color: live.status === 'بث مباشر الآن' ? 'white' : 'var(--text-secondary)',
+                            backgroundColor: isActive ? '#ef4444' : 'rgba(255,255,255,0.05)',
+                            color: isActive ? 'white' : 'var(--text-secondary)',
                             padding: '4px 10px',
                             borderRadius: '20px',
                             fontSize: '11px',
@@ -2130,8 +2235,8 @@ function ShariaDashboard() {
                             alignItems: 'center',
                             gap: '5px'
                           }}>
-                            {live.status === 'بث مباشر الآن' && <span className="pulse-indicator" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'white', display: 'inline-block' }}></span>}
-                            {live.status}
+                            {isActive && <span className="pulse-indicator" style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'white', display: 'inline-block' }}></span>}
+                            {displayStatus}
                           </span>
                           <span style={{
                             backgroundColor: 'rgba(214, 175, 55, 0.1)',
@@ -2207,7 +2312,7 @@ function ShariaDashboard() {
                         target="_blank" 
                         rel="noreferrer"
                         style={{
-                          backgroundColor: live.status === 'بث مباشر الآن' ? '#ef4444' : 'var(--border-subtle)',
+                          backgroundColor: isActive ? '#ef4444' : 'var(--border-subtle)',
                           color: 'white',
                           textDecoration: 'none',
                           padding: '6px 12px',
@@ -2219,7 +2324,7 @@ function ShariaDashboard() {
                           gap: '4px'
                         }}
                       >
-                        {live.status === 'بث مباشر الآن' ? <Play size={12} /> : <ExternalLink size={12} />}
+                        {isActive ? <Play size={12} /> : <ExternalLink size={12} />}
                         دخول المحاضرة
                       </a>
                     </div>
