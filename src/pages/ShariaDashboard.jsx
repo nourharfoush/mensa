@@ -32,6 +32,7 @@ function ShariaDashboard() {
   
   // Governorate filter selection (Students & Live Lectures & Attendance vary per governorate)
   const [selectedGov, setSelectedGov] = useState('الكل');
+  const [selectedBranch, setSelectedBranch] = useState('الكل');
 
   useEffect(() => {
     const targetTab = tabParam || 'overview';
@@ -42,7 +43,7 @@ function ShariaDashboard() {
     }
   }, [tabParam, isShariaStudent]);
 
-  const { managers = [], addManager, deleteManager, addUser, updateUser, users = [] } = useAppData();
+  const { managers = [], addManager, deleteManager, addUser, updateUser, users = [], branches = [] } = useAppData();
 
   const targetSpecialties = [
     'مدير الإدارة',
@@ -173,6 +174,7 @@ function ShariaDashboard() {
     name: '', 
     nationalId: '', 
     governorate: 'الجامع الأزهر', 
+    branch: '',
     stage: 'تمهيدية', 
     level: 'المستوى الأول', 
     discipline: '—', 
@@ -194,7 +196,8 @@ function ShariaDashboard() {
     university: '',
     college: '',
     department: '',
-    governorate: 'الجامع الأزهر'
+    governorate: 'الجامع الأزهر',
+    branch: ''
   });
 
   // --- HANDLERS FOR ADDING ITEMS ---
@@ -277,6 +280,7 @@ function ShariaDashboard() {
       name: '', 
       nationalId: '', 
       governorate: 'الجامع الأزهر', 
+      branch: '',
       stage: 'تمهيدية', 
       level: 'المستوى الأول', 
       discipline: '—', 
@@ -378,7 +382,8 @@ function ShariaDashboard() {
       university: '',
       college: '',
       department: '',
-      governorate: 'الجامع الأزهر'
+      governorate: 'الجامع الأزهر',
+      branch: ''
     });
   };
 
@@ -426,6 +431,7 @@ function ShariaDashboard() {
   const getFilteredStudents = () => {
     return students.filter(s => 
       (selectedGov === 'الكل' || s.governorate === selectedGov) &&
+      (selectedBranch === 'الكل' || s.branch === selectedBranch) &&
       (s.name.includes(searchTerm) || s.nationalId.includes(searchTerm) || (s.code && s.code.includes(searchTerm)))
     );
   };
@@ -433,6 +439,7 @@ function ShariaDashboard() {
   const getFilteredTeachers = () => {
     return teachers.filter(t => 
       (selectedGov === 'الكل' || t.governorate === selectedGov) &&
+      (selectedBranch === 'الكل' || t.branch === selectedBranch) &&
       (t.name.includes(searchTerm) || t.department.includes(searchTerm) || t.university.includes(searchTerm))
     );
   };
@@ -452,7 +459,10 @@ function ShariaDashboard() {
         return matchGov && hasStage && hasLevel;
       });
     } else {
-      filtered = filtered.filter(l => selectedGov === 'الكل' || l.governorate === selectedGov);
+      filtered = filtered.filter(l => 
+        (selectedGov === 'الكل' || l.governorate === selectedGov) &&
+        (selectedBranch === 'الكل' || l.branch === selectedBranch)
+      );
     }
     return filtered;
   };
@@ -464,7 +474,8 @@ function ShariaDashboard() {
       );
     }
     return results.filter(r => 
-      selectedGov === 'الكل' || r.governorate === selectedGov
+      (selectedGov === 'الكل' || r.governorate === selectedGov) &&
+      (selectedBranch === 'الكل' || r.branch === selectedBranch)
     );
   };
 
@@ -601,49 +612,81 @@ function ShariaDashboard() {
           </div>
         </div>
         
-        {isShariaStudent ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>الموقع النشط حالياً:</span>
-            <span style={{
-              padding: '8px 16px',
-              borderRadius: '8px',
-              border: '1px solid var(--border-subtle)',
-              backgroundColor: 'rgba(214, 175, 55, 0.08)',
-              color: 'var(--accent-gold)',
-              fontSize: '13px',
-              fontWeight: 'bold',
-              minWidth: '220px',
-              textAlign: 'center'
-            }}>
-              {selectedGov} (محدد تلقائياً)
-            </span>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>الموقع النشط حالياً:</span>
-            <select
-              value={selectedGov}
-              onChange={(e) => setSelectedGov(e.target.value)}
-              style={{
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap' }}>
+          {isShariaStudent ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>الموقع النشط حالياً:</span>
+              <span style={{
                 padding: '8px 16px',
                 borderRadius: '8px',
                 border: '1px solid var(--border-subtle)',
-                backgroundColor: 'var(--bg-main)',
-                color: 'var(--text-primary)',
+                backgroundColor: 'rgba(214, 175, 55, 0.08)',
+                color: 'var(--accent-gold)',
                 fontSize: '13px',
                 fontWeight: 'bold',
-                cursor: 'pointer',
-                outline: 'none',
-                minWidth: '220px'
-              }}
-            >
-              <option value="الكل">الكل (جميع المحافظات والجامع الأزهر)</option>
-              {GOVERNORATES.map(gov => (
-                <option key={gov} value={gov}>{gov}</option>
-              ))}
-            </select>
-          </div>
-        )}
+                minWidth: '220px',
+                textAlign: 'center'
+              }}>
+                {selectedGov} (محدد تلقائياً)
+              </span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>الموقع النشط حالياً:</span>
+              <select
+                value={selectedGov}
+                onChange={(e) => {
+                  setSelectedGov(e.target.value);
+                  setSelectedBranch('الكل');
+                }}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-subtle)',
+                  backgroundColor: 'var(--bg-main)',
+                  color: 'var(--text-primary)',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  minWidth: '220px'
+                }}
+              >
+                <option value="الكل">الكل (جميع المحافظات والجامع الأزهر)</option>
+                {GOVERNORATES.map(gov => (
+                  <option key={gov} value={gov}>{gov}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {selectedGov !== 'الكل' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>الفرع:</span>
+              <select
+                value={selectedBranch}
+                onChange={(e) => setSelectedBranch(e.target.value)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-subtle)',
+                  backgroundColor: 'var(--bg-main)',
+                  color: 'var(--text-primary)',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  minWidth: '220px'
+                }}
+              >
+                <option value="الكل">الكل (جميع فروع المحافظة)</option>
+                {branches.filter(b => b.admin === selectedGov).map(b => (
+                  <option key={b.id || b._id} value={b.name}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main Tabs Navigation */}
@@ -1011,7 +1054,9 @@ function ShariaDashboard() {
                       <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{teacher.name}</td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.nationalId}</td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.phone}</td>
-                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.governorate}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                        {teacher.governorate} {teacher.branch && <span style={{ fontSize: '11px', color: 'var(--accent-gold)' }}>({teacher.branch})</span>}
+                      </td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.jobGrade}</td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.university}</td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{teacher.college || '—'}</td>
@@ -1501,7 +1546,9 @@ function ShariaDashboard() {
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: '#10b981', fontWeight: 'bold' }}>{student.code || '—'}</td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>{student.seatNumber || '—'}</td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{student.nationalId}</td>
-                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{student.governorate}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                        {student.governorate} {student.branch && <span style={{ fontSize: '11px', color: 'var(--accent-gold)' }}>({student.branch})</span>}
+                      </td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{student.gender}</td>
                       <td style={{ padding: '14px 10px', fontSize: '13px' }}>
                         <span style={{
@@ -1705,7 +1752,9 @@ function ShariaDashboard() {
                   getFilteredResults().map(res => (
                     <tr key={res.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
                       <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{res.studentName}</td>
-                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>{res.governorate}</td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>
+                        {res.governorate} {res.branch && <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>({res.branch})</span>}
+                      </td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>{res.examName}</td>
                       <td style={{ padding: '14px 10px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)' }}>{res.score} / 100</td>
                       <td style={{ padding: '14px 10px', textAlign: 'center', fontSize: '13px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>{res.grade}</td>
@@ -2076,9 +2125,18 @@ function ShariaDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>الإدارة (الموقع / المحافظة)</label>
-                    <select value={studentForm.governorate} onChange={(e) => setStudentForm({ ...studentForm, governorate: e.target.value })} style={selectStyle}>
+                    <select value={studentForm.governorate} onChange={(e) => setStudentForm({ ...studentForm, governorate: e.target.value, branch: '' })} style={selectStyle}>
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الفرع التعليمي</label>
+                    <select required value={studentForm.branch} onChange={(e) => setStudentForm({ ...studentForm, branch: e.target.value })} style={selectStyle}>
+                      <option value="">اختر الفرع...</option>
+                      {branches.filter(b => b.admin === studentForm.governorate).map(b => (
+                        <option key={b.id || b._id} value={b.name}>{b.name}</option>
                       ))}
                     </select>
                   </div>
@@ -2245,9 +2303,18 @@ function ShariaDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>الإدارة (الموقع / المحافظة)</label>
-                    <select value={editingStudent.governorate} onChange={(e) => setEditingStudent({ ...editingStudent, governorate: e.target.value })} style={selectStyle}>
+                    <select value={editingStudent.governorate} onChange={(e) => setEditingStudent({ ...editingStudent, governorate: e.target.value, branch: '' })} style={selectStyle}>
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الفرع التعليمي</label>
+                    <select required value={editingStudent.branch || ''} onChange={(e) => setEditingStudent({ ...editingStudent, branch: e.target.value })} style={selectStyle}>
+                      <option value="">اختر الفرع...</option>
+                      {branches.filter(b => b.admin === editingStudent.governorate).map(b => (
+                        <option key={b.id || b._id} value={b.name}>{b.name}</option>
                       ))}
                     </select>
                   </div>
@@ -2605,9 +2672,18 @@ function ShariaDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>الإدارة (الموقع / المحافظة)</label>
-                    <select value={teacherForm.governorate} onChange={(e) => setTeacherForm({ ...teacherForm, governorate: e.target.value })} style={selectStyle}>
+                    <select value={teacherForm.governorate} onChange={(e) => setTeacherForm({ ...teacherForm, governorate: e.target.value, branch: '' })} style={selectStyle}>
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الفرع التعليمي</label>
+                    <select required value={teacherForm.branch} onChange={(e) => setTeacherForm({ ...teacherForm, branch: e.target.value })} style={selectStyle}>
+                      <option value="">اختر الفرع...</option>
+                      {branches.filter(b => b.admin === teacherForm.governorate).map(b => (
+                        <option key={b.id || b._id} value={b.name}>{b.name}</option>
                       ))}
                     </select>
                   </div>
@@ -2670,9 +2746,18 @@ function ShariaDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>الإدارة (الموقع / المحافظة)</label>
-                    <select value={editingTeacher.governorate} onChange={(e) => setEditingTeacher({ ...editingTeacher, governorate: e.target.value })} style={selectStyle}>
+                    <select value={editingTeacher.governorate} onChange={(e) => setEditingTeacher({ ...editingTeacher, governorate: e.target.value, branch: '' })} style={selectStyle}>
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={labelStyle}>الفرع التعليمي</label>
+                    <select required value={editingTeacher.branch || ''} onChange={(e) => setEditingTeacher({ ...editingTeacher, branch: e.target.value })} style={selectStyle}>
+                      <option value="">اختر الفرع...</option>
+                      {branches.filter(b => b.admin === editingTeacher.governorate).map(b => (
+                        <option key={b.id || b._id} value={b.name}>{b.name}</option>
                       ))}
                     </select>
                   </div>
