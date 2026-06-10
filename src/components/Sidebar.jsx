@@ -71,9 +71,9 @@ const menuGroups = [
       { name: 'أعضاء هيئة التدريس', icon: Users, path: '/sharia-dashboard?tab=teachers' },
       { name: 'المقررات والمواد الدراسية', icon: BookIcon, path: '/sharia-dashboard?tab=courses' },
       { name: 'قسم الدارسين والطلاب', icon: Users, path: '/sharia-dashboard?tab=students' },
+      { name: 'البث المباشر والمحاضرات', icon: Video, path: '/sharia-dashboard?tab=live' },
       { name: 'الاختبارات والامتحانات', icon: FileText, path: '/sharia-dashboard?tab=exams' },
       { name: 'نتائج الامتحانات', icon: Award, path: '/sharia-dashboard?tab=results' },
-      { name: 'البث المباشر والمحاضرات', icon: Video, path: '/sharia-dashboard?tab=live' },
       { name: 'الأخبار والإعلانات', icon: Newspaper, path: '/sharia-dashboard?tab=news' },
     ]
   }
