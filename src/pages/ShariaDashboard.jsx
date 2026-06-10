@@ -29,6 +29,7 @@ function ShariaDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(null); // 'admin', 'externalAdmin', 'course', 'student', 'exam', 'result', 'news', 'live'
+  const [showOnlyActiveLives, setShowOnlyActiveLives] = useState(false);
   
   // Governorate filter selection (Students & Live Lectures & Attendance vary per governorate)
   const [selectedGov, setSelectedGov] = useState('الكل');
@@ -521,6 +522,9 @@ function ShariaDashboard() {
         (selectedGov === 'الكل' || l.governorate === selectedGov)
       );
     }
+    if (showOnlyActiveLives) {
+      filtered = filtered.filter(isLectureActiveNow);
+    }
     return filtered;
   };
 
@@ -787,7 +791,7 @@ function ShariaDashboard() {
         borderBottom: '1px solid var(--border-subtle)'
       }}>
         <button 
-          onClick={() => { setActiveTab('overview'); setSearchTerm(''); }}
+          onClick={() => { setActiveTab('overview'); setSearchTerm(''); setShowOnlyActiveLives(false); }}
           style={{
             padding: '10px 20px',
             borderRadius: '8px',
@@ -805,7 +809,7 @@ function ShariaDashboard() {
         {sectionGridItems.map(item => (
           <button 
             key={item.key}
-            onClick={() => { setActiveTab(item.key); setSearchTerm(''); }}
+            onClick={() => { setActiveTab(item.key); setSearchTerm(''); setShowOnlyActiveLives(false); }}
             style={{
               padding: '10px 18px',
               borderRadius: '8px',
@@ -877,7 +881,7 @@ function ShariaDashboard() {
                 <span style={{ fontSize: '13px', color: 'var(--text-secondary)', marginRight: '6px' }}>محاضرة نشطة الآن</span>
               </div>
               <button 
-                onClick={() => setActiveTab('live')}
+                onClick={() => { setActiveTab('live'); setShowOnlyActiveLives(true); }}
                 className="btn btn-primary" 
                 style={{ 
                   backgroundColor: '#ef4444',
@@ -905,7 +909,7 @@ function ShariaDashboard() {
             {dynamicStats.map(stat => (
               <div 
                 key={stat.id}
-                onClick={() => setActiveTab(stat.tab)}
+                onClick={() => { setActiveTab(stat.tab); setShowOnlyActiveLives(false); }}
                 style={{
                   background: 'var(--bg-card)',
                   border: '1px solid var(--border-subtle)',
@@ -2122,30 +2126,60 @@ function ShariaDashboard() {
               </h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>تتغير جداول ومواعيد المحاضرات الأونلاين للدارسين عن بعد من محافظة لأخرى ومن محافظة للجامع الأزهر</p>
             </div>
-            {!isShariaStudent && (
-              <button 
-                onClick={() => {
-                  setLiveForm({ ...liveForm, governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov });
-                  setShowAddModal('live');
-                }}
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setShowOnlyActiveLives(!showOnlyActiveLives)}
                 style={{
-                  backgroundColor: '#ef4444',
-                  border: 'none',
-                  color: 'white',
                   padding: '8px 16px',
                   borderRadius: '6px',
+                  border: showOnlyActiveLives ? '1px solid #ef4444' : '1px solid var(--border-subtle)',
+                  backgroundColor: showOnlyActiveLives ? 'rgba(239, 68, 68, 0.15)' : 'var(--bg-main)',
+                  color: showOnlyActiveLives ? '#ef4444' : 'var(--text-secondary)',
+                  fontSize: '13px',
                   fontWeight: 'bold',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  fontSize: '13px'
+                  gap: '8px',
+                  transition: 'all 0.2s'
                 }}
               >
-                <Plus size={16} />
-                جدولة بث مباشر
+                <span className={showOnlyActiveLives ? 'pulse-indicator' : ''} style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ef4444',
+                  display: 'inline-block'
+                }}></span>
+                {showOnlyActiveLives ? 'عرض جميع المحاضرات' : 'المحاضرات الجارية الآن فقط'}
               </button>
-            )}
+
+              {!isShariaStudent && (
+                <button 
+                  onClick={() => {
+                    setLiveForm({ ...liveForm, governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov });
+                    setShowAddModal('live');
+                  }}
+                  style={{
+                    backgroundColor: '#ef4444',
+                    border: 'none',
+                    color: 'white',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13px'
+                  }}
+                >
+                  <Plus size={16} />
+                  جدولة بث مباشر
+                </button>
+              )}
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
