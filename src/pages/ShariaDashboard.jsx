@@ -89,28 +89,7 @@ function ShariaDashboard() {
       const stored = localStorage.getItem('sharia_courses');
       if (stored) return JSON.parse(stored);
     } catch (e) {}
-    return [
-      // تمهيدية - المستوى الأول
-      { id: 1, stage: 'تمهيدية', level: 'المستوى الأول', discipline: '—', name: 'مدخل إلى العلوم الشرعية', teacher: 'الشيخ أحمد البهتيمي', hours: 30, studentsCount: 120 },
-      { id: 2, stage: 'تمهيدية', level: 'المستوى الأول', discipline: '—', name: 'النحو التطبيقي (مبادئ التأسيس)', teacher: 'الأستاذ الدكتور خالد عبد العزيز', hours: 40, studentsCount: 110 },
-      // تمهيدية - المستوى الثاني
-      { id: 3, stage: 'تمهيدية', level: 'المستوى الثاني', discipline: '—', name: 'تيسير مصطلح الحديث', teacher: 'الشيخ الدكتور حسن الشافعي', hours: 35, studentsCount: 95 },
-      { id: 4, stage: 'تمهيدية', level: 'المستوى الثاني', discipline: '—', name: 'تفسير جزء عم', teacher: 'الشيخ أحمد الطيب', hours: 30, studentsCount: 140 },
-      // متوسطة - المستوى الأول
-      { id: 5, stage: 'متوسطة', level: 'المستوى الأول', discipline: '—', name: 'شرح متن أبي شجاع في الفقه الشافعي', teacher: 'الشيخ محمد مصطفى', hours: 45, studentsCount: 85 },
-      { id: 6, stage: 'متوسطة', level: 'المستوى الأول', discipline: '—', name: 'العقيدة الطحاوية وشرحها الكافي', teacher: 'الشيخ علي جمعة', hours: 40, studentsCount: 90 },
-      // متوسطة - المستوى الثاني
-      { id: 7, stage: 'متوسطة', level: 'المستوى الثاني', discipline: '—', name: 'متن قطر الندى وبل الصدى', teacher: 'الأستاذ يسري جبر', hours: 50, studentsCount: 78 },
-      // متقدمة - فقه وأصوله
-      { id: 8, stage: 'متقدمة', level: 'المستوى الأول', discipline: 'fiqh', name: 'شرح فتح القدير على الهداية (حنفي)', teacher: 'الشيخ أحمد معبد', hours: 60, studentsCount: 65 },
-      { id: 9, stage: 'متقدمة', level: 'المستوى الثاني', discipline: 'fiqh', name: 'شرح جمع الجوامع في أصول الفقه', teacher: 'الشيخ إبراهيم الهدهد', hours: 55, studentsCount: 50 },
-      // متقدمة - تفسير وحديث
-      { id: 10, stage: 'متقدمة', level: 'المستوى الأول', discipline: 'tafsir', name: 'علوم الحديث ومناهج المحدثين', teacher: 'الشيخ عبد الحليم محمود', hours: 48, studentsCount: 72 },
-      // متقدمة - عقيدة
-      { id: 11, stage: 'متقدمة', level: 'المستوى الثالث', discipline: 'aqeedah', name: 'المواقف في علم الكلام وعضد الدين الإيجي', teacher: 'الشيخ عبد الفضيل القوصي', hours: 60, studentsCount: 40 },
-      // متقدمة - لغة عربية
-      { id: 12, stage: 'متقدمة', level: 'المستوى الرابع', discipline: 'arabic', name: 'دلائل الإعجاز لعبد القاهر الجرجاني', teacher: 'الشيخ محمد أبو موسى', hours: 50, studentsCount: 35 }
-    ];
+    return [];
   });
 
   useEffect(() => {
@@ -155,11 +134,7 @@ function ShariaDashboard() {
       const stored = localStorage.getItem('sharia_teachers');
       if (stored) return JSON.parse(stored);
     } catch (e) {}
-    return [
-      { id: 1, name: 'أ.د/ خالد عبد العزيز', nationalId: '27501019999991', phone: '01012345678', jobGrade: 'أستاذ ورئيس قسم', university: 'جامعة الأزهر', college: 'كلية اللغة العربية بالقاهرة', department: 'اللغويات', governorate: 'الجامع الأزهر' },
-      { id: 2, name: 'أ.د/ إبراهيم الهدهد', nationalId: '27005129999992', phone: '01198765432', jobGrade: 'أستاذ متفرغ (رئيس الجامعة الأسبق)', university: 'جامعة الأزهر', college: 'كلية اللغة العربية بالقاهرة', department: 'البلاغة والنقد', governorate: 'الجامع الأزهر' },
-      { id: 3, name: 'الشيخ/ أحمد معبد عبد الكريم', nationalId: '26508209999993', phone: '01234567890', jobGrade: 'أستاذ الحديث', university: 'جامعة الأزهر', college: 'كلية أصول الدين بالقاهرة', department: 'الحديث وعلومه', governorate: 'الجامع الأزهر' }
-    ];
+    return [];
   });
 
   const [editingTeacher, setEditingTeacher] = useState(null);
