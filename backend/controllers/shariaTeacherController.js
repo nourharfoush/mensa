@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import ShariaTeacher from '../models/ShariaTeacher.js';
 
 export const getShariaTeachers = async (req, res) => {
@@ -11,7 +12,11 @@ export const getShariaTeachers = async (req, res) => {
 
 export const getShariaTeacher = async (req, res) => {
   try {
-    const item = await ShariaTeacher.findOne({ id: req.params.id });
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ id }, { _id: id }] }
+      : { id };
+    const item = await ShariaTeacher.findOne(query);
     if (!item) return res.status(404).json({ message: 'Teacher not found' });
     res.json(item);
   } catch (error) {
@@ -38,14 +43,23 @@ export const createShariaTeacher = async (req, res) => {
 
 export const updateShariaTeacher = async (req, res) => {
   try {
+    const { id } = req.params;
     const { nationalId } = req.body;
+    
     if (nationalId) {
-      const existing = await ShariaTeacher.findOne({ nationalId, id: { $ne: req.params.id } });
+      const queryDuplicate = mongoose.Types.ObjectId.isValid(id)
+        ? { nationalId, $and: [{ id: { $ne: id } }, { _id: { $ne: id } }] }
+        : { nationalId, id: { $ne: id } };
+      const existing = await ShariaTeacher.findOne(queryDuplicate);
       if (existing) {
         return res.status(400).json({ message: 'الرقم القومي مسجل بالفعل لمحاضر آخر' });
       }
     }
-    const item = await ShariaTeacher.findOne({ id: req.params.id });
+    
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ id }, { _id: id }] }
+      : { id };
+    const item = await ShariaTeacher.findOne(query);
     if (!item) return res.status(404).json({ message: 'Teacher not found' });
     
     Object.assign(item, req.body);
@@ -58,7 +72,11 @@ export const updateShariaTeacher = async (req, res) => {
 
 export const deleteShariaTeacher = async (req, res) => {
   try {
-    const item = await ShariaTeacher.findOneAndDelete({ id: req.params.id });
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ id }, { _id: id }] }
+      : { id };
+    const item = await ShariaTeacher.findOneAndDelete(query);
     if (!item) return res.status(404).json({ message: 'Teacher not found' });
     res.json({ message: 'Teacher deleted' });
   } catch (error) {

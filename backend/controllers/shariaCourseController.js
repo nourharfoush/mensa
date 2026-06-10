@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import ShariaCourse from '../models/ShariaCourse.js';
 
 export const getShariaCourses = async (req, res) => {
@@ -11,7 +12,11 @@ export const getShariaCourses = async (req, res) => {
 
 export const getShariaCourse = async (req, res) => {
   try {
-    const item = await ShariaCourse.findOne({ id: req.params.id });
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ id }, { _id: id }] }
+      : { id };
+    const item = await ShariaCourse.findOne(query);
     if (!item) return res.status(404).json({ message: 'Course not found' });
     res.json(item);
   } catch (error) {
@@ -31,7 +36,11 @@ export const createShariaCourse = async (req, res) => {
 
 export const updateShariaCourse = async (req, res) => {
   try {
-    const item = await ShariaCourse.findOne({ id: req.params.id });
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ id }, { _id: id }] }
+      : { id };
+    const item = await ShariaCourse.findOne(query);
     if (!item) return res.status(404).json({ message: 'Course not found' });
     
     Object.assign(item, req.body);
@@ -44,7 +53,11 @@ export const updateShariaCourse = async (req, res) => {
 
 export const deleteShariaCourse = async (req, res) => {
   try {
-    const item = await ShariaCourse.findOneAndDelete({ id: req.params.id });
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ id }, { _id: id }] }
+      : { id };
+    const item = await ShariaCourse.findOneAndDelete(query);
     if (!item) return res.status(404).json({ message: 'Course not found' });
     res.json({ message: 'Course deleted' });
   } catch (error) {

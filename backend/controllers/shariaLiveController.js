@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import ShariaLive from '../models/ShariaLive.js';
 
 export const getShariaLives = async (req, res) => {
@@ -11,7 +12,11 @@ export const getShariaLives = async (req, res) => {
 
 export const getShariaLive = async (req, res) => {
   try {
-    const item = await ShariaLive.findOne({ id: req.params.id });
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ id }, { _id: id }] }
+      : { id };
+    const item = await ShariaLive.findOne(query);
     if (!item) return res.status(404).json({ message: 'Live stream not found' });
     res.json(item);
   } catch (error) {
@@ -31,7 +36,11 @@ export const createShariaLive = async (req, res) => {
 
 export const updateShariaLive = async (req, res) => {
   try {
-    const item = await ShariaLive.findOne({ id: req.params.id });
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ id }, { _id: id }] }
+      : { id };
+    const item = await ShariaLive.findOne(query);
     if (!item) return res.status(404).json({ message: 'Live stream not found' });
     
     Object.assign(item, req.body);
@@ -44,7 +53,11 @@ export const updateShariaLive = async (req, res) => {
 
 export const deleteShariaLive = async (req, res) => {
   try {
-    const item = await ShariaLive.findOneAndDelete({ id: req.params.id });
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ id }, { _id: id }] }
+      : { id };
+    const item = await ShariaLive.findOneAndDelete(query);
     if (!item) return res.status(404).json({ message: 'Live stream not found' });
     res.json({ message: 'Live stream deleted' });
   } catch (error) {

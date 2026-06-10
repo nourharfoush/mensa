@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import ShariaBranch from '../models/ShariaBranch.js';
 
 export const getShariaBranches = async (req, res) => {
@@ -11,7 +12,11 @@ export const getShariaBranches = async (req, res) => {
 
 export const getShariaBranch = async (req, res) => {
   try {
-    const item = await ShariaBranch.findOne({ id: req.params.id });
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ id }, { _id: id }] }
+      : { id };
+    const item = await ShariaBranch.findOne(query);
     if (!item) return res.status(404).json({ message: 'Branch not found' });
     res.json(item);
   } catch (error) {
@@ -31,7 +36,11 @@ export const createShariaBranch = async (req, res) => {
 
 export const updateShariaBranch = async (req, res) => {
   try {
-    const item = await ShariaBranch.findOne({ id: req.params.id });
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ id }, { _id: id }] }
+      : { id };
+    const item = await ShariaBranch.findOne(query);
     if (!item) return res.status(404).json({ message: 'Branch not found' });
     
     Object.assign(item, req.body);
@@ -44,7 +53,11 @@ export const updateShariaBranch = async (req, res) => {
 
 export const deleteShariaBranch = async (req, res) => {
   try {
-    const item = await ShariaBranch.findOneAndDelete({ id: req.params.id });
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ id }, { _id: id }] }
+      : { id };
+    const item = await ShariaBranch.findOneAndDelete(query);
     if (!item) return res.status(404).json({ message: 'Branch not found' });
     res.json({ message: 'Branch deleted' });
   } catch (error) {

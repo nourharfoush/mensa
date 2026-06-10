@@ -667,6 +667,26 @@ export function AppDataProvider({ children }) {
   }, [administrations]);
 
   useEffect(() => {
+    saveToLocalStorage('sharia_courses', shariaCourses);
+  }, [shariaCourses]);
+
+  useEffect(() => {
+    saveToLocalStorage('sharia_branches', shariaBranches);
+  }, [shariaBranches]);
+
+  useEffect(() => {
+    saveToLocalStorage('sharia_students', shariaStudents);
+  }, [shariaStudents]);
+
+  useEffect(() => {
+    saveToLocalStorage('sharia_teachers', shariaTeachers);
+  }, [shariaTeachers]);
+
+  useEffect(() => {
+    saveToLocalStorage('sharia_live', shariaLiveLectures);
+  }, [shariaLiveLectures]);
+
+  useEffect(() => {
     setAdministrations(prev => {
       let changed = false;
       const next = prev.map(admin => {
