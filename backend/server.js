@@ -180,6 +180,25 @@ app.use('/api/shariastudents', shariaStudentRoutes);
 app.use('/api/shariateachers', shariaTeacherRoutes);
 app.use('/api/sharialives', shariaLiveRoutes);
 
+// Debug database endpoint
+app.get('/api/debug-db', async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+    const collections = await db.listCollections().toArray();
+    const result = [];
+    for (const coll of collections) {
+      const count = await db.collection(coll.name).countDocuments();
+      result.push({ name: coll.name, count });
+    }
+    res.json({
+      database: db.databaseName,
+      collections: result
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
