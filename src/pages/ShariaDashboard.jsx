@@ -68,7 +68,8 @@ function ShariaDashboard() {
     shariaBranches = [], addShariaBranch, updateShariaBranch, deleteShariaBranch,
     shariaStudents = [], addShariaStudent, updateShariaStudent, deleteShariaStudent,
     shariaTeachers = [], addShariaTeacher, updateShariaTeacher, deleteShariaTeacher,
-    shariaLiveLectures = [], addShariaLive, updateShariaLive, deleteShariaLive
+    shariaLiveLectures = [], addShariaLive, updateShariaLive, deleteShariaLive,
+    shariaSchedules = [], addShariaSchedule, updateShariaSchedule, deleteShariaSchedule
   } = useAppData();
 
   const courses = shariaCourses;
@@ -137,6 +138,7 @@ function ShariaDashboard() {
   const [editingCourse, setEditingCourse] = useState(null);
   const [editingShariaBranch, setEditingShariaBranch] = useState(null);
   const [editingLive, setEditingLive] = useState(null);
+  const [editingSchedule, setEditingSchedule] = useState(null);
 
   const [exams, setExams] = useState([]);
   const [results, setResults] = useState([]);
@@ -198,6 +200,19 @@ function ShariaDashboard() {
     branches: []
   });
   const [shariaBranchForm, setShariaBranchForm] = useState({ name: '', governorate: 'الجامع الأزهر', code: '', address: '' });
+  const [scheduleForm, setScheduleForm] = useState({
+    governorate: 'الجامع الأزهر',
+    branch: '',
+    stage: 'تمهيدية',
+    level: 'المستوى الأول',
+    discipline: '—',
+    day: 'السبت',
+    timeStart: '',
+    timeEnd: '',
+    teacher: '',
+    place: '',
+    isWeekly: true
+  });
 
   // --- HANDLERS FOR ADDING ITEMS ---
   const handleAddAdmin = (e) => {
@@ -482,11 +497,38 @@ function ShariaDashboard() {
     setEditingLive(null);
   };
 
+  const handleAddSchedule = (e) => {
+    e.preventDefault();
+    addShariaSchedule(scheduleForm);
+    setShowAddModal(null);
+    setScheduleForm({
+      governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov,
+      branch: '',
+      stage: 'تمهيدية',
+      level: 'المستوى الأول',
+      discipline: '—',
+      day: 'السبت',
+      timeStart: '',
+      timeEnd: '',
+      teacher: '',
+      place: '',
+      isWeekly: true
+    });
+  };
+
+  const handleEditSchedule = (e) => {
+    e.preventDefault();
+    if (!editingSchedule) return;
+    updateShariaSchedule(editingSchedule.id, editingSchedule);
+    setEditingSchedule(null);
+  };
+
   // --- ACTIONS ---
   const handleDelete = (id, listName) => {
     if (listName === 'admins') deleteManager(id);
     if (listName === 'externalAdmins') deleteManager(id);
     if (listName === 'shariaBranches') deleteShariaBranch(id);
+    if (listName === 'schedules') deleteShariaSchedule(id);
     if (listName === 'courses' || listName === 'preparatory' || listName === 'intermediate' || listName === 'advanced') deleteShariaCourse(id);
     if (listName === 'students') deleteShariaStudent(id);
     if (listName === 'exams') {
@@ -1159,6 +1201,7 @@ function ShariaDashboard() {
     { key: 'shariaBranches', name: 'فروع العلوم الشرعية', desc: 'عرض وإدارة فروع قطاع العلوم الشرعية والعربية بمختلف المحافظات.', icon: Layers, color: '#eab308' },
     { key: 'students', name: 'قسم الدارسين', desc: 'متابعة شؤون الطلاب المسجلين بالمحافظة ومستوياتهم ونسب حضورهم وجداولهم.', icon: Users, color: '#ec4899' },
     { key: 'live', name: 'قسم البث المباشر والمحاضرات', desc: 'جدولة البثوث التفاعلية ومواعيد المحاضرات الاونلاين الخاصة بطلاب المحافظة.', icon: Radio, color: '#ef4444' },
+    { key: 'schedules', name: 'جدول المحاضرات الحضورية', desc: 'جدولة وإدارة المحاضرات الأسبوعية الحضورية وتوزيعها بالفروع والمحافظات.', icon: Calendar, color: '#6366f1' },
     { key: 'exams', name: 'قسم الاختبارات والامتحانات', desc: 'تنظيم وجدولة الامتحانات، وتصميم أوراق الاختبارات الفترية والنهائية.', icon: FileText, color: '#14b8a6' },
     { key: 'results', name: 'قسم النتائج والتقديرات', desc: 'إصدار نتائج المحافظة وعرض درجات الدارسين ونسب النجاح والرسوب.', icon: Award, color: '#06b6d4' },
     { key: 'news', name: 'قسم الأخبار والإعلانات', desc: 'إضافة الإعلانات الهامة وتعميم المواعيد وجداول الفصول الدراسية العامة للرواق.', icon: Newspaper, color: '#84cc16' },
@@ -3119,6 +3162,166 @@ function ShariaDashboard() {
       )}
 
       {/* ========================================================================= */}
+      {/* 11. TAB: SCHEDULES (جدول المحاضرات الحضورية بالفروع) */}
+      {/* ========================================================================= */}
+      {activeTab === 'schedules' && (
+        <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
+            <div>
+              <h2 style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Calendar size={20} color="#6366f1" />
+                جدول المحاضرات الحضورية بالفروع لـ [ {selectedGov === 'الكل' ? 'جميع المحافظات' : selectedGov} ] {selectedBranch !== 'الكل' && ` - فرع [ ${selectedBranch} ]`}
+              </h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>عرض وتخطيط الجداول الدراسية الأسبوعية والمحاضرات الحضورية بالفروع المختلفة</p>
+            </div>
+            
+            {!isShariaStudent && (
+              <button 
+                onClick={() => {
+                  const firstBranch = shariaBranches.find(b => selectedGov === 'الكل' || b.governorate === selectedGov)?.name || '';
+                  setScheduleForm({
+                    ...scheduleForm,
+                    governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov,
+                    branch: firstBranch,
+                    stage: 'تمهيدية',
+                    level: 'المستوى الأول',
+                    discipline: '—',
+                    day: 'السبت',
+                    timeStart: '14:00',
+                    timeEnd: '16:00',
+                    teacher: '',
+                    place: '',
+                    isWeekly: true
+                  });
+                  setShowAddModal('schedule');
+                }}
+                style={{
+                  backgroundColor: '#6366f1',
+                  border: 'none',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '13px'
+                }}
+              >
+                <Plus size={16} />
+                إضافة جدول محاضرة
+              </button>
+            )}
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid var(--border-subtle)', color: 'var(--text-secondary)' }}>
+                  <th style={{ padding: '12px 10px', fontSize: '13px' }}>المحافظة / الفرع</th>
+                  <th style={{ padding: '12px 10px', fontSize: '13px' }}>المرحلة والمستوى</th>
+                  <th style={{ padding: '12px 10px', fontSize: '13px' }}>التخصص</th>
+                  <th style={{ padding: '12px 10px', fontSize: '13px' }}>المحاضر</th>
+                  <th style={{ padding: '12px 10px', fontSize: '13px' }}>الموعد والتوقيت</th>
+                  <th style={{ padding: '12px 10px', fontSize: '13px' }}>مكان المحاضرة</th>
+                  <th style={{ padding: '12px 10px', fontSize: '13px', textAlign: 'center' }}>التكرار</th>
+                  {!isShariaStudent && <th style={{ padding: '12px 10px', fontSize: '13px', textAlign: 'center' }}>الإجراءات</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {shariaSchedules.filter(s => 
+                  (selectedGov === 'الكل' || s.governorate === selectedGov) &&
+                  (selectedBranch === 'الكل' || s.branch === selectedBranch)
+                ).length === 0 ? (
+                  <tr>
+                    <td colSpan={isShariaStudent ? 7 : 8} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+                      لا توجد محاضرات حضورية مجدولة حالياً.
+                    </td>
+                  </tr>
+                ) : (
+                  shariaSchedules.filter(s => 
+                    (selectedGov === 'الكل' || s.governorate === selectedGov) &&
+                    (selectedBranch === 'الكل' || s.branch === selectedBranch)
+                  ).map(sched => (
+                    <tr key={sched.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                      <td style={{ padding: '14px 10px' }}>
+                        <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', fontSize: '14px' }}>{sched.branch}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--accent-gold)' }}>{sched.governorate}</div>
+                      </td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                        <div>{sched.stage}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{sched.level}</div>
+                      </td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-primary)' }}>
+                        <div>{sched.stage === 'متقدمة' && sched.discipline ? getDisciplineKey(sched.discipline) : 'عامة'}</div>
+                      </td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                        {sched.teacher}
+                      </td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                        <span style={{ color: 'var(--accent-gold)', fontWeight: 'bold' }}>{sched.day}</span>
+                        <div style={{ fontSize: '11px', direction: 'ltr', textAlign: 'right' }}>
+                          {sched.timeStart} - {sched.timeEnd}
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                        {sched.place || '—'}
+                      </td>
+                      <td style={{ padding: '14px 10px', textAlign: 'center' }}>
+                        {sched.isWeekly ? (
+                          <span style={{
+                            background: 'rgba(16, 185, 129, 0.15)',
+                            color: '#10b981',
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: 'bold'
+                          }}>
+                            يتجدد أسبوعياً
+                          </span>
+                        ) : (
+                          <span style={{
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            color: 'var(--text-muted)',
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            fontSize: '11px'
+                          }}>
+                            مرة واحدة
+                          </span>
+                        )}
+                      </td>
+                      {!isShariaStudent && (
+                        <td style={{ padding: '14px 10px', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                            <button 
+                              onClick={() => setEditingSchedule(sched)}
+                              style={{ background: 'transparent', border: 'none', color: 'var(--accent-gold)', cursor: 'pointer', padding: '4px' }}
+                              title="تعديل"
+                            >
+                              <Edit size={14} />
+                            </button>
+                            <button 
+                              onClick={() => handleDelete(sched.id, 'schedules')}
+                              style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
+                              title="حذف"
+                            >
+                              <Trash size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
       {/* --- ALL POPUP MODALS / FORM VIEWS --- */}
       {/* ========================================================================= */}
 
@@ -3941,6 +4144,436 @@ function ShariaDashboard() {
         </div>
       );
     })()}
+
+      {/* Modal: Add Schedule */}
+      {showAddModal === 'schedule' && (() => {
+        const availableTeachers = teachers.filter(t => {
+          const matchGov = t.governorate === scheduleForm.governorate;
+          const tBranches = String(t.branch || '').split(/,|،/).map(b => b.trim());
+          return matchGov && (scheduleForm.branch === '' || tBranches.includes(scheduleForm.branch.trim()));
+        });
+
+        return (
+          <div style={modalOverlayStyle}>
+            <div style={modalContentStyle}>
+              <div style={modalHeaderStyle}>
+                <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>إضافة جدول محاضرة جديدة بالفروع</h2>
+                <button onClick={() => setShowAddModal(null)} style={closeBtnStyle}><X size={18} /></button>
+              </div>
+              <form onSubmit={handleAddSchedule}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px', maxHeight: '60vh', overflowY: 'auto', paddingLeft: '8px' }}>
+                  
+                  {/* Governorate */}
+                  <div>
+                    <label style={labelStyle}>المحافظة / الإدارة</label>
+                    <select 
+                      value={scheduleForm.governorate} 
+                      onChange={(e) => {
+                        const newGov = e.target.value;
+                        const firstBranch = shariaBranches.find(b => b.governorate === newGov)?.name || '';
+                        setScheduleForm({ ...scheduleForm, governorate: newGov, branch: firstBranch, teacher: '' });
+                      }} 
+                      style={selectStyle}
+                    >
+                      {GOVERNORATES.map(gov => (
+                        <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Branch */}
+                  <div>
+                    <label style={labelStyle}>الفرع</label>
+                    <select 
+                      value={scheduleForm.branch} 
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, branch: e.target.value, teacher: '' })} 
+                      style={selectStyle}
+                      required
+                    >
+                      <option value="">اختر الفرع...</option>
+                      {shariaBranches.filter(b => b.governorate === scheduleForm.governorate).map(b => (
+                        <option key={b.id || b._id} value={b.name}>{b.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Stage */}
+                  <div>
+                    <label style={labelStyle}>المرحلة الدراسية</label>
+                    <select 
+                      value={scheduleForm.stage} 
+                      onChange={(e) => {
+                        const stageVal = e.target.value;
+                        setScheduleForm({ 
+                          ...scheduleForm, 
+                          stage: stageVal,
+                          level: (stageVal !== 'متقدمة' && (scheduleForm.level === 'المستوى الثالث' || scheduleForm.level === 'المستوى الرابع')) 
+                            ? 'المستوى الأول' 
+                            : scheduleForm.level,
+                          discipline: stageVal === 'متقدمة' ? 'fiqh' : '—'
+                        });
+                      }} 
+                      style={selectStyle}
+                    >
+                      <option value="تمهيدية">المرحلة التمهيدية</option>
+                      <option value="متوسطة">المرحلة المتوسطة</option>
+                      <option value="متقدمة">المرحلة المتقدمة</option>
+                    </select>
+                  </div>
+
+                  {/* Discipline (for Advanced Stage) */}
+                  {scheduleForm.stage === 'متقدمة' && (
+                    <div>
+                      <label style={labelStyle}>التخصص</label>
+                      <select 
+                        value={scheduleForm.discipline} 
+                        onChange={(e) => setScheduleForm({ ...scheduleForm, discipline: e.target.value })} 
+                        style={selectStyle}
+                      >
+                        <option value="fiqh">فقه وأصوله</option>
+                        <option value="tafsir">تفسير وحديث</option>
+                        <option value="aqeedah">عقيدة</option>
+                        <option value="arabic">لغة عربية</option>
+                        <option value="general">عامة</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Level */}
+                  <div>
+                    <label style={labelStyle}>المستوى الدراسي</label>
+                    <select 
+                      value={scheduleForm.level} 
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, level: e.target.value })} 
+                      style={selectStyle}
+                    >
+                      <option value="المستوى الأول">المستوى الأول</option>
+                      <option value="المستوى الثاني">المستوى الثاني</option>
+                      {scheduleForm.stage === 'متقدمة' && (
+                        <>
+                          <option value="المستوى الثالث">المستوى الثالث</option>
+                          <option value="المستوى الرابع">المستوى الرابع</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+
+                  {/* Lecturer / Teacher */}
+                  <div>
+                    <label style={labelStyle}>المحاضر (من المسجلين بالفرع)</label>
+                    <select 
+                      value={scheduleForm.teacher} 
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, teacher: e.target.value })} 
+                      style={selectStyle}
+                      required
+                    >
+                      <option value="">اختر محاضراً...</option>
+                      {availableTeachers.map(t => (
+                        <option key={t.id} value={t.name}>{t.name}</option>
+                      ))}
+                    </select>
+                    {availableTeachers.length === 0 && scheduleForm.branch && (
+                      <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px' }}>
+                        تنبيه: لا يوجد محاضرين مسجلين في هذا الفرع حالياً. يرجى إضافة محاضر في قسم هيئة التدريس وتعيين هذا الفرع له أولاً.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Day */}
+                  <div>
+                    <label style={labelStyle}>اليوم</label>
+                    <select 
+                      value={scheduleForm.day} 
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, day: e.target.value })} 
+                      style={selectStyle}
+                    >
+                      <option value="السبت">السبت</option>
+                      <option value="الأحد">الأحد</option>
+                      <option value="الاثنين">الاثنين</option>
+                      <option value="الثلاثاء">الثلاثاء</option>
+                      <option value="الأربعاء">الأربعاء</option>
+                      <option value="الخميس">الخميس</option>
+                      <option value="الجمعة">الجمعة</option>
+                    </select>
+                  </div>
+
+                  {/* Time */}
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>وقت البدء</label>
+                      <input 
+                        type="time" 
+                        required 
+                        value={scheduleForm.timeStart} 
+                        onChange={(e) => setScheduleForm({ ...scheduleForm, timeStart: e.target.value })} 
+                        style={inputStyle} 
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>وقت الانتهاء</label>
+                      <input 
+                        type="time" 
+                        required 
+                        value={scheduleForm.timeEnd} 
+                        onChange={(e) => setScheduleForm({ ...scheduleForm, timeEnd: e.target.value })} 
+                        style={inputStyle} 
+                      />
+                    </div>
+                  </div>
+
+                  {/* Place */}
+                  <div>
+                    <label style={labelStyle}>مكان المحاضرة بالفصل/الرواق</label>
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="مثال: القاعة الكبرى، رواق القرآن، فصل 3" 
+                      value={scheduleForm.place} 
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, place: e.target.value })} 
+                      style={inputStyle} 
+                    />
+                  </div>
+
+                  {/* Weekly Recurrence Note */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '5px' }}>
+                    <input 
+                      type="checkbox" 
+                      id="isWeeklySchedule"
+                      checked={scheduleForm.isWeekly} 
+                      onChange={(e) => setScheduleForm({ ...scheduleForm, isWeekly: e.target.checked })} 
+                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
+                    <label htmlFor="isWeeklySchedule" style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer', userSelect: 'none' }}>
+                      تتجدد المحاضرة في نفس التوقيت أسبوعياً تلقائياً
+                    </label>
+                  </div>
+
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                  <button type="button" onClick={() => setShowAddModal(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#6366f1', border: 'none', color: 'white' }}>حفظ الجدول</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Modal: Edit Schedule */}
+      {editingSchedule && (() => {
+        const availableTeachers = teachers.filter(t => {
+          const matchGov = t.governorate === editingSchedule.governorate;
+          const tBranches = String(t.branch || '').split(/,|،/).map(b => b.trim());
+          return matchGov && (editingSchedule.branch === '' || tBranches.includes(editingSchedule.branch.trim()));
+        });
+
+        return (
+          <div style={modalOverlayStyle}>
+            <div style={modalContentStyle}>
+              <div style={modalHeaderStyle}>
+                <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>تعديل جدول المحاضرة</h2>
+                <button onClick={() => setEditingSchedule(null)} style={closeBtnStyle}><X size={18} /></button>
+              </div>
+              <form onSubmit={handleEditSchedule}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px', maxHeight: '60vh', overflowY: 'auto', paddingLeft: '8px' }}>
+                  
+                  {/* Governorate */}
+                  <div>
+                    <label style={labelStyle}>المحافظة / الإدارة</label>
+                    <select 
+                      value={editingSchedule.governorate} 
+                      onChange={(e) => {
+                        const newGov = e.target.value;
+                        const firstBranch = shariaBranches.find(b => b.governorate === newGov)?.name || '';
+                        setEditingSchedule({ ...editingSchedule, governorate: newGov, branch: firstBranch, teacher: '' });
+                      }} 
+                      style={selectStyle}
+                    >
+                      {GOVERNORATES.map(gov => (
+                        <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Branch */}
+                  <div>
+                    <label style={labelStyle}>الفرع</label>
+                    <select 
+                      value={editingSchedule.branch} 
+                      onChange={(e) => setEditingSchedule({ ...editingSchedule, branch: e.target.value, teacher: '' })} 
+                      style={selectStyle}
+                      required
+                    >
+                      <option value="">اختر الفرع...</option>
+                      {shariaBranches.filter(b => b.governorate === editingSchedule.governorate).map(b => (
+                        <option key={b.id || b._id} value={b.name}>{b.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Stage */}
+                  <div>
+                    <label style={labelStyle}>المرحلة الدراسية</label>
+                    <select 
+                      value={editingSchedule.stage} 
+                      onChange={(e) => {
+                        const stageVal = e.target.value;
+                        setEditingSchedule({ 
+                          ...editingSchedule, 
+                          stage: stageVal,
+                          level: (stageVal !== 'متقدمة' && (editingSchedule.level === 'المستوى الثالث' || editingSchedule.level === 'المستوى الرابع')) 
+                            ? 'المستوى الأول' 
+                            : editingSchedule.level,
+                          discipline: stageVal === 'متقدمة' ? 'fiqh' : '—'
+                        });
+                      }} 
+                      style={selectStyle}
+                    >
+                      <option value="تمهيدية">المرحلة التمهيدية</option>
+                      <option value="متوسطة">المرحلة المتوسطة</option>
+                      <option value="متقدمة">المرحلة المتقدمة</option>
+                    </select>
+                  </div>
+
+                  {/* Discipline (for Advanced Stage) */}
+                  {editingSchedule.stage === 'متقدمة' && (
+                    <div>
+                      <label style={labelStyle}>التخصص</label>
+                      <select 
+                        value={editingSchedule.discipline} 
+                        onChange={(e) => setEditingSchedule({ ...editingSchedule, discipline: e.target.value })} 
+                        style={selectStyle}
+                      >
+                        <option value="fiqh">فقه وأصوله</option>
+                        <option value="tafsir">تفسير وحديث</option>
+                        <option value="aqeedah">عقيدة</option>
+                        <option value="arabic">لغة عربية</option>
+                        <option value="general">عامة</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Level */}
+                  <div>
+                    <label style={labelStyle}>المستوى الدراسي</label>
+                    <select 
+                      value={editingSchedule.level} 
+                      onChange={(e) => setEditingSchedule({ ...editingSchedule, level: e.target.value })} 
+                      style={selectStyle}
+                    >
+                      <option value="المستوى الأول">المستوى الأول</option>
+                      <option value="المستوى الثاني">المستوى الثاني</option>
+                      {editingSchedule.stage === 'متقدمة' && (
+                        <>
+                          <option value="المستوى الثالث">المستوى الثالث</option>
+                          <option value="المستوى الرابع">المستوى الرابع</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+
+                  {/* Lecturer / Teacher */}
+                  <div>
+                    <label style={labelStyle}>المحاضر (من المسجلين بالفرع)</label>
+                    <select 
+                      value={editingSchedule.teacher} 
+                      onChange={(e) => setEditingSchedule({ ...editingSchedule, teacher: e.target.value })} 
+                      style={selectStyle}
+                      required
+                    >
+                      <option value="">اختر محاضراً...</option>
+                      {availableTeachers.map(t => (
+                        <option key={t.id} value={t.name}>{t.name}</option>
+                      ))}
+                    </select>
+                    {availableTeachers.length === 0 && editingSchedule.branch && (
+                      <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px' }}>
+                        تنبيه: لا يوجد محاضرين مسجلين في هذا الفرع حالياً. يرجى إضافة محاضر في قسم هيئة التدريس وتعيين هذا الفرع له أولاً.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Day */}
+                  <div>
+                    <label style={labelStyle}>اليوم</label>
+                    <select 
+                      value={editingSchedule.day} 
+                      onChange={(e) => setEditingSchedule({ ...editingSchedule, day: e.target.value })} 
+                      style={selectStyle}
+                    >
+                      <option value="السبت">السبت</option>
+                      <option value="الأحد">الأحد</option>
+                      <option value="الاثنين">الاثنين</option>
+                      <option value="الثلاثاء">الثلاثاء</option>
+                      <option value="الأربعاء">الأربعاء</option>
+                      <option value="الخميس">الخميس</option>
+                      <option value="الجمعة">الجمعة</option>
+                    </select>
+                  </div>
+
+                  {/* Time */}
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>وقت البدء</label>
+                      <input 
+                        type="time" 
+                        required 
+                        value={editingSchedule.timeStart} 
+                        onChange={(e) => setEditingSchedule({ ...editingSchedule, timeStart: e.target.value })} 
+                        style={inputStyle} 
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={labelStyle}>وقت الانتهاء</label>
+                      <input 
+                        type="time" 
+                        required 
+                        value={editingSchedule.timeEnd} 
+                        onChange={(e) => setEditingSchedule({ ...editingSchedule, timeEnd: e.target.value })} 
+                        style={inputStyle} 
+                      />
+                    </div>
+                  </div>
+
+                  {/* Place */}
+                  <div>
+                    <label style={labelStyle}>مكان المحاضرة بالفصل/الرواق</label>
+                    <input 
+                      type="text" 
+                      required 
+                      placeholder="مثال: القاعة الكبرى، رواق القرآن، فصل 3" 
+                      value={editingSchedule.place} 
+                      onChange={(e) => setEditingSchedule({ ...editingSchedule, place: e.target.value })} 
+                      style={inputStyle} 
+                    />
+                  </div>
+
+                  {/* Weekly Recurrence Note */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '5px' }}>
+                    <input 
+                      type="checkbox" 
+                      id="editIsWeeklySchedule"
+                      checked={editingSchedule.isWeekly} 
+                      onChange={(e) => setEditingSchedule({ ...editingSchedule, isWeekly: e.target.checked })} 
+                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
+                    <label htmlFor="editIsWeeklySchedule" style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer', userSelect: 'none' }}>
+                      تتجدد المحاضرة في نفس التوقيت أسبوعياً تلقائياً
+                    </label>
+                  </div>
+
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
+                  <button type="button" onClick={() => setEditingSchedule(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#6366f1', border: 'none', color: 'white' }}>حفظ التعديلات</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Modal 8-Edit: Edit Live */}
       {editingLive && (() => {

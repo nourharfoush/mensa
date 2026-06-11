@@ -290,6 +290,23 @@ export function AppDataProvider({ children }) {
     }
   ]));
 
+  const [shariaSchedules, setShariaSchedules] = useState(() => getFromLocalStorage('sharia_schedules', [
+    {
+      id: 'sched-1',
+      governorate: 'الجامع الأزهر',
+      branch: 'فرع الجامع الأزهر الرئيسي',
+      stage: 'تمهيدية',
+      level: 'المستوى الأول',
+      discipline: '—',
+      day: 'الأحد',
+      timeStart: '10:00',
+      timeEnd: '12:00',
+      teacher: 'أ.د. أحمد المعتز بالله',
+      place: 'الرواق العباسي',
+      isWeekly: true
+    }
+  ]));
+
   // Save permissions to localStorage
   useEffect(() => {
     saveToLocalStorage('rolePermissions', rolePermissions);
@@ -716,6 +733,10 @@ export function AppDataProvider({ children }) {
   useEffect(() => {
     saveToLocalStorage('sharia_live', shariaLiveLectures);
   }, [shariaLiveLectures]);
+
+  useEffect(() => {
+    saveToLocalStorage('sharia_schedules', shariaSchedules);
+  }, [shariaSchedules]);
 
   useEffect(() => {
     setAdministrations(prev => {
@@ -1437,6 +1458,19 @@ export function AppDataProvider({ children }) {
     }
   };
 
+  const addShariaSchedule = (schedule) => {
+    const newSchedule = { ...schedule, id: String(Date.now() + Math.random()) };
+    setShariaSchedules(prev => [...prev, newSchedule]);
+  };
+  const updateShariaSchedule = (id, updatedSchedule) => {
+    setShariaSchedules(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...updatedSchedule } : s));
+  };
+  const deleteShariaSchedule = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setShariaSchedules(prev => prev.filter(s => String(s.id) !== String(id)));
+    }
+  };
+
   const updateRolePermissions = (newPermissions) => {
     setRolePermissions(newPermissions);
   };
@@ -1488,6 +1522,7 @@ export function AppDataProvider({ children }) {
       shariaStudents, addShariaStudent, updateShariaStudent, deleteShariaStudent,
       shariaTeachers, addShariaTeacher, updateShariaTeacher, deleteShariaTeacher,
       shariaLiveLectures, addShariaLive, updateShariaLive, deleteShariaLive,
+      shariaSchedules, addShariaSchedule, updateShariaSchedule, deleteShariaSchedule,
 
       theme, toggleTheme,
       rolePermissions, updateRolePermissions, hasPermission,
