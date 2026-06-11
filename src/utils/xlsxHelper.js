@@ -26,6 +26,30 @@ export function exportToXLSX(data, fileName = 'export', sheetName = 'Sheet1') {
 }
 
 /**
+ * Export multiple sheets to a single .xlsx file
+ * @param {Array} sheets - Array of { data: Array, sheetName: string }
+ * @param {string} fileName - Output file name (without extension)
+ */
+export function exportMultiSheetToXLSX(sheets, fileName = 'export') {
+  if (!sheets || sheets.length === 0) {
+    alert('لا توجد بيانات للتصدير');
+    return;
+  }
+  try {
+    const workbook = xlsxLib.utils.book_new();
+    sheets.forEach(sheet => {
+      const worksheet = xlsxLib.utils.json_to_sheet(sheet.data);
+      xlsxLib.utils.book_append_sheet(workbook, worksheet, sheet.sheetName);
+    });
+    xlsxLib.writeFile(workbook, `${fileName}.xlsx`);
+  } catch (error) {
+    console.error('XLSX Export Error:', error);
+    alert('حدث خطأ أثناء تصدير الملف. يرجى المحاولة مرة أخرى.');
+  }
+}
+
+
+/**
  * Import data from an xlsx file, returns a Promise resolving to array of objects
  * @param {File} file - File object from input[type="file"]
  */

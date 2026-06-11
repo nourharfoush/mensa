@@ -6,7 +6,7 @@ import {
   Trash, Edit, Check, X, ChevronLeft, ChevronRight, Play, ExternalLink,
   Download, Upload
 } from 'lucide-react';
-import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
+import { exportToXLSX, importFromXLSX, exportMultiSheetToXLSX } from '../utils/xlsxHelper';
 import Footer from '../components/Footer';
 import { useAppData } from '../context/AppDataContext';
 
@@ -739,7 +739,15 @@ function ShariaDashboard() {
       }];
     }
 
-    exportToXLSX(exportData, 'الإدارة_العليا_العلوم_الشرعية', 'الإدارة العليا');
+    const helperData = [
+      ...targetSpecialties.map(spec => ({ 'التخصص المعتمد': spec, 'حالة الحساب المعتمدة': 'نشط' })),
+      { 'التخصص المعتمد': '', 'حالة الحساب المعتمدة': 'غير نشط' }
+    ];
+
+    exportMultiSheetToXLSX([
+      { data: exportData, sheetName: 'الإدارة العليا' },
+      { data: helperData, sheetName: 'المصطلحات المعتمدة' }
+    ], 'الإدارة_العليا_العلوم_الشرعية');
   };
 
   const handleExportTeachers = () => {
@@ -769,7 +777,14 @@ function ShariaDashboard() {
       }];
     }
 
-    exportToXLSX(exportData, 'أعضاء_هيئة_التدريس_العلوم_الشرعية', 'أعضاء هيئة التدريس');
+    const helperData = GOVERNORATES.map(gov => ({
+      'المحافظة المعتمدة': gov
+    }));
+
+    exportMultiSheetToXLSX([
+      { data: exportData, sheetName: 'أعضاء هيئة التدريس' },
+      { data: helperData, sheetName: 'المحافظات المعتمدة' }
+    ], 'أعضاء_هيئة_التدريس_العلوم_الشرعية');
   };
 
   const handleExportStudents = () => {
@@ -807,7 +822,24 @@ function ShariaDashboard() {
       }];
     }
 
-    exportToXLSX(exportData, 'الدارسين_العلوم_الشرعية', 'الدارسين');
+    const maxLen = Math.max(GOVERNORATES.length, 6);
+    const helperData = [];
+    for (let i = 0; i < maxLen; i++) {
+      helperData.push({
+        'المحافظة المعتمدة': GOVERNORATES[i] || '',
+        'المرحلة المعتمدة': ['تمهيدية', 'متوسطة', 'متقدمة'][i] || '',
+        'المستوى المعتمد': ['المستوى الأول', 'المستوى الثاني', 'المستوى الثالث', 'المستوى الرابع'][i] || '',
+        'التخصص المعتمد': ['فقه وأصوله', 'تفسير وحديث', 'عقيدة', 'لغة عربية', 'عامة', '—'][i] || '',
+        'المذهب المعتمد': ['شافعي', 'حنفي', 'مالكي', 'حنبلي'][i] || '',
+        'الجنس المعتمد': ['ذكر', 'أنثى'][i] || '',
+        'نوع الدراسة المعتمد': ['مباشر', 'عن بعد'][i] || ''
+      });
+    }
+
+    exportMultiSheetToXLSX([
+      { data: exportData, sheetName: 'الدارسين' },
+      { data: helperData, sheetName: 'المصطلحات المعتمدة' }
+    ], 'الدارسين_العلوم_الشرعية');
   };
 
   // --- FILTERED DATA FOR ACTIVE GOVERNORATE ---
