@@ -16,6 +16,9 @@ function Header({ toggleSidebar }) {
     { id: 4, text: "تحديث جديد في صلاحيات مدراء الأروقة", time: "منذ يوم", unread: false },
   ]);
 
+  const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+  const userName = currentUser ? (currentUser.name || currentUser.username) : '';
+
   const notifRef = useRef(null);
   const langRef = useRef(null);
 
@@ -86,6 +89,21 @@ function Header({ toggleSidebar }) {
       </div>
       
       <div className="header-right">
+        {userName && (
+          <span className="user-name-display" style={{
+            fontSize: '14px',
+            fontWeight: '600',
+            color: 'var(--text-primary)',
+            marginLeft: '15px',
+            marginRight: '5px',
+            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            padding: '4px 10px',
+            borderRadius: '4px',
+            border: '1px solid var(--border-subtle)'
+          }}>
+            {userName}
+          </span>
+        )}
         {/* Theme Toggle */}
         <button className="icon-btn theme-toggle" onClick={toggleTheme} title="تغيير المظهر">
           {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
