@@ -14,6 +14,7 @@ const shariaStudentSchema = new mongoose.Schema(
     studyType: String,
     code: String,
     seatNumber: String,
+    phone: String,
   },
   { strict: false, timestamps: true }
 );

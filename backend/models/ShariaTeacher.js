@@ -10,6 +10,13 @@ const shariaTeacherSchema = new mongoose.Schema(
     specialization: String,
     administration: String,
     status: String,
+    jobGrade: String,
+    university: String,
+    college: String,
+    department: String,
+    governorate: String,
+    branches: [String],
+    branch: String,
   },
   { strict: false, timestamps: true }
 );
