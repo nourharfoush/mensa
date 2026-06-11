@@ -41,6 +41,8 @@ function ShariaDashboard() {
   const importAdminsRef = useRef(null);
   const importTeachersRef = useRef(null);
   const importStudentsRef = useRef(null);
+  const importCoursesRef = useRef(null);
+  const importLiveRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
@@ -840,6 +842,191 @@ function ShariaDashboard() {
       { data: exportData, sheetName: 'الدارسين' },
       { data: helperData, sheetName: 'المصطلحات المعتمدة' }
     ], 'الدارسين_العلوم_الشرعية');
+  };
+
+  const handleImportCourses = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const rows = await importFromXLSX(file);
+      const validRows = rows.filter(row => row['اسم المقرر'] || row['اسم المادة']);
+
+      if (validRows.length === 0) {
+        alert('الملف فارغ أو يحتوي على صفوف فارغة فقط');
+        e.target.value = '';
+        return;
+      }
+
+      validRows.forEach(row => {
+        const stageVal = row['المرحلة'] || 'تمهيدية';
+        const disciplineVal = stageVal === 'متقدمة' ? getDisciplineKey(row['التخصص'] || 'fiqh') : '—';
+        
+        const formattedCourse = {
+          stage: stageVal,
+          level: row['المستوى'] || 'المستوى الأول',
+          discipline: disciplineVal,
+          name: row['اسم المقرر'] || row['اسم المادة'] || '',
+          teacher: row['المحاضر'] || row['المعلم'] || '',
+          studentsCount: Number(row['عدد الطلاب']) || 0,
+          hours: Number(row['الساعات المعبرة']) || Number(row['الساعات']) || 20
+        };
+        addShariaCourse(formattedCourse);
+      });
+      alert('تم استيراد المقررات الدراسية بنجاح');
+    } catch (err) {
+      console.error(err);
+      alert('حدث خطأ في استيراد الملف');
+    }
+    e.target.value = '';
+  };
+
+  const handleExportCourses = () => {
+    let exportData = courses.map(c => ({
+      'المرحلة': c.stage || '',
+      'المستوى': c.level || '',
+      'التخصص': c.discipline || '',
+      'اسم المقرر': c.name || '',
+      'المحاضر': c.teacher || '',
+      'عدد الطلاب': c.studentsCount || 0,
+      'الساعات': c.hours || 20
+    }));
+
+    if (exportData.length === 0) {
+      exportData = [{
+        'المرحلة': '',
+        'المستوى': '',
+        'التخصص': '',
+        'اسم المقرر': '',
+        'المحاضر': '',
+        'عدد الطلاب': 0,
+        'الساعات': 20
+      }];
+    }
+
+    const maxLen = Math.max(GOVERNORATES.length, 6);
+    const helperData = [];
+    for (let i = 0; i < maxLen; i++) {
+      helperData.push({
+        'المرحلة المعتمدة': ['تمهيدية', 'متوسطة', 'متقدمة'][i] || '',
+        'المستوى المعتمد': ['المستوى الأول', 'المستوى الثاني', 'المستوى الثالث', 'المستوى الرابع'][i] || '',
+        'التخصص المعتمد': ['فقه وأصوله', 'تفسير وحديث', 'عقيدة', 'لغة عربية', 'عامة', '—'][i] || ''
+      });
+    }
+
+    exportMultiSheetToXLSX([
+      { data: exportData, sheetName: 'المقررات والمواد' },
+      { data: helperData, sheetName: 'المصطلحات المعتمدة' }
+    ], 'المقررات_الدراسية_العلوم_الشرعية');
+  };
+
+  const handleImportLive = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const rows = await importFromXLSX(file);
+      const validRows = rows.filter(row => row['عنوان البث'] || row['اسم المادة']);
+
+      if (validRows.length === 0) {
+        alert('الملف فارغ أو يحتوي على صفوف فارغة فقط');
+        e.target.value = '';
+        return;
+      }
+
+      let importedCount = 0;
+      let conflictCount = 0;
+
+      validRows.forEach(row => {
+        const stageVal = row['المرحلة'] || 'تمهيدية';
+        const disciplineVal = stageVal === 'متقدمة' ? getDisciplineKey(row['التخصص'] || 'fiqh') : '—';
+        
+        const liveItem = {
+          title: row['عنوان البث'] || row['اسم المادة'] || '',
+          governorate: row['المحافظة'] || 'الجامع الأزهر',
+          stage: stageVal,
+          level: row['المستوى'] || 'المستوى الأول',
+          discipline: disciplineVal,
+          teacher: row['المحاضر'] || '',
+          day: row['اليوم'] || 'الأحد',
+          timeStart: row['وقت البدء'] || '',
+          timeEnd: row['وقت الانتهاء'] || '',
+          link: row['رابط البث'] || row['رابط Zoom'] || '',
+          isWeekly: row['يتجدد أسبوعياً'] === 'نعم' || row['يتجدد اسبوعيا'] === 'نعم' || true,
+          status: row['حالة البث'] || 'مجدول'
+        };
+
+        const conflict = checkLiveConflict(liveItem);
+        if (conflict) {
+          conflictCount++;
+        } else {
+          addShariaLive(liveItem);
+          importedCount++;
+        }
+      });
+
+      if (conflictCount > 0) {
+        alert(`تم استيراد ${importedCount} محاضرة بنجاح. وتم تخطي ${conflictCount} محاضرة لوجود تعارض في مواعيد المحاضر أو الصف الدراسي.`);
+      } else {
+        alert('تم استيراد محاضرات البث المباشر بنجاح');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('حدث خطأ في استيراد الملف');
+    }
+    e.target.value = '';
+  };
+
+  const handleExportLive = () => {
+    const filteredLive = getFilteredLiveLectures();
+    let exportData = filteredLive.map(l => ({
+      'عنوان البث': l.title || '',
+      'المحافظة': l.governorate || '',
+      'المرحلة': l.stage || '',
+      'المستوى': l.level || '',
+      'التخصص': l.discipline || '',
+      'المحاضر': l.teacher || '',
+      'اليوم': l.day || '',
+      'وقت البدء': l.timeStart || '',
+      'وقت الانتهاء': l.timeEnd || '',
+      'رابط البث': l.link || '',
+      'يتجدد أسبوعياً': l.isWeekly ? 'نعم' : 'لا',
+      'حالة البث': l.status || 'مجدول'
+    }));
+
+    if (exportData.length === 0) {
+      exportData = [{
+        'عنوان البث': '',
+        'المحافظة': '',
+        'المرحلة': '',
+        'المستوى': '',
+        'التخصص': '',
+        'المحاضر': '',
+        'اليوم': '',
+        'وقت البدء': '',
+        'وقت الانتهاء': '',
+        'رابط البث': '',
+        'يتجدد أسبوعياً': '',
+        'حالة البث': ''
+      }];
+    }
+
+    const maxLen = Math.max(GOVERNORATES.length, 7);
+    const helperData = [];
+    for (let i = 0; i < maxLen; i++) {
+      helperData.push({
+        'المحافظة المعتمدة': GOVERNORATES[i] || '',
+        'المرحلة المعتمدة': ['تمهيدية', 'متوسطة', 'متقدمة'][i] || '',
+        'المستوى المعتمد': ['المستوى الأول', 'المستوى الثاني', 'المستوى الثالث', 'المستوى الرابع'][i] || '',
+        'التخصص المعتمد': ['فقه وأصوله', 'تفسير وحديث', 'عقيدة', 'لغة عربية', 'عامة', '—'][i] || '',
+        'اليوم المعتمد': ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'][i] || '',
+        'يتجدد أسبوعياً المعتمد': ['نعم', 'لا'][i] || '',
+        'حالة البث المعتمدة': ['بث مباشر الآن', 'مجدول', 'منتهي'][i] || ''
+      });
+    }
+
+    exportMultiSheetToXLSX([
+      { data: exportData, sheetName: 'البث المباشر والمحاضرات' },
+      { data: helperData, sheetName: 'المصطلحات المعتمدة' }
+    ], 'البث_المباشر_العلوم_الشرعية');
   };
 
   // --- FILTERED DATA FOR ACTIVE GOVERNORATE ---
@@ -1723,6 +1910,51 @@ function ShariaDashboard() {
               </h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '4px' }}>قم باختيار المستوى الدراسي لتصفية المواد الدراسية أو إضافة مادة جديدة له</p>
             </div>
+            
+            {!isShariaStudent && (
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button 
+                  onClick={() => importCoursesRef.current.click()}
+                  style={{
+                    backgroundColor: 'rgba(214, 175, 55, 0.1)',
+                    border: '1px solid rgba(214, 175, 55, 0.3)',
+                    color: 'var(--accent-gold)',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13px'
+                  }}
+                >
+                  <Upload size={16} />
+                  استيراد
+                </button>
+                <input ref={importCoursesRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImportCourses} />
+                
+                <button 
+                  onClick={handleExportCourses}
+                  style={{
+                    backgroundColor: 'transparent',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-secondary)',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13px'
+                  }}
+                >
+                  <Download size={16} />
+                  تصدير
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Level Selector Widget */}
@@ -2661,6 +2893,51 @@ function ShariaDashboard() {
                   display: 'inline-block'
                 }}></span>
                 {showOnlyActiveLives ? 'عرض جميع المحاضرات' : 'المحاضرات الجارية الآن فقط'}
+              </button>
+
+              {!isShariaStudent && (
+                <>
+                  <button 
+                    onClick={() => importLiveRef.current.click()}
+                    style={{
+                      backgroundColor: 'rgba(214, 175, 55, 0.1)',
+                      border: '1px solid rgba(214, 175, 55, 0.3)',
+                      color: 'var(--accent-gold)',
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '13px'
+                    }}
+                  >
+                    <Upload size={16} />
+                    استيراد
+                  </button>
+                  <input ref={importLiveRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImportLive} />
+                </>
+              )}
+
+              <button 
+                onClick={handleExportLive}
+                style={{
+                  backgroundColor: 'transparent',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-secondary)',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '13px'
+                }}
+              >
+                <Download size={16} />
+                تصدير
               </button>
 
               {!isShariaStudent && (
