@@ -1456,6 +1456,23 @@ export function AppDataProvider({ children }) {
     }
   };
 
+  const bulkImportShariaStudents = async (studentList) => {
+    const newStudents = studentList.map(s => ({
+      ...s,
+      id: s.id || String(Date.now() + Math.random())
+    }));
+    try {
+      await shariaStudentsAPI.bulkImport(newStudents);
+    } catch (err) {
+      console.error('Failed to bulk import sharia students to DB:', err);
+      alert('فشل حفظ الطلاب في قاعدة البيانات: ' + err.message);
+      throw err;
+    }
+    setShariaStudents(prev => [...prev, ...newStudents]);
+    const saved = getFromLocalStorage('sharia_students', []);
+    saveToLocalStorage('sharia_students', [...saved, ...newStudents]);
+  };
+
   const addShariaTeacher = (teacher) => {
     const newTeacher = { ...teacher, id: String(Date.now() + Math.random()) };
     setShariaTeachers(prev => [...prev, newTeacher]);
@@ -1477,6 +1494,22 @@ export function AppDataProvider({ children }) {
       setShariaTeachers(prev => prev.filter(t => String(t.id) !== String(id)));
       shariaTeachersAPI.delete(id).catch(err => console.error(err));
     }
+  };
+  const bulkImportShariaTeachers = async (teacherList) => {
+    const newTeachers = teacherList.map(t => ({
+      ...t,
+      id: t.id || String(Date.now() + Math.random())
+    }));
+    try {
+      await shariaTeachersAPI.bulkImport(newTeachers);
+    } catch (err) {
+      console.error('Failed to bulk import sharia teachers to DB:', err);
+      alert('فشل حفظ المحاضرين في قاعدة البيانات: ' + err.message);
+      throw err;
+    }
+    setShariaTeachers(prev => [...prev, ...newTeachers]);
+    const saved = getFromLocalStorage('sharia_teachers', []);
+    saveToLocalStorage('sharia_teachers', [...saved, ...newTeachers]);
   };
 
   const addShariaLive = (live) => {
@@ -1556,8 +1589,8 @@ export function AppDataProvider({ children }) {
 
       shariaCourses, addShariaCourse, updateShariaCourse, deleteShariaCourse,
       shariaBranches, addShariaBranch, updateShariaBranch, deleteShariaBranch,
-      shariaStudents, addShariaStudent, updateShariaStudent, deleteShariaStudent,
-      shariaTeachers, addShariaTeacher, updateShariaTeacher, deleteShariaTeacher,
+      shariaStudents, addShariaStudent, updateShariaStudent, deleteShariaStudent, bulkImportShariaStudents,
+      shariaTeachers, addShariaTeacher, updateShariaTeacher, deleteShariaTeacher, bulkImportShariaTeachers,
       shariaLiveLectures, addShariaLive, updateShariaLive, deleteShariaLive,
       shariaSchedules, addShariaSchedule, updateShariaSchedule, deleteShariaSchedule,
 

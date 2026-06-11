@@ -45,8 +45,8 @@ function ShariaDashboard() {
     managers = [], addManager, deleteManager, addUser, updateUser, users = [], branches = [],
     shariaCourses = [], addShariaCourse, updateShariaCourse, deleteShariaCourse,
     shariaBranches = [], addShariaBranch, updateShariaBranch, deleteShariaBranch,
-    shariaStudents = [], addShariaStudent, updateShariaStudent, deleteShariaStudent,
-    shariaTeachers = [], addShariaTeacher, updateShariaTeacher, deleteShariaTeacher,
+    shariaStudents = [], addShariaStudent, updateShariaStudent, deleteShariaStudent, bulkImportShariaStudents,
+    shariaTeachers = [], addShariaTeacher, updateShariaTeacher, deleteShariaTeacher, bulkImportShariaTeachers,
     shariaLiveLectures = [], addShariaLive, updateShariaLive, deleteShariaLive,
     shariaSchedules = [], addShariaSchedule, updateShariaSchedule, deleteShariaSchedule
   } = useAppData();
@@ -702,6 +702,7 @@ function ShariaDashboard() {
         return;
       }
 
+      const newTeachers = [];
       validRows.forEach(row => {
         const natId = (row['الرقم القومي'] || row['الرقم القومى'] || '').toString().trim();
         
@@ -716,8 +717,9 @@ function ShariaDashboard() {
           governorate: row['المحافظة'] || (selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov),
           branch: row['الفروع'] || row['الفرع'] || ''
         };
-        addShariaTeacher(finalForm);
+        newTeachers.push(finalForm);
       });
+      await bulkImportShariaTeachers(newTeachers);
       alert('تم استيراد المحاضرين بنجاح');
     } catch (err) {
       console.error(err);
@@ -756,6 +758,7 @@ function ShariaDashboard() {
         return;
       }
 
+      const newStudents = [];
       validRows.forEach(row => {
         const natId = (row['الرقم القومي'] || row['الرقم القومى'] || '').toString().trim();
         const govVal = row['المحافظة'] || (selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov);
@@ -775,22 +778,9 @@ function ShariaDashboard() {
           seatNumber: row['رقم الجلوس'] || '',
           phone: row['الهاتف'] || row['رقم الهاتف'] || ''
         };
-        addShariaStudent(finalForm);
-
-        // Auto-create user account
-        const studentUser = {
-          name: finalForm.name,
-          national_id: finalForm.nationalId,
-          username: finalForm.nationalId,
-          password: finalForm.nationalId,
-          email: finalForm.nationalId,
-          role: 'sharia_student',
-          phone: finalForm.phone || '',
-          governorate: finalForm.governorate || '',
-          created_at: new Date().toLocaleDateString('ar-EG')
-        };
-        addUser(studentUser);
+        newStudents.push(finalForm);
       });
+      await bulkImportShariaStudents(newStudents);
       alert('تم استيراد الدارسين بنجاح وتوليد حساباتهم');
     } catch (err) {
       console.error(err);
