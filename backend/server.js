@@ -68,16 +68,39 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-  .then(() => console.log('✓ MongoDB connected successfully'))
-  .catch(err => {
-    console.error('✗ MongoDB connection error:', err.message);
-    console.log('⚠ Server running without active MongoDB connection. Please check your DB connection.');
-  });
+// MongoDB Connection configuration
+let cachedConnection = null;
+
+async function connectDB() {
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
+  }
+  
+  if (!cachedConnection) {
+    cachedConnection = mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    }).then((conn) => {
+      console.log('✓ MongoDB connected successfully');
+      return conn;
+    }).catch(err => {
+      cachedConnection = null;
+      console.error('✗ MongoDB connection error:', err.message);
+      throw err;
+    });
+  }
+  return cachedConnection;
+}
+
+// Middleware to ensure database connection is ready for all API requests
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    res.status(500).json({ message: 'Database connection failed', error: error.message });
+  }
+});
 
 // Generic Delete All endpoint
 app.delete('/api/:collection/all', async (req, res) => {
