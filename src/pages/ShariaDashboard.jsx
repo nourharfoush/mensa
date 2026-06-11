@@ -121,7 +121,29 @@ function ShariaDashboard() {
                m.specialty,
     status: m.status || 'نشط'
   }));
+  const adminMember = managers.find(m => {
+    const gov = m.admin || m.governorate;
+    const spec = m.specialty || m.specialization || '';
+    return gov === selectedGov && (
+      spec.includes('العضو الإداري') || 
+      spec.includes('العضو الاداري') || 
+      spec === 'العضو الإداري للعلوم الشرعية والعربية' ||
+      spec === 'العضو الإداري، علوم شرعية وعربية' ||
+      spec === 'العضو الإداري علوم شرعية وعربية'
+    );
+  });
 
+  const scientificMember = managers.find(m => {
+    const gov = m.admin || m.governorate;
+    const spec = m.specialty || m.specialization || '';
+    return gov === selectedGov && (
+      spec.includes('العضو العلمي') || 
+      spec.includes('العضو العلمى') || 
+      spec === 'العضو العلمي للعلوم الشرعية والعربية' ||
+      spec === 'العضو العلمي، علوم شرعية وعربية' ||
+      spec === 'العضو العلمي علوم شرعية وعربية'
+    );
+  });
   const [selectedCourseStage, setSelectedCourseStage] = useState('تمهيدية');
   const [selectedCourseLevel, setSelectedCourseLevel] = useState('المستوى الأول');
   const [selectedCourseDiscipline, setSelectedCourseDiscipline] = useState('fiqh');
@@ -1445,6 +1467,97 @@ function ShariaDashboard() {
       {/* ========================================================================= */}
       {activeTab === 'overview' && (
         <div>
+          {isShariaStudent && (
+            <div style={{
+              background: 'linear-gradient(135deg, var(--bg-sidebar) 0%, rgba(99, 102, 241, 0.1) 100%)',
+              border: '1px solid rgba(99, 102, 241, 0.25)',
+              borderRadius: '16px',
+              padding: '24px',
+              marginBottom: '25px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)'
+            }}>
+              <h3 style={{ fontSize: '16px', color: '#818cf8', fontWeight: 'bold', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Users size={18} />
+                مسؤولو الدعم والتواصل بمحافظة ({selectedGov}) للعلوم الشرعية والعربية
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '15px' }}>
+                في حال مواجهة أي مشكلة في الدراسة أو التسجيل أو الحلقات، يرجى التواصل مع مسؤولي المحافظة المعتمدين:
+              </p>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
+                {/* Administrative Member */}
+                <div style={{
+                  background: 'var(--bg-main)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '12px',
+                  padding: '16px 20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '15px'
+                }}>
+                  <div style={{
+                    background: 'rgba(16, 185, 129, 0.1)',
+                    color: '#10b981',
+                    padding: '10px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Shield size={20} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>العضو الإداري للعلوم الشرعية والعربية</div>
+                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', marginTop: '2px' }}>
+                      {adminMember ? adminMember.name : 'جاري التعيين...'}
+                    </div>
+                    {adminMember?.phone && (
+                      <div style={{ fontSize: '13px', color: 'var(--accent-gold)', fontWeight: 'bold', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>الهاتف:</span>
+                        <a href={`tel:${adminMember.phone}`} style={{ color: 'var(--accent-gold)', textDecoration: 'none' }}>{adminMember.phone}</a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Scientific Member */}
+                <div style={{
+                  background: 'var(--bg-main)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '12px',
+                  padding: '16px 20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '15px'
+                }}>
+                  <div style={{
+                    background: 'rgba(245, 158, 11, 0.1)',
+                    color: '#f59e0b',
+                    padding: '10px',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <BookOpen size={20} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>العضو العلمي للعلوم الشرعية والعربية</div>
+                    <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', marginTop: '2px' }}>
+                      {scientificMember ? scientificMember.name : 'جاري التعيين...'}
+                    </div>
+                    {scientificMember?.phone && (
+                      <div style={{ fontSize: '13px', color: 'var(--accent-gold)', fontWeight: 'bold', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>الهاتف:</span>
+                        <a href={`tel:${scientificMember.phone}`} style={{ color: 'var(--accent-gold)', textDecoration: 'none' }}>{scientificMember.phone}</a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Real-time active lectures card */}
           <div style={{
             background: 'linear-gradient(135deg, rgba(214,175,55,0.08), rgba(239,68,68,0.08))',
