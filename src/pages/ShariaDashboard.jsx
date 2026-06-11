@@ -17,6 +17,16 @@ const GOVERNORATES = [
   'جنوب سيناء', 'كفر الشيخ', 'مطروح', 'الأقصر', 'قنا', 'شمال سيناء', 'سوهاج'
 ];
 
+const getDisciplineKey = (arabicVal) => {
+  if (!arabicVal) return '—';
+  if (arabicVal === 'فقه وأصوله' || arabicVal === 'fiqh') return 'fiqh';
+  if (arabicVal === 'تفسير وحديث' || arabicVal === 'tafsir') return 'tafsir';
+  if (arabicVal === 'عقيدة' || arabicVal === 'aqeedah') return 'aqeedah';
+  if (arabicVal === 'لغة عربية' || arabicVal === 'arabic') return 'arabic';
+  if (arabicVal === 'عامة' || arabicVal === 'general') return 'general';
+  return arabicVal;
+};
+
 function ShariaDashboard() {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -514,12 +524,20 @@ function ShariaDashboard() {
         const matchGov = l.governorate === loggedInStudent.governorate;
         const lectureStage = l.stage || '';
         const hasStage = lectureStage.includes(loggedInStudent.stage);
-        const hasLevel = lectureStage.includes(loggedInStudent.level) || 
-                         (loggedInStudent.level === 'المستوى الأول' && (lectureStage.includes('الأول') || lectureStage.includes('اول'))) ||
-                         (loggedInStudent.level === 'المستوى الثاني' && (lectureStage.includes('الثاني') || lectureStage.includes('ثاني'))) ||
-                         (loggedInStudent.level === 'المستوى الثالث' && (lectureStage.includes('الثالث') || lectureStage.includes('ثالث'))) ||
-                         (loggedInStudent.level === 'المستوى الرابع' && (lectureStage.includes('الرابع') || lectureStage.includes('رابع')));
-        return matchGov && hasStage && hasLevel;
+        
+        const lectureLevel = l.level || '';
+        const hasLevel = lectureLevel.includes(loggedInStudent.level) || 
+                         (loggedInStudent.level === 'المستوى الأول' && (lectureLevel.includes('الأول') || lectureLevel.includes('اول'))) ||
+                         (loggedInStudent.level === 'المستوى الثاني' && (lectureLevel.includes('الثاني') || lectureLevel.includes('ثاني'))) ||
+                         (loggedInStudent.level === 'المستوى الثالث' && (lectureLevel.includes('الثالث') || lectureLevel.includes('ثالث'))) ||
+                         (loggedInStudent.level === 'المستوى الرابع' && (lectureLevel.includes('الرابع') || lectureLevel.includes('رابع')));
+
+        const matchDiscipline = loggedInStudent.stage !== 'متقدمة' || 
+                                !l.discipline || 
+                                l.discipline === '—' || 
+                                getDisciplineKey(l.discipline) === getDisciplineKey(loggedInStudent.discipline);
+
+        return matchGov && hasStage && hasLevel && matchDiscipline;
       });
     } else {
       filtered = filtered.filter(l => 
