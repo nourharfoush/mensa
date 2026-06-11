@@ -1438,9 +1438,16 @@ export function AppDataProvider({ children }) {
     setShariaStudents(prev => [...prev, newStudent]);
     shariaStudentsAPI.create(newStudent).catch(err => console.error(err));
   };
-  const updateShariaStudent = (id, updatedStudent) => {
+  const updateShariaStudent = async (id, updatedStudent) => {
+    const previousStudents = [...shariaStudents];
     setShariaStudents(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...updatedStudent } : s));
-    shariaStudentsAPI.update(id, updatedStudent).catch(err => console.error(err));
+    try {
+      await shariaStudentsAPI.update(id, updatedStudent);
+    } catch (err) {
+      console.error('Failed to update sharia student on backend:', err);
+      alert('فشل حفظ التعديلات في قاعدة البيانات: ' + (err.message || 'خطأ غير معروف'));
+      setShariaStudents(previousStudents);
+    }
   };
   const deleteShariaStudent = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
@@ -1454,9 +1461,16 @@ export function AppDataProvider({ children }) {
     setShariaTeachers(prev => [...prev, newTeacher]);
     shariaTeachersAPI.create(newTeacher).catch(err => console.error(err));
   };
-  const updateShariaTeacher = (id, updatedTeacher) => {
+  const updateShariaTeacher = async (id, updatedTeacher) => {
+    const previousTeachers = [...shariaTeachers];
     setShariaTeachers(prev => prev.map(t => String(t.id) === String(id) ? { ...t, ...updatedTeacher } : t));
-    shariaTeachersAPI.update(id, updatedTeacher).catch(err => console.error(err));
+    try {
+      await shariaTeachersAPI.update(id, updatedTeacher);
+    } catch (err) {
+      console.error('Failed to update sharia teacher on backend:', err);
+      alert('فشل حفظ التعديلات في قاعدة البيانات: ' + (err.message || 'خطأ غير معروف'));
+      setShariaTeachers(previousTeachers);
+    }
   };
   const deleteShariaTeacher = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
