@@ -48,7 +48,7 @@ export const updateShariaTeacher = async (req, res) => {
     
     if (nationalId) {
       const queryDuplicate = mongoose.Types.ObjectId.isValid(id)
-        ? { nationalId, $and: [{ id: { $ne: id } }, { _id: { $ne: id } }] }
+        ? { nationalId, $and: [{ id: { $ne: id } }, { _id: { $ne: new mongoose.Types.ObjectId(id) } }] }
         : { nationalId, id: { $ne: id } };
       const existing = await ShariaTeacher.findOne(queryDuplicate);
       if (existing) {

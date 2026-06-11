@@ -38,7 +38,7 @@ export const updateMohfez = async (req, res) => {
 
     if (national_id) {
       const queryDuplicate = mongoose.Types.ObjectId.isValid(id)
-        ? { national_id, $and: [{ id: { $ne: id } }, { _id: { $ne: id } }] }
+        ? { national_id, $and: [{ id: { $ne: id } }, { _id: { $ne: new mongoose.Types.ObjectId(id) } }] }
         : { national_id, id: { $ne: id } };
       const existing = await Mohfez.findOne(queryDuplicate);
       if (existing) {
