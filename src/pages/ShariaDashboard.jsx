@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { 
   BookOpen, GraduationCap, Users, Calendar, Award, Shield, MapPin, 
   Layers, FileText, Newspaper, Radio, Video, Plus, Search, Filter, 
-  Trash, Edit, Check, X, ChevronLeft, ChevronRight, Play, ExternalLink
+  Trash, Edit, Check, X, ChevronLeft, ChevronRight, Play, ExternalLink,
+  Download, Upload
 } from 'lucide-react';
+import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
 import Footer from '../components/Footer';
 import { useAppData } from '../context/AppDataContext';
 
@@ -35,6 +37,10 @@ function ShariaDashboard() {
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
   const userRole = currentUser ? currentUser.role : '';
   const isShariaStudent = userRole === 'sharia_student';
+
+  const importAdminsRef = useRef(null);
+  const importTeachersRef = useRef(null);
+  const importStudentsRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
@@ -498,6 +504,310 @@ function ShariaDashboard() {
     }
     if (listName === 'live') deleteShariaLive(id);
     if (listName === 'teachers') deleteShariaTeacher(id);
+  };
+
+  // --- IMPORT / EXPORT EXCEL ---
+  const handleImportAdmins = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const rows = await importFromXLSX(file);
+      const validRows = rows.filter(row => row['الاسم'] && row['الاسم'].toString().trim() !== '');
+
+      if (validRows.length === 0) {
+        alert('الملف فارغ أو يحتوي على صفوف فارغة فقط');
+        e.target.value = '';
+        return;
+      }
+
+      const duplicates = [];
+      validRows.forEach((row, index) => {
+        const natId = (row['الرقم القومي'] || row['الرقم القومى'] || '').toString().trim();
+        if (natId) {
+          const existsInState = managers.some(m => String(m.national_id).trim() === natId);
+          if (existsInState) {
+            duplicates.push(`الرقم القومي (${natId}) في الصف ${index + 2} موجود بالفعل في النظام`);
+          }
+        }
+      });
+
+      if (duplicates.length > 0) {
+        alert(`فشل الاستيراد لوجود قيم مكررة:\n${duplicates.slice(0, 10).join('\n')}${duplicates.length > 10 ? '\n...وغيرها' : ''}`);
+        e.target.value = '';
+        return;
+      }
+
+      validRows.forEach(row => {
+        const natId = (row['الرقم القومي'] || row['الرقم القومى'] || '').toString().trim();
+        const recNo = (row['رقم السجل'] || '').toString().trim();
+        
+        const finalForm = {
+          name: row['الاسم'] || '',
+          email: row['البريد الإلكتروني'] || row['البريد الالكتروني'] || natId || '',
+          phone: row['الهاتف'] || row['رقم الهاتف'] || '',
+          national_id: natId,
+          specialty: row['التخصص'] || row['التخصص / المسمى'] || 'مدير الإدارة',
+          record_no: recNo,
+          job_title: row['المسمى الوظيفي'] || row['الوظيفة'] || '',
+          workplace: row['جهة العمل'] || '',
+          job_grade: row['الدرجة الوظيفية'] || '',
+          qualification: row['المؤهل'] || '',
+          decision_no: row['رقم القرار'] || '',
+          admin: 'الجامع الأزهر',
+          address: row['العنوان'] || '',
+          status: row['الحالة'] || 'نشط',
+          username: natId,
+          password: recNo || natId
+        };
+        addManager(finalForm);
+
+        let userRole = 'rowaq_member';
+        if (finalForm.specialty === 'مدير الإدارة') userRole = 'rowaq_manager';
+        else if (finalForm.specialty === 'العضو التقني') userRole = 'rowaq_tech';
+        
+        const adminUser = {
+          name: finalForm.name,
+          email: finalForm.national_id,
+          username: finalForm.national_id,
+          national_id: finalForm.national_id,
+          password: finalForm.record_no || finalForm.national_id,
+          record_number: finalForm.record_no || finalForm.national_id,
+          phone: finalForm.phone || '',
+          role: userRole,
+          userAdmin: finalForm.admin || '',
+          created_at: new Date().toLocaleDateString('ar-EG')
+        };
+        addUser(adminUser);
+      });
+      alert('تم استيراد أعضاء الإدارة بنجاح وتوليد حساباتهم');
+    } catch (err) {
+      console.error(err);
+      alert('حدث خطأ في استيراد الملف');
+    }
+    e.target.value = '';
+  };
+
+  const handleImportTeachers = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const rows = await importFromXLSX(file);
+      const validRows = rows.filter(row => row['الاسم'] && row['الاسم'].toString().trim() !== '');
+
+      if (validRows.length === 0) {
+        alert('الملف فارغ أو يحتوي على صفوف فارغة فقط');
+        e.target.value = '';
+        return;
+      }
+
+      const duplicates = [];
+      validRows.forEach((row, index) => {
+        const natId = (row['الرقم القومي'] || row['الرقم القومى'] || '').toString().trim();
+        if (natId) {
+          const existsInState = teachers.some(t => String(t.nationalId).trim() === natId);
+          if (existsInState) {
+            duplicates.push(`الرقم القومي (${natId}) في الصف ${index + 2} موجود بالفعل في النظام`);
+          }
+        }
+      });
+
+      if (duplicates.length > 0) {
+        alert(`فشل الاستيراد لوجود قيم مكررة:\n${duplicates.slice(0, 10).join('\n')}${duplicates.length > 10 ? '\n...وغيرها' : ''}`);
+        e.target.value = '';
+        return;
+      }
+
+      validRows.forEach(row => {
+        const natId = (row['الرقم القومي'] || row['الرقم القومى'] || '').toString().trim();
+        
+        const finalForm = {
+          name: row['الاسم'] || '',
+          nationalId: natId,
+          phone: row['الهاتف'] || row['رقم الهاتف'] || '',
+          jobGrade: row['الدرجة الوظيفية'] || '',
+          university: row['الجامعة'] || '',
+          college: row['الكلية'] || '',
+          department: row['القسم'] || '',
+          governorate: row['المحافظة'] || (selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov),
+          branch: row['الفروع'] || row['الفرع'] || ''
+        };
+        addShariaTeacher(finalForm);
+      });
+      alert('تم استيراد المحاضرين بنجاح');
+    } catch (err) {
+      console.error(err);
+      alert('حدث خطأ في استيراد الملف');
+    }
+    e.target.value = '';
+  };
+
+  const handleImportStudents = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const rows = await importFromXLSX(file);
+      const validRows = rows.filter(row => row['الاسم'] && row['الاسم'].toString().trim() !== '');
+
+      if (validRows.length === 0) {
+        alert('الملف فارغ أو يحتوي على صفوف فارغة فقط');
+        e.target.value = '';
+        return;
+      }
+
+      const duplicates = [];
+      validRows.forEach((row, index) => {
+        const natId = (row['الرقم القومي'] || row['الرقم القومى'] || '').toString().trim();
+        if (natId) {
+          const existsInState = students.some(s => String(s.nationalId).trim() === natId);
+          if (existsInState) {
+            duplicates.push(`الرقم القومي (${natId}) في الصف ${index + 2} موجود بالفعل في النظام`);
+          }
+        }
+      });
+
+      if (duplicates.length > 0) {
+        alert(`فشل الاستيراد لوجود قيم مكررة:\n${duplicates.slice(0, 10).join('\n')}${duplicates.length > 10 ? '\n...وغيرها' : ''}`);
+        e.target.value = '';
+        return;
+      }
+
+      validRows.forEach(row => {
+        const natId = (row['الرقم القومي'] || row['الرقم القومى'] || '').toString().trim();
+        const govVal = row['المحافظة'] || (selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov);
+        
+        const finalForm = {
+          name: row['الاسم'] || '',
+          nationalId: natId,
+          governorate: govVal,
+          branch: row['الفرع'] || '',
+          stage: row['المرحلة'] || 'تمهيدية',
+          level: row['المستوى'] || 'المستوى الأول',
+          discipline: row['التخصص'] || '—',
+          fiqhSchool: row['المذهب الفقهي'] || row['المذهب'] || 'شافعي',
+          gender: row['الجنس'] || row['النوع'] || 'ذكر',
+          studyType: row['نوع الدراسة'] || 'مباشر',
+          code: row['الكود'] || row['كود الطالب'] || '',
+          seatNumber: row['رقم الجلوس'] || '',
+          phone: row['الهاتف'] || row['رقم الهاتف'] || ''
+        };
+        addShariaStudent(finalForm);
+
+        // Auto-create user account
+        const studentUser = {
+          name: finalForm.name,
+          national_id: finalForm.nationalId,
+          username: finalForm.nationalId,
+          password: finalForm.nationalId,
+          email: finalForm.nationalId,
+          role: 'sharia_student',
+          phone: finalForm.phone || '',
+          governorate: finalForm.governorate || '',
+          created_at: new Date().toLocaleDateString('ar-EG')
+        };
+        addUser(studentUser);
+      });
+      alert('تم استيراد الدارسين بنجاح وتوليد حساباتهم');
+    } catch (err) {
+      console.error(err);
+      alert('حدث خطأ في استيراد الملف');
+    }
+    e.target.value = '';
+  };
+
+  const handleExportAdmins = () => {
+    let exportData = admins.map(a => ({
+      'الاسم': a.name || '',
+      'الرقم القومي': a.national_id || '',
+      'رقم السجل': a.record_no || '',
+      'التخصص / المسمى': a.specialty || '',
+      'الهاتف': a.phone || '',
+      'الوظيفة': a.job_title || '',
+      'جهة العمل': a.workplace || '',
+      'الحالة': a.status || 'نشط'
+    }));
+
+    if (exportData.length === 0) {
+      exportData = [{
+        'الاسم': '',
+        'الرقم القومي': '',
+        'رقم السجل': '',
+        'التخصص / المسمى': '',
+        'الهاتف': '',
+        'الوظيفة': '',
+        'جهة العمل': '',
+        'الحالة': ''
+      }];
+    }
+
+    exportToXLSX(exportData, 'الإدارة_العليا_العلوم_الشرعية', 'الإدارة العليا');
+  };
+
+  const handleExportTeachers = () => {
+    let exportData = getFilteredTeachers().map(t => ({
+      'الاسم': t.name || '',
+      'الرقم القومي': t.nationalId || '',
+      'الهاتف': t.phone || '',
+      'الدرجة الوظيفية': t.jobGrade || '',
+      'الجامعة': t.university || '',
+      'الكلية': t.college || '',
+      'القسم': t.department || '',
+      'المحافظة': t.governorate || '',
+      'الفروع': t.branch || ''
+    }));
+
+    if (exportData.length === 0) {
+      exportData = [{
+        'الاسم': '',
+        'الرقم القومي': '',
+        'الهاتف': '',
+        'الدرجة الوظيفية': '',
+        'الجامعة': '',
+        'الكلية': '',
+        'القسم': '',
+        'المحافظة': '',
+        'الفروع': ''
+      }];
+    }
+
+    exportToXLSX(exportData, 'أعضاء_هيئة_التدريس_العلوم_الشرعية', 'أعضاء هيئة التدريس');
+  };
+
+  const handleExportStudents = () => {
+    let exportData = getFilteredStudents().map(s => ({
+      'الاسم': s.name || '',
+      'الرقم القومي': s.nationalId || '',
+      'المحافظة': s.governorate || '',
+      'الفرع': s.branch || '',
+      'المرحلة': s.stage || '',
+      'المستوى': s.level || '',
+      'التخصص': s.discipline || '',
+      'المذهب الفقهي': s.fiqhSchool || '',
+      'الجنس': s.gender || '',
+      'نوع الدراسة': s.studyType || '',
+      'الكود': s.code || '',
+      'رقم الجلوس': s.seatNumber || '',
+      'الهاتف': s.phone || ''
+    }));
+
+    if (exportData.length === 0) {
+      exportData = [{
+        'الاسم': '',
+        'الرقم القومي': '',
+        'المحافظة': '',
+        'الفرع': '',
+        'المرحلة': '',
+        'المستوى': '',
+        'التخصص': '',
+        'المذهب الفقهي': '',
+        'الجنس': '',
+        'نوع الدراسة': '',
+        'الكود': '',
+        'رقم الجلوس': '',
+        'الهاتف': ''
+      }];
+    }
+
+    exportToXLSX(exportData, 'الدارسين_العلوم_الشرعية', 'الدارسين');
   };
 
   // --- FILTERED DATA FOR ACTIVE GOVERNORATE ---
@@ -1054,6 +1364,50 @@ function ShariaDashboard() {
               <Shield size={20} color="#a855f7" />
               أعضاء الإدارة العليا ومستشاري المواد (الادمن)
             </h2>
+            {!isShariaStudent && (
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button 
+                  onClick={() => importAdminsRef.current.click()}
+                  style={{
+                    backgroundColor: 'rgba(214, 175, 55, 0.1)',
+                    border: '1px solid rgba(214, 175, 55, 0.3)',
+                    color: 'var(--accent-gold)',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13px'
+                  }}
+                >
+                  <Upload size={16} />
+                  استيراد
+                </button>
+                <input ref={importAdminsRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImportAdmins} />
+                
+                <button 
+                  onClick={handleExportAdmins}
+                  style={{
+                    backgroundColor: 'transparent',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--text-secondary)',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13px'
+                  }}
+                >
+                  <Download size={16} />
+                  تصدير
+                </button>
+              </div>
+            )}
           </div>
 
           <div style={{ overflowX: 'auto' }}>
@@ -1168,7 +1522,7 @@ function ShariaDashboard() {
               </h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>تصفية أعضاء هيئة التدريس وبياناتهم الأكاديمية والوظيفية حسب الموقع الجغرافي النشط</p>
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <div style={{ position: 'relative' }}>
                 <input
                   type="text"
@@ -1182,20 +1536,43 @@ function ShariaDashboard() {
                     border: '1px solid var(--border-subtle)',
                     color: 'var(--text-primary)',
                     fontSize: '13px',
-                    width: '250px'
+                    width: '200px'
                   }}
                 />
                 <Search size={14} color="var(--text-secondary)" style={{ position: 'absolute', right: '12px', top: '11px' }} />
               </div>
+              
+              {!isShariaStudent && (
+                <>
+                  <button 
+                    onClick={() => importTeachersRef.current.click()}
+                    style={{
+                      backgroundColor: 'rgba(214, 175, 55, 0.1)',
+                      border: '1px solid rgba(214, 175, 55, 0.3)',
+                      color: 'var(--accent-gold)',
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '13px'
+                    }}
+                  >
+                    <Upload size={16} />
+                    استيراد
+                  </button>
+                  <input ref={importTeachersRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImportTeachers} />
+                </>
+              )}
+
               <button 
-                onClick={() => {
-                  setTeacherForm({ ...teacherForm, governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov });
-                  setShowAddModal('teacher');
-                }}
+                onClick={handleExportTeachers}
                 style={{
-                  backgroundColor: '#f59e0b',
-                  border: 'none',
-                  color: 'white',
+                  backgroundColor: 'transparent',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-secondary)',
                   padding: '8px 16px',
                   borderRadius: '6px',
                   fontWeight: 'bold',
@@ -1206,9 +1583,34 @@ function ShariaDashboard() {
                   fontSize: '13px'
                 }}
               >
-                <Plus size={16} />
-                تسجيل عضو هيئة تدريس جديد
+                <Download size={16} />
+                تصدير
               </button>
+
+              {!isShariaStudent && (
+                <button 
+                  onClick={() => {
+                    setTeacherForm({ ...teacherForm, governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov });
+                    setShowAddModal('teacher');
+                  }}
+                  style={{
+                    backgroundColor: '#f59e0b',
+                    border: 'none',
+                    color: 'white',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13px'
+                  }}
+                >
+                  <Plus size={16} />
+                  تسجيل عضو هيئة تدريس جديد
+                </button>
+              )}
             </div>
           </div>
 
@@ -1747,7 +2149,7 @@ function ShariaDashboard() {
               </h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>يتم تصفية الدارسين وجداول حضورهم ونوع دراستهم (مباشر / عن بعد) حسب الموقع الجغرافي النشط</p>
             </div>
-            <div style={{ display: 'flex', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
               <div style={{ position: 'relative' }}>
                 <input
                   type="text"
@@ -1761,20 +2163,43 @@ function ShariaDashboard() {
                     border: '1px solid var(--border-subtle)',
                     color: 'var(--text-primary)',
                     fontSize: '13px',
-                    width: '250px'
+                    width: '200px'
                   }}
                 />
                 <Search size={14} color="var(--text-secondary)" style={{ position: 'absolute', right: '12px', top: '11px' }} />
               </div>
+              
+              {!isShariaStudent && (
+                <>
+                  <button 
+                    onClick={() => importStudentsRef.current.click()}
+                    style={{
+                      backgroundColor: 'rgba(214, 175, 55, 0.1)',
+                      border: '1px solid rgba(214, 175, 55, 0.3)',
+                      color: 'var(--accent-gold)',
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '13px'
+                    }}
+                  >
+                    <Upload size={16} />
+                    استيراد
+                  </button>
+                  <input ref={importStudentsRef} type="file" accept=".xlsx" style={{ display: 'none' }} onChange={handleImportStudents} />
+                </>
+              )}
+
               <button 
-                onClick={() => {
-                  setStudentForm({ ...studentForm, governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov });
-                  setShowAddModal('student');
-                }}
+                onClick={handleExportStudents}
                 style={{
-                  backgroundColor: '#ec4899',
-                  border: 'none',
-                  color: 'white',
+                  backgroundColor: 'transparent',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-secondary)',
                   padding: '8px 16px',
                   borderRadius: '6px',
                   fontWeight: 'bold',
@@ -1785,9 +2210,34 @@ function ShariaDashboard() {
                   fontSize: '13px'
                 }}
               >
-                <Plus size={16} />
-                تسجيل دارس جديد
+                <Download size={16} />
+                تصدير
               </button>
+
+              {!isShariaStudent && (
+                <button 
+                  onClick={() => {
+                    setStudentForm({ ...studentForm, governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov });
+                    setShowAddModal('student');
+                  }}
+                  style={{
+                    backgroundColor: '#ec4899',
+                    border: 'none',
+                    color: 'white',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '13px'
+                  }}
+                >
+                  <Plus size={16} />
+                  تسجيل دارس جديد
+                </button>
+              )}
             </div>
           </div>
 
