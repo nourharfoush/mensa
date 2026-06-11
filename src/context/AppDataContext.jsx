@@ -591,6 +591,28 @@ export function AppDataProvider({ children }) {
         }
       });
 
+      // من العلوم الشرعية: الدارسين (الطلاب)
+      shariaStudents.forEach(s => {
+        const nid = String(s.nationalId || '').trim();
+        if (nid && !existingNationalIds.has(nid)) {
+          normalized.push({
+            id: Date.now() + Math.random(),
+            name: s.name || '',
+            email: nid,
+            username: nid,
+            national_id: nid,
+            password: nid,
+            record_number: nid,
+            phone: s.phone || '',
+            role: 'sharia_student',
+            governorate: s.governorate || '',
+            created_at: new Date().toLocaleDateString('ar-EG')
+          });
+          existingNationalIds.add(nid);
+          newUsersAdded++;
+        }
+      });
+
       console.log('🔄 تطبيع بيانات المستخدمين:', normalized.length, 'مستخدم (تم إنشاء', newUsersAdded, 'حساب جديد)');
       normalized.forEach((u, i) => {
         console.log(`  [${i}] ${u.name}: national_id=${u.national_id}, password=${u.password}, role=${u.role}`);
@@ -598,8 +620,17 @@ export function AppDataProvider({ children }) {
       saveToLocalStorage('users', normalized);
       return normalized;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    coordinators,
+    mohfezs,
+    managers,
+    platformCoordinators,
+    platformSupervisors,
+    platformMohfezs,
+    platformTopManagement,
+    platformStudents,
+    shariaStudents
+  ]);
 
   // Save all data to localStorage whenever it changes
   useEffect(() => {
