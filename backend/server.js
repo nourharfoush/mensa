@@ -26,6 +26,25 @@ mongoose.plugin((schema) => {
     }
     next();
   });
+
+  // Automatically track and synchronize changes to non-schema fields when strict: false is used.
+  // This prevents edits to fields not defined in the schema from being silently ignored on document.save().
+  schema.pre('save', function (next) {
+    if (schema.options.strict === false) {
+      const docKeys = Object.keys(this._doc);
+      const objKeys = Object.keys(this);
+      const allKeys = new Set([...docKeys, ...objKeys]);
+      for (const key of allKeys) {
+        if (!schema.paths[key] && key !== '_id' && key !== '__v' && !key.startsWith('$') && !key.startsWith('_')) {
+          if (this[key] !== undefined) {
+            this._doc[key] = this[key];
+          }
+          this.markModified(key);
+        }
+      }
+    }
+    next();
+  });
 });
 
 // Import routes
