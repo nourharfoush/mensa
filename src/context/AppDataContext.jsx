@@ -630,6 +630,28 @@ export function AppDataProvider({ children }) {
         }
       });
 
+      // من العلوم الشرعية: المحاضرين (المعلمين)
+      shariaTeachers.forEach(t => {
+        const nid = String(t.nationalId || '').trim();
+        if (nid && !existingNationalIds.has(nid)) {
+          normalized.push({
+            id: Date.now() + Math.random(),
+            name: t.name || '',
+            email: nid,
+            username: nid,
+            national_id: nid,
+            password: nid,
+            record_number: nid,
+            phone: t.phone || '',
+            role: 'sharia_teacher',
+            governorate: t.governorate || '',
+            created_at: new Date().toLocaleDateString('ar-EG')
+          });
+          existingNationalIds.add(nid);
+          newUsersAdded++;
+        }
+      });
+
       console.log('🔄 تطبيع بيانات المستخدمين:', normalized.length, 'مستخدم (تم إنشاء', newUsersAdded, 'حساب جديد)');
       normalized.forEach((u, i) => {
         console.log(`  [${i}] ${u.name}: national_id=${u.national_id}, password=${u.password}, role=${u.role}`);
@@ -646,7 +668,8 @@ export function AppDataProvider({ children }) {
     platformMohfezs,
     platformTopManagement,
     platformStudents,
-    shariaStudents
+    shariaStudents,
+    shariaTeachers
   ]);
 
   // Save all data to localStorage whenever it changes

@@ -119,6 +119,20 @@ function Sidebar({ isOpen, toggleSidebar }) {
       return allowed.includes(path);
     }
 
+    // 11. sharia_teacher (محاضر علوم شرعية)
+    if (userRole === 'sharia_teacher') {
+      const allowed = [
+        '/sharia-dashboard',
+        '/sharia-dashboard?tab=courses',
+        '/sharia-dashboard?tab=exams',
+        '/sharia-dashboard?tab=results',
+        '/sharia-dashboard?tab=live',
+        '/sharia-dashboard?tab=schedules',
+        '/sharia-dashboard?tab=news'
+      ];
+      return allowed.includes(path);
+    }
+
     // Sharia paths allowed for admin, rowaq_admin, and the four designated specialties
     if (path.startsWith('/sharia-dashboard') || ['/sharia-courses', '/sharia-teachers', '/sharia-students', '/sharia-sessions'].includes(path)) {
       const shariaSpecialties = [
@@ -131,7 +145,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
         'العضو الإداري للعلوم الشرعية والعربية',
         'العضو العلمي للعلوم الشرعية والعربية'
       ];
-      return userRole === 'admin' || userRole === 'rowaq_admin' || shariaSpecialties.includes(specialty);
+      return userRole === 'admin' || userRole === 'rowaq_admin' || userRole === 'sharia_teacher' || shariaSpecialties.includes(specialty);
     }
 
     // Super Admin can access everything

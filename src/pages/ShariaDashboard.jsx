@@ -29,6 +29,17 @@ const getDisciplineKey = (arabicVal) => {
   return arabicVal;
 };
 
+const normalizeArabic = (str) => {
+  if (!str) return '';
+  return str
+    .trim()
+    .replace(/[أإآا]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/ِ|ُ|َ|ً|ٌ|ٍ|ّ|ْ/g, ''); // Remove diacritics
+};
+
+
 function ShariaDashboard() {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
@@ -37,6 +48,7 @@ function ShariaDashboard() {
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
   const userRole = currentUser ? currentUser.role : '';
   const isShariaStudent = userRole === 'sharia_student';
+  const isShariaTeacher = userRole === 'sharia_teacher';
   const userAdminGov = currentUser ? (currentUser.userAdmin || currentUser.governorate) : '';
   const isSuperAdmin = userRole === 'admin';
   const isGovOfficial = !isSuperAdmin && userAdminGov && userAdminGov !== 'الجامع الأزهر';
@@ -61,12 +73,12 @@ function ShariaDashboard() {
 
   useEffect(() => {
     const targetTab = tabParam || 'overview';
-    if (isShariaStudent && ['admins', 'externalAdmins', 'students'].includes(targetTab)) {
+    if ((isShariaStudent || isShariaTeacher) && ['admins', 'externalAdmins', 'students', 'teachers'].includes(targetTab)) {
       setActiveTab('overview');
     } else {
       setActiveTab(targetTab);
     }
-  }, [tabParam, isShariaStudent]);
+  }, [tabParam, isShariaStudent, isShariaTeacher]);
 
   const {
     managers = [], addManager, deleteManager, addUser, updateUser, users = [], branches = [],
@@ -1138,6 +1150,10 @@ function ShariaDashboard() {
 
         return matchGov && hasStage && hasLevel && matchDiscipline;
       });
+    } else if (isShariaTeacher) {
+      filtered = filtered.filter(l => 
+        currentUser?.name && normalizeArabic(l.teacher) === normalizeArabic(currentUser.name)
+      );
     } else {
       filtered = filtered.filter(l => 
         (selectedGov === 'الكل' || l.governorate === selectedGov)
@@ -1237,6 +1253,8 @@ function ShariaDashboard() {
 
   const sectionGridItems = isShariaStudent
     ? allSectionGridItems.filter(item => !['admins', 'externalAdmins', 'students', 'teachers'].includes(item.key))
+    : isShariaTeacher
+    ? allSectionGridItems.filter(item => !['admins', 'externalAdmins', 'students', 'teachers', 'shariaBranches'].includes(item.key))
     : allSectionGridItems;
 
   return (
@@ -3070,7 +3088,7 @@ function ShariaDashboard() {
                 {showOnlyActiveLives ? 'عرض جميع المحاضرات' : 'المحاضرات الجارية الآن فقط'}
               </button>
 
-              {!isShariaStudent && (
+              {!isShariaStudent && !isShariaTeacher && (
                 <>
                   <button 
                     onClick={() => importLiveRef.current.click()}
@@ -3115,7 +3133,7 @@ function ShariaDashboard() {
                 تصدير
               </button>
 
-              {!isShariaStudent && (
+              {!isShariaStudent && !isShariaTeacher && (
                 <button 
                   onClick={() => {
                     setLiveForm({ ...liveForm, governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov });
@@ -3218,7 +3236,7 @@ function ShariaDashboard() {
                             </span>
                           )}
                         </div>
-                        {!isShariaStudent && (
+                        {!isShariaStudent && !isShariaTeacher && (
                           <div style={{ display: 'flex', gap: '8px', marginRight: 'auto', alignItems: 'center' }}>
                             <button 
                               onClick={() => setEditingLive(live)}
@@ -3307,7 +3325,7 @@ function ShariaDashboard() {
               <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>عرض وتخطيط الجداول الدراسية الأسبوعية والمحاضرات الحضورية بالفروع المختلفة</p>
             </div>
             
-            {!isShariaStudent && (
+            {!isShariaStudent && !isShariaTeacher && (
               <button 
                 onClick={() => {
                   const firstBranch = shariaBranches.find(b => selectedGov === 'الكل' || b.governorate === selectedGov)?.name || '';
@@ -3358,24 +3376,34 @@ function ShariaDashboard() {
                   <th style={{ padding: '12px 10px', fontSize: '13px' }}>الموعد والتوقيت</th>
                   <th style={{ padding: '12px 10px', fontSize: '13px' }}>مكان المحاضرة</th>
                   <th style={{ padding: '12px 10px', fontSize: '13px', textAlign: 'center' }}>التكرار</th>
-                  {!isShariaStudent && <th style={{ padding: '12px 10px', fontSize: '13px', textAlign: 'center' }}>الإجراءات</th>}
+                  {!isShariaStudent && !isShariaTeacher && <th style={{ padding: '12px 10px', fontSize: '13px', textAlign: 'center' }}>الإجراءات</th>}
                 </tr>
               </thead>
               <tbody>
-                {shariaSchedules.filter(s => 
-                  (selectedGov === 'الكل' || s.governorate === selectedGov) &&
-                  (selectedBranch === 'الكل' || s.branch === selectedBranch)
-                ).length === 0 ? (
+                {shariaSchedules.filter(s => {
+                  const matchGov = selectedGov === 'الكل' || s.governorate === selectedGov;
+                  const matchBranch = selectedBranch === 'الكل' || s.branch === selectedBranch;
+                  if (!matchGov || !matchBranch) return false;
+                  if (isShariaTeacher) {
+                    return currentUser?.name && normalizeArabic(s.teacher) === normalizeArabic(currentUser.name);
+                  }
+                  return true;
+                }).length === 0 ? (
                   <tr>
-                    <td colSpan={isShariaStudent ? 7 : 8} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+                    <td colSpan={(isShariaStudent || isShariaTeacher) ? 7 : 8} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
                       لا توجد محاضرات حضورية مجدولة حالياً.
                     </td>
                   </tr>
                 ) : (
-                  shariaSchedules.filter(s => 
-                    (selectedGov === 'الكل' || s.governorate === selectedGov) &&
-                    (selectedBranch === 'الكل' || s.branch === selectedBranch)
-                  ).map(sched => (
+                  shariaSchedules.filter(s => {
+                    const matchGov = selectedGov === 'الكل' || s.governorate === selectedGov;
+                    const matchBranch = selectedBranch === 'الكل' || s.branch === selectedBranch;
+                    if (!matchGov || !matchBranch) return false;
+                    if (isShariaTeacher) {
+                      return currentUser?.name && normalizeArabic(s.teacher) === normalizeArabic(currentUser.name);
+                    }
+                    return true;
+                  }).map(sched => (
                     <tr key={sched.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
                       <td style={{ padding: '14px 10px' }}>
                         <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', fontSize: '14px' }}>{sched.branch}</div>
@@ -3424,7 +3452,7 @@ function ShariaDashboard() {
                           </span>
                         )}
                       </td>
-                      {!isShariaStudent && (
+                      {!isShariaStudent && !isShariaTeacher && (
                         <td style={{ padding: '14px 10px', textAlign: 'center' }}>
                           <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                             <button 
