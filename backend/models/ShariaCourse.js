@@ -8,6 +8,12 @@ const shariaCourseSchema = new mongoose.Schema(
     discipline: String,
     teacher: String,
     hours: Number,
+    pdfs: [
+      {
+        name: String,
+        data: String // Base64 Data URL
+      }
+    ]
   },
   { strict: false, timestamps: true }
 );

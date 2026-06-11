@@ -197,7 +197,7 @@ function ShariaDashboard() {
     record_no: '', job_title: '', workplace: '', job_grade: '',
     qualification: '', decision_no: '', governorate: 'الجامع الأزهر', address: '', status: 'نشط', branchCount: 1
   });
-  const [courseForm, setCourseForm] = useState({ stage: 'تمهيدية', level: 'المستوى الأول', discipline: 'fiqh', name: '', teacher: '', hours: 20 });
+  const [courseForm, setCourseForm] = useState({ stage: 'تمهيدية', level: 'المستوى الأول', discipline: 'fiqh', name: '', teacher: '', hours: 20, pdfs: [] });
   const [studentForm, setStudentForm] = useState({ 
     name: '', 
     nationalId: '', 
@@ -298,11 +298,53 @@ function ShariaDashboard() {
       name: courseForm.name,
       teacher: '',
       studentsCount: 0,
-      hours: 20
+      hours: 20,
+      pdfs: courseForm.pdfs || []
     };
     addShariaCourse(formattedCourse);
     setShowAddModal(null);
-    setCourseForm({ stage: 'تمهيدية', level: 'المستوى الأول', discipline: 'fiqh', name: '', teacher: '', hours: 20 });
+    setCourseForm({ stage: 'تمهيدية', level: 'المستوى الأول', discipline: 'fiqh', name: '', teacher: '', hours: 20, pdfs: [] });
+  };
+
+  const handleFileChange = (e, isEdit = false) => {
+    const files = Array.from(e.target.files);
+    const pdfFiles = files.filter(file => file.type === 'application/pdf');
+    
+    if (pdfFiles.length === 0) {
+      if (files.length > 0) {
+        alert('يرجى اختيار ملفات PDF فقط');
+      }
+      return;
+    }
+    
+    let loadedPdfs = [];
+    let count = 0;
+    pdfFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        loadedPdfs.push({
+          name: file.name,
+          data: event.target.result
+        });
+        
+        count++;
+        if (count === pdfFiles.length) {
+          if (isEdit) {
+            setEditingCourse(prev => ({
+              ...prev,
+              pdfs: [...(prev.pdfs || []), ...loadedPdfs]
+            }));
+          } else {
+            setCourseForm(prev => ({
+              ...prev,
+              pdfs: [...(prev.pdfs || []), ...loadedPdfs]
+            }));
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
   };
 
   const handleAddStudent = (e) => {
@@ -2470,6 +2512,53 @@ function ShariaDashboard() {
                         {course.name}
                       </h4>
 
+                      {course.pdfs && course.pdfs.length > 0 && (
+                        <div style={{
+                          marginTop: '12px',
+                          marginBottom: '12px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px',
+                          borderTop: '1px dashed var(--border-subtle)',
+                          paddingTop: '10px'
+                        }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>المقررات والملفات الدراسية:</span>
+                          {course.pdfs.map((pdf, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = pdf.data;
+                                link.download = pdf.name;
+                                link.click();
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                background: 'rgba(255, 255, 255, 0.03)',
+                                border: '1px solid var(--border-subtle)',
+                                borderRadius: '6px',
+                                padding: '6px 10px',
+                                color: 'var(--text-primary)',
+                                cursor: 'pointer',
+                                fontSize: '12px',
+                                textAlign: 'right',
+                                width: '100%',
+                                transition: 'background 0.2s'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)'}
+                            >
+                              <Download size={14} style={{ color: 'var(--accent-gold)' }} />
+                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                                {pdf.name}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
 
 
                       <div style={{
@@ -3559,6 +3648,44 @@ function ShariaDashboard() {
                     onChange={(e) => setCourseForm({ ...courseForm, name: e.target.value })} 
                     style={inputStyle} 
                   />
+                </div>
+
+                {/* PDF Files Upload */}
+                <div>
+                  <label style={labelStyle}>المرفقات (ملفات PDF)</label>
+                  <input 
+                    type="file" 
+                    accept=".pdf" 
+                    multiple 
+                    onChange={(e) => handleFileChange(e, false)} 
+                    style={{ ...inputStyle, padding: '6px 10px' }} 
+                  />
+                  {courseForm.pdfs && courseForm.pdfs.length > 0 && (
+                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      {courseForm.pdfs.map((pdf, index) => (
+                        <div key={index} style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          backgroundColor: 'rgba(255,255,255,0.05)',
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          fontSize: '13px'
+                        }}>
+                          <span style={{ color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80%' }}>
+                            {pdf.name}
+                          </span>
+                          <button 
+                            type="button" 
+                            onClick={() => setCourseForm(prev => ({ ...prev, pdfs: prev.pdfs.filter((_, i) => i !== index) }))}
+                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '12px' }}
+                          >
+                            حذف
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
 
@@ -5348,6 +5475,44 @@ function ShariaDashboard() {
                     onChange={(e) => setEditingCourse({ ...editingCourse, name: e.target.value })} 
                     style={inputStyle} 
                   />
+                </div>
+
+                {/* PDF Files Upload */}
+                <div>
+                  <label style={labelStyle}>المرفقات (ملفات PDF)</label>
+                  <input 
+                    type="file" 
+                    accept=".pdf" 
+                    multiple 
+                    onChange={(e) => handleFileChange(e, true)} 
+                    style={{ ...inputStyle, padding: '6px 10px' }} 
+                  />
+                  {editingCourse.pdfs && editingCourse.pdfs.length > 0 && (
+                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      {editingCourse.pdfs.map((pdf, index) => (
+                        <div key={index} style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          backgroundColor: 'rgba(255,255,255,0.05)',
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          fontSize: '13px'
+                        }}>
+                          <span style={{ color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80%' }}>
+                            {pdf.name}
+                          </span>
+                          <button 
+                            type="button" 
+                            onClick={() => setEditingCourse(prev => ({ ...prev, pdfs: prev.pdfs.filter((_, i) => i !== index) }))}
+                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '12px' }}
+                          >
+                            حذف
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
 
