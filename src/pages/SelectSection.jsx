@@ -7,7 +7,7 @@ import './Auth.css'; // We can reuse background styles
 function SelectSection() {
   const navigate = useNavigate();
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
-  const { theme, toggleTheme } = useAppData();
+  const { theme, toggleTheme, shariaTeachers = [], mohfezs = [] } = useAppData();
 
   if (!currentUser) {
     window.location.href = '/login';
@@ -25,6 +25,10 @@ function SelectSection() {
     navigate('/login');
   };
 
+  const nationalId = String(currentUser.national_id || currentUser.username || '').trim();
+  const isAlsoShariaTeacher = shariaTeachers.some(t => String(t.nationalId || '').trim() === nationalId);
+  const isAlsoMohfez = mohfezs.some(m => String(m.national_id || '').trim() === nationalId);
+
   // Determine which sections to show based on user role
   const role = currentUser.role || '';
   const isAdmin = role === 'admin';
@@ -32,7 +36,7 @@ function SelectSection() {
   const isRowaqAllowed = isAdmin || [
     'rowaq_admin', 'rowaq_manager', 'rowaq_tech', 'rowaq_member',
     'branch_admin_coordinator', 'branch_scientific_coordinator', 'mohfez'
-  ].includes(role);
+  ].includes(role) || isAlsoMohfez;
 
   const isPlatformAllowed = isAdmin || [
     'platform_admin', 'platform_supervisor', 'platform_coordinator',
@@ -55,6 +59,7 @@ function SelectSection() {
     (role === 'rowaq_admin') || 
     (role === 'sharia_student') ||
     (role === 'sharia_teacher') ||
+    isAlsoShariaTeacher ||
     shariaSpecialties.includes(currentUser.specialty);
 
   return (

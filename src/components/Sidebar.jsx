@@ -5,6 +5,7 @@ import {
   BookOpen, Building, MapPin, UserPlus, FilePlus, Settings, User, LogOut, Shield, ArrowRightLeft, BookOpen as BookIcon, Award, Video, Newspaper
 } from 'lucide-react';
 import './Sidebar.css';
+import { useAppData } from '../context/AppDataContext';
 
 const menuGroups = [
   {
@@ -95,8 +96,9 @@ function Sidebar({ isOpen, toggleSidebar }) {
   // Get current user and role
   let role = '';
   let specialty = '';
+  let currentUser = null;
   try {
-    const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
+    currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
     if (currentUser) {
       role = currentUser.role || '';
       specialty = currentUser.specialty || '';
@@ -104,6 +106,11 @@ function Sidebar({ isOpen, toggleSidebar }) {
   } catch (e) {
     console.error('Error parsing currentUser in Sidebar', e);
   }
+
+  const { shariaTeachers = [], mohfezs = [] } = useAppData();
+  const nationalId = currentUser ? String(currentUser.national_id || currentUser.username || '').trim() : '';
+  const isAlsoShariaTeacher = shariaTeachers.some(t => String(t.nationalId || '').trim() === nationalId);
+  const isAlsoMohfez = mohfezs.some(m => String(m.national_id || '').trim() === nationalId);
 
   const isPathAllowed = (path, userRole) => {
     // 10. sharia_student (دارس علوم شرعية)
@@ -120,7 +127,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
     }
 
     // 11. sharia_teacher (محاضر علوم شرعية)
-    if (userRole === 'sharia_teacher') {
+    if (userRole === 'sharia_teacher' || (userRole === 'mohfez' && isAlsoShariaTeacher)) {
       const allowed = [
         '/sharia-dashboard',
         '/sharia-dashboard?tab=courses',
@@ -259,7 +266,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
     }
 
     // 9. mohfez (محفظ شؤون الأروقة)
-    if (userRole === 'mohfez') {
+    if (userRole === 'mohfez' || (userRole === 'sharia_teacher' && isAlsoMohfez)) {
       const allowed = [
         '/dashboard',
         '/sessions'

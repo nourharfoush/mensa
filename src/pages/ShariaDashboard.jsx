@@ -41,6 +41,16 @@ const normalizeArabic = (str) => {
 
 
 function ShariaDashboard() {
+  const {
+    managers = [], addManager, deleteManager, addUser, updateUser, users = [], branches = [],
+    shariaCourses = [], addShariaCourse, updateShariaCourse, deleteShariaCourse,
+    shariaBranches = [], addShariaBranch, updateShariaBranch, deleteShariaBranch,
+    shariaStudents = [], addShariaStudent, updateShariaStudent, deleteShariaStudent,
+    shariaTeachers = [], addShariaTeacher, updateShariaTeacher, deleteShariaTeacher,
+    shariaLiveLectures = [], addShariaLive, updateShariaLive, deleteShariaLive,
+    shariaSchedules = [], addShariaSchedule, updateShariaSchedule, deleteShariaSchedule
+  } = useAppData();
+
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const tabParam = queryParams.get('tab');
@@ -48,7 +58,8 @@ function ShariaDashboard() {
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
   const userRole = currentUser ? currentUser.role : '';
   const isShariaStudent = userRole === 'sharia_student';
-  const isShariaTeacher = userRole === 'sharia_teacher';
+  const isShariaTeacher = userRole === 'sharia_teacher' || 
+    (userRole === 'mohfez' && shariaTeachers.some(t => String(t.nationalId || '').trim() === String(currentUser?.national_id || currentUser?.username || '').trim()));
   const userAdminGov = currentUser ? (currentUser.userAdmin || currentUser.governorate) : '';
   const isSuperAdmin = userRole === 'admin';
   const isGovOfficial = !isSuperAdmin && userAdminGov && userAdminGov !== 'الجامع الأزهر';
@@ -79,16 +90,6 @@ function ShariaDashboard() {
       setActiveTab(targetTab);
     }
   }, [tabParam, isShariaStudent, isShariaTeacher]);
-
-  const {
-    managers = [], addManager, deleteManager, addUser, updateUser, users = [], branches = [],
-    shariaCourses = [], addShariaCourse, updateShariaCourse, deleteShariaCourse,
-    shariaBranches = [], addShariaBranch, updateShariaBranch, deleteShariaBranch,
-    shariaStudents = [], addShariaStudent, updateShariaStudent, deleteShariaStudent,
-    shariaTeachers = [], addShariaTeacher, updateShariaTeacher, deleteShariaTeacher,
-    shariaLiveLectures = [], addShariaLive, updateShariaLive, deleteShariaLive,
-    shariaSchedules = [], addShariaSchedule, updateShariaSchedule, deleteShariaSchedule
-  } = useAppData();
 
   const courses = shariaCourses;
   const students = shariaStudents;
