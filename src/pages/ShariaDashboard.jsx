@@ -37,6 +37,9 @@ function ShariaDashboard() {
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
   const userRole = currentUser ? currentUser.role : '';
   const isShariaStudent = userRole === 'sharia_student';
+  const userAdminGov = currentUser ? (currentUser.userAdmin || currentUser.governorate) : '';
+  const isSuperAdmin = userRole === 'admin';
+  const isGovOfficial = !isSuperAdmin && userAdminGov && userAdminGov !== 'الجامع الأزهر';
 
   const importAdminsRef = useRef(null);
   const importTeachersRef = useRef(null);
@@ -50,7 +53,10 @@ function ShariaDashboard() {
   const [showOnlyActiveLives, setShowOnlyActiveLives] = useState(false);
   
   // Governorate filter selection (Students & Live Lectures & Attendance vary per governorate)
-  const [selectedGov, setSelectedGov] = useState('الكل');
+  const [selectedGov, setSelectedGov] = useState(() => {
+    if (isGovOfficial) return userAdminGov;
+    return 'الكل';
+  });
   const [selectedBranch, setSelectedBranch] = useState('الكل');
 
   useEffect(() => {
@@ -1325,6 +1331,7 @@ function ShariaDashboard() {
                   setSelectedGov(e.target.value);
                   setSelectedBranch('الكل');
                 }}
+                disabled={isGovOfficial}
                 style={{
                   padding: '8px 16px',
                   borderRadius: '8px',
@@ -1333,16 +1340,28 @@ function ShariaDashboard() {
                   color: 'var(--text-primary)',
                   fontSize: '13px',
                   fontWeight: 'bold',
-                  cursor: 'pointer',
+                  cursor: isGovOfficial ? 'not-allowed' : 'pointer',
+                  opacity: isGovOfficial ? 0.7 : 1,
                   outline: 'none',
                   minWidth: '220px'
                 }}
               >
-                <option value="الكل">الكل (جميع المحافظات والجامع الأزهر)</option>
-                {GOVERNORATES.map(gov => (
-                  <option key={gov} value={gov}>{gov}</option>
-                ))}
+                {isGovOfficial ? (
+                  <option value={userAdminGov}>{userAdminGov}</option>
+                ) : (
+                  <>
+                    <option value="الكل">الكل (جميع المحافظات والجامع الأزهر)</option>
+                    {GOVERNORATES.map(gov => (
+                      <option key={gov} value={gov}>{gov}</option>
+                    ))}
+                  </>
+                )}
               </select>
+              {isGovOfficial && (
+                <span style={{ fontSize: '12px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>
+                  (محدد تلقائياً لمحافظتك)
+                </span>
+              )}
             </div>
           )}
 
@@ -3438,7 +3457,7 @@ function ShariaDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>الإدارة (الموقع / المحافظة)</label>
-                    <select value={studentForm.governorate} onChange={(e) => setStudentForm({ ...studentForm, governorate: e.target.value, branch: '' })} style={selectStyle}>
+                    <select value={studentForm.governorate} onChange={(e) => setStudentForm({ ...studentForm, governorate: e.target.value, branch: '' })} style={selectStyle} disabled={isGovOfficial}>
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
                       ))}
@@ -3616,7 +3635,7 @@ function ShariaDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>الإدارة (الموقع / المحافظة)</label>
-                    <select value={editingStudent.governorate} onChange={(e) => setEditingStudent({ ...editingStudent, governorate: e.target.value, branch: '' })} style={selectStyle}>
+                    <select value={editingStudent.governorate} onChange={(e) => setEditingStudent({ ...editingStudent, governorate: e.target.value, branch: '' })} style={selectStyle} disabled={isGovOfficial}>
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
                       ))}
@@ -3951,6 +3970,7 @@ function ShariaDashboard() {
                       value={liveForm.governorate} 
                       onChange={(e) => setLiveForm({ ...liveForm, governorate: e.target.value, teacher: '' })} 
                       style={selectStyle}
+                      disabled={isGovOfficial}
                     >
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
@@ -4174,6 +4194,7 @@ function ShariaDashboard() {
                         setScheduleForm({ ...scheduleForm, governorate: newGov, branch: firstBranch, teacher: '' });
                       }} 
                       style={selectStyle}
+                      disabled={isGovOfficial}
                     >
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
@@ -4389,6 +4410,7 @@ function ShariaDashboard() {
                         setEditingSchedule({ ...editingSchedule, governorate: newGov, branch: firstBranch, teacher: '' });
                       }} 
                       style={selectStyle}
+                      disabled={isGovOfficial}
                     >
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
@@ -4609,6 +4631,7 @@ function ShariaDashboard() {
                       value={editingLive.governorate} 
                       onChange={(e) => setEditingLive({ ...editingLive, governorate: e.target.value, teacher: '' })} 
                       style={selectStyle}
+                      disabled={isGovOfficial}
                     >
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
@@ -4820,7 +4843,7 @@ function ShariaDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>الإدارة (الموقع / المحافظة)</label>
-                    <select value={teacherForm.governorate} onChange={(e) => setTeacherForm({ ...teacherForm, governorate: e.target.value, branches: [] })} style={selectStyle}>
+                    <select value={teacherForm.governorate} onChange={(e) => setTeacherForm({ ...teacherForm, governorate: e.target.value, branches: [] })} style={selectStyle} disabled={isGovOfficial}>
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
                       ))}
@@ -4924,7 +4947,7 @@ function ShariaDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>الموقع / المحافظة</label>
-                    <select value={shariaBranchForm.governorate} onChange={(e) => setShariaBranchForm({ ...shariaBranchForm, governorate: e.target.value })} style={selectStyle}>
+                    <select value={shariaBranchForm.governorate} onChange={(e) => setShariaBranchForm({ ...shariaBranchForm, governorate: e.target.value })} style={selectStyle} disabled={isGovOfficial}>
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
                       ))}
@@ -4970,7 +4993,7 @@ function ShariaDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>الموقع / المحافظة</label>
-                    <select value={editingShariaBranch.governorate} onChange={(e) => setEditingShariaBranch({ ...editingShariaBranch, governorate: e.target.value })} style={selectStyle}>
+                    <select value={editingShariaBranch.governorate} onChange={(e) => setEditingShariaBranch({ ...editingShariaBranch, governorate: e.target.value })} style={selectStyle} disabled={isGovOfficial}>
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
                       ))}
@@ -5016,7 +5039,7 @@ function ShariaDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>الإدارة (الموقع / المحافظة)</label>
-                    <select value={editingTeacher.governorate} onChange={(e) => setEditingTeacher({ ...editingTeacher, governorate: e.target.value, branches: [], branch: '' })} style={selectStyle}>
+                    <select value={editingTeacher.governorate} onChange={(e) => setEditingTeacher({ ...editingTeacher, governorate: e.target.value, branches: [], branch: '' })} style={selectStyle} disabled={isGovOfficial}>
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
                       ))}
