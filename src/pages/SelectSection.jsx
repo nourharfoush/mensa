@@ -54,6 +54,7 @@ function SelectSection() {
   const isShariaAllowed = isAdmin || 
     (role === 'rowaq_admin') || 
     (role === 'sharia_student') ||
+    (role === 'sharia_teacher') ||
     shariaSpecialties.includes(currentUser.specialty);
 
   return (
