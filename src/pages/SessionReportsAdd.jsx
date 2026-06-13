@@ -121,6 +121,19 @@ function SessionReportsAdd() {
       return;
     }
 
+    // 1.1 Prevent duplicate reports for the same session number
+    if (sessionNum) {
+      const isDuplicateSessionNum = (sessionReports || []).some(r => 
+        String(r.sessionId) === String(sessionId) && 
+        String(r.sessionNum || '').trim() === String(sessionNum).trim() &&
+        !!r.isPlatform === !!isPlatform
+      );
+      if (isDuplicateSessionNum) {
+        alert('تم تسجيل تقرير لهذه الجلسة لهذه الحلقة بالفعل!');
+        return;
+      }
+    }
+
     // 2. Validate session working days
     if (isInvalidDay) {
       alert(`تاريخ التقرير لا يوافق أيام عمل الحلقة. أيام عمل الحلقة هي: ${sessionWorkDays.join('، ')} (اليوم المختار: ${selectedDayName})`);
