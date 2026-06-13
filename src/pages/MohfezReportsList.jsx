@@ -7,20 +7,23 @@ import egyptCenters from '../data/egyptCenters';
 
 function MohfezReportsList() {
   const { 
-    sessions, sessionReports, attendances, mohfezs 
+    sessions, sessionReports, attendances, mohfezs, branches 
   } = useAppData();
 
   // Get current user and role
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
   const role = currentUser ? currentUser.role : 'admin';
   const userAdmin = currentUser ? currentUser.userAdmin : '';
+  const userCenter = currentUser ? currentUser.userCenter : '';
   const userBranch = currentUser ? currentUser.userBranch : '';
 
   const isRowaqStaff = ['rowaq_manager', 'rowaq_tech', 'rowaq_member'].includes(role);
   const isBranchCoordinator = ['branch_admin_coordinator', 'branch_scientific_coordinator'].includes(role);
   const isMohfez = ['mohfez', 'platform_mohfez'].includes(role);
 
-  const [filterAdmin, setFilterAdmin] = useState(isRowaqStaff && userAdmin ? userAdmin : '');
+  const [filterAdmin, setFilterAdmin] = useState(isRowaqStaff || isBranchCoordinator ? userAdmin : '');
+  const [filterCenter, setFilterCenter] = useState(isBranchCoordinator ? userCenter : '');
+  const [filterBranch, setFilterBranch] = useState(isBranchCoordinator ? userBranch : '');
   const [filterYear, setFilterYear] = useState('');
   const [filterMonth, setFilterMonth] = useState('');
 
@@ -28,9 +31,16 @@ function MohfezReportsList() {
     if (isRowaqStaff && userAdmin) {
       setFilterAdmin(userAdmin);
     }
+    if (isBranchCoordinator) {
+      if (userAdmin) setFilterAdmin(userAdmin);
+      if (userCenter) setFilterCenter(userCenter);
+      if (userBranch) setFilterBranch(userBranch);
+    }
   }, [currentUser]);
 
   const governorates = Object.keys(egyptCenters);
+  const availableCenters = filterAdmin ? (egyptCenters[filterAdmin] || []) : [];
+  const availableBranches = branches.filter(b => b.admin === filterAdmin && b.center === filterCenter);
 
   const months = [
     {v:'1',l:'يناير'},{v:'2',l:'فبراير'},{v:'3',l:'مارس'},{v:'4',l:'أبريل'},
@@ -80,7 +90,10 @@ function MohfezReportsList() {
   const filteredMohfezs = (mohfezs || []).filter(m => {
     if (isRowaqStaff && userAdmin && normalizeArabic(m.admin) !== normalizeArabic(userAdmin)) return false;
     if (isBranchCoordinator && userBranch && normalizeArabic(m.branch) !== normalizeArabic(userBranch)) return false;
+    
     if (filterAdmin && normalizeArabic(m.admin) !== normalizeArabic(filterAdmin)) return false;
+    if (filterCenter && normalizeArabic(m.center) !== normalizeArabic(filterCenter)) return false;
+    if (filterBranch && normalizeArabic(m.branch) !== normalizeArabic(filterBranch)) return false;
     return true;
   });
 
@@ -182,12 +195,26 @@ function MohfezReportsList() {
       </div>
 
       <div className="search-section box-card" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-        <div className="form-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '20px' }}>
+        <div className="form-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)', marginBottom: '20px' }}>
           <div className="form-group">
             <label>الإدارة</label>
-            <select className="form-select" value={filterAdmin} onChange={e => setFilterAdmin(e.target.value)} disabled={isRowaqStaff && !!userAdmin}>
+            <select className="form-select" value={filterAdmin} onChange={e => { setFilterAdmin(e.target.value); setFilterCenter(''); setFilterBranch(''); }} disabled={(isRowaqStaff || isBranchCoordinator) && !!userAdmin}>
               <option value="">--- اختار المحافظة ---</option>
               {governorates.map((g,i) => <option key={i} value={g}>{g}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>المركز</label>
+            <select className="form-select" value={filterCenter} onChange={e => { setFilterCenter(e.target.value); setFilterBranch(''); }} disabled={!filterAdmin || isBranchCoordinator}>
+              <option value="">{filterAdmin ? '--- اختار المركز ---' : 'اختار المحافظة أولاً'}</option>
+              {availableCenters.map((c, i) => <option key={i} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>الفرع</label>
+            <select className="form-select" value={filterBranch} onChange={e => setFilterBranch(e.target.value)} disabled={!filterCenter || isBranchCoordinator}>
+              <option value="">{filterCenter ? '--- اختار الفرع ---' : 'اختار المركز أولاً'}</option>
+              {availableBranches.map((b, i) => <option key={i} value={b.name}>{b.name}</option>)}
             </select>
           </div>
           <div className="form-group">
@@ -208,7 +235,9 @@ function MohfezReportsList() {
         <div className="search-actions" style={{ justifyContent: 'flex-end', flexDirection: 'row-reverse' }}>
           <button className="btn btn-primary"><Search size={16} /> بحث</button>
           <button className="btn btn-outline" onClick={() => { 
-            if (!isRowaqStaff || !userAdmin) setFilterAdmin(''); 
+            if (!isRowaqStaff && !isBranchCoordinator) setFilterAdmin(''); 
+            if (!isBranchCoordinator) setFilterCenter('');
+            if (!isBranchCoordinator) setFilterBranch('');
             setFilterYear(''); 
             setFilterMonth(''); 
           }}>إعادة تعيين</button>
