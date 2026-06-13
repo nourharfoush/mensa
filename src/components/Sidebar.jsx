@@ -33,6 +33,7 @@ const menuGroups = [
       { name: 'المنسقين', icon: User, path: '/coordinators' },
       { name: 'المحفظين', icon: Users, path: '/mohfez' },
       { name: 'الحلقات', icon: Users, path: '/sessions' },
+      { name: 'تقارير المحفظين', icon: FileText, path: '/mohfez-reports' },
       { name: 'الدارسين', icon: BookOpen, path: '/students' },
       { name: 'المتقدمين الجدد', icon: UserPlus, path: '/applicants' },
     ]
@@ -249,6 +250,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
         '/dashboard',
         '/branches',
         '/sessions',
+        '/mohfez-reports',
         '/students',
         '/applicants'
       ];
@@ -260,6 +262,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
       const allowed = [
         '/dashboard',
         '/sessions',
+        '/mohfez-reports',
         '/students'
       ];
       return allowed.includes(path);

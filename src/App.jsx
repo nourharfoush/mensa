@@ -21,6 +21,7 @@ import CoordinatorsList from './pages/CoordinatorsList';
 import CoordinatorsCreate from './pages/CoordinatorsCreate';
 import MohfezList from './pages/MohfezList';
 import MohfezCreate from './pages/MohfezCreate';
+import MohfezReportsList from './pages/MohfezReportsList';
 import SessionsList from './pages/SessionsList';
 import SessionsCreate from './pages/SessionsCreate';
 import SessionAttendance from './pages/SessionAttendance';
@@ -149,6 +150,7 @@ function DashboardLayout() {
             <Route path="/mohfez" element={<MohfezList />} />
             <Route path="/mohfez/create" element={<MohfezCreate />} />
             <Route path="/sessions" element={<SessionsList />} />
+            <Route path="/mohfez-reports" element={<MohfezReportsList />} />
             <Route path="/sessions/create" element={<SessionsCreate />} />
             <Route path="/sessions/:id/attendance" element={<SessionAttendance />} />
             <Route path="/sessions/:id/attendance/add" element={<SessionAttendanceAdd />} />
