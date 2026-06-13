@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { Plus, Trash2, Eye, Download } from 'lucide-react';
 import '../components/Management.css';
@@ -10,6 +10,9 @@ function SessionAttendance() {
   const location = useLocation();
   const isPlatform = location.pathname.startsWith('/platform-sessions');
   const { sessions, platformSessions, attendances, deleteAttendance, hasPermission } = useAppData();
+  
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [selectedAttendance, setSelectedAttendance] = useState(null);
   
   const sessionId = id;
   const session = isPlatform
@@ -147,7 +150,7 @@ function SessionAttendance() {
                     <button className="btn" style={{ background: '#374151', color: 'white', padding: '6px 12px', border: 'none', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={handleExport}>
                       تصدير <Download size={14} />
                     </button>
-                    <button className="btn" style={{ background: '#0ea5e9', color: 'white', padding: '6px 12px', border: 'none', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <button className="btn" style={{ background: '#0ea5e9', color: 'white', padding: '6px 12px', border: 'none', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => { setSelectedAttendance(a); setShowPreviewModal(true); }}>
                       معاينة <Eye size={14} />
                     </button>
                     <button className="btn" style={{ background: '#ef4444', color: 'white', padding: '6px 10px', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => deleteAttendance(a.id)}>
@@ -160,6 +163,78 @@ function SessionAttendance() {
           </tbody>
         </table>
       </div>
+
+      {/* Attendance Preview Modal */}
+      {showPreviewModal && selectedAttendance && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          backdropFilter: 'blur(4px)',
+          direction: 'rtl'
+        }}>
+          <div className="box-card animate-float-1" style={{
+            width: '90%',
+            maxWidth: '600px',
+            padding: '30px',
+            position: 'relative',
+            border: '1px solid var(--accent-gold)'
+          }}>
+            <h3 style={{ marginBottom: '20px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '10px', color: 'var(--text-primary)' }}>
+              معاينة غياب وحضور حلقة {session?.session_no || sessionId}
+            </h3>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', backgroundColor: 'var(--bg-secondary)', padding: '12px 20px', borderRadius: '8px' }}>
+              <div><strong>تاريخ السجل:</strong> {selectedAttendance.date}</div>
+              <div>
+                <span style={{ color: '#10b981', marginLeft: '15px' }}><strong>حاضر:</strong> {selectedAttendance.presentCount}</span>
+                <span style={{ color: '#ef4444' }}><strong>غائب:</strong> {selectedAttendance.absentCount}</span>
+              </div>
+            </div>
+
+            <h4 style={{ marginBottom: '10px', color: 'var(--text-secondary)' }}>تفاصيل حضور الدارسين:</h4>
+            <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid var(--border-subtle)', borderRadius: '8px', marginBottom: '25px' }}>
+              {!selectedAttendance.records || selectedAttendance.records.length === 0 ? (
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  لا توجد تفاصيل تفصيلية مسجلة للدارسين.
+                </div>
+              ) : (
+                selectedAttendance.records.map((record, idx) => (
+                  <div key={idx} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '10px 20px',
+                    backgroundColor: idx % 2 === 0 ? 'var(--bg-secondary)' : 'var(--bg-card)',
+                    borderBottom: idx < selectedAttendance.records.length - 1 ? '1px solid var(--border-subtle)' : 'none'
+                  }}>
+                    <span>{record.studentName}</span>
+                    <span style={{
+                      padding: '4px 10px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      backgroundColor: record.isPresent ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                      color: record.isPresent ? '#10b981' : '#ef4444',
+                      border: record.isPresent ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)'
+                    }}>
+                      {record.isPresent ? 'حاضر' : 'غائب'}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-start', flexDirection: 'row-reverse' }}>
+              <button className="btn btn-outline" onClick={() => { setShowPreviewModal(false); setSelectedAttendance(null); }}>إغلاق</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
