@@ -6,14 +6,21 @@ import { exportToXLSX } from '../utils/xlsxHelper';
 import egyptCenters from '../data/egyptCenters';
 
 function StatisticsList() {
-  const { managers, monthlyReports, followUpReports } = useAppData();
+  const { 
+    managers, monthlyReports, followUpReports, 
+    sessions, sessionReports, attendances, mohfezs 
+  } = useAppData();
 
   // Get current user and role
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
   const role = currentUser ? currentUser.role : 'admin';
   const userAdmin = currentUser ? currentUser.userAdmin : '';
+  const userBranch = currentUser ? currentUser.userBranch : '';
 
+  const isSuperAdmin = ['admin', 'rowaq_admin'].includes(role);
   const isRowaqStaff = ['rowaq_manager', 'rowaq_tech', 'rowaq_member'].includes(role);
+  const isBranchCoordinator = ['branch_admin_coordinator', 'branch_scientific_coordinator'].includes(role);
+  const isMohfez = ['mohfez', 'platform_mohfez'].includes(role);
 
   const [filterAdmin, setFilterAdmin] = useState(isRowaqStaff && userAdmin ? userAdmin : '');
   const [filterYear, setFilterYear] = useState('');
@@ -109,6 +116,118 @@ function StatisticsList() {
     exportToXLSX(exportData, 'إحصائيات_تقارير_المتابعة', 'إحصائيات تقارير المتابعة لأعضاء الإدارة');
   };
 
+  // --- Mohfez Monthly Report Logic ---
+
+  const isReportInMonthAndYear = (reportDate, year, month) => {
+    if (!reportDate) return false;
+    const normalized = reportDate.replace(/\//g, '-');
+    const parts = normalized.split('-');
+    if (parts.length < 2) return false;
+    const rYear = parts[0];
+    const rMonth = parseInt(parts[1], 10).toString();
+    
+    const matchYear = year ? String(rYear) === String(year) : true;
+    const matchMonth = month ? String(rMonth) === String(month) : true;
+    
+    return matchYear && matchMonth;
+  };
+
+  // Filter Mohfezs list based on geographic permissions and filter select
+  const filteredMohfezs = (mohfezs || []).filter(m => {
+    if (isRowaqStaff && userAdmin && normalizeArabic(m.admin) !== normalizeArabic(userAdmin)) return false;
+    if (isBranchCoordinator && userBranch && normalizeArabic(m.branch) !== normalizeArabic(userBranch)) return false;
+    if (filterAdmin && normalizeArabic(m.admin) !== normalizeArabic(filterAdmin)) return false;
+    return true;
+  });
+
+  const getMohfezMonthlyStats = (m) => {
+    const mohfezSessions = (sessions || []).filter(s => 
+      normalizeArabic(s.mohfez) === normalizeArabic(m.name) && 
+      !s.isPlatform
+    );
+
+    let actualSessionsCount = 0;
+    let totalHours = 0.0;
+
+    mohfezSessions.forEach(session => {
+      const reports = (sessionReports || []).filter(r => 
+        String(r.sessionId) === String(session.id) && 
+        !r.isPlatform &&
+        isReportInMonthAndYear(r.date, filterYear, filterMonth)
+      );
+
+      actualSessionsCount += reports.length;
+
+      reports.forEach(r => {
+        const attendance = (attendances || []).find(a => 
+          String(a.sessionId) === String(session.id) && 
+          !a.isPlatform &&
+          a.date && r.date &&
+          a.date.replace(/\//g, '-') === r.date.replace(/\//g, '-')
+        );
+
+        const presentCount = attendance ? (attendance.presentCount || 0) : 0;
+        
+        let sessionDuration = 1.0;
+        if (presentCount < 6) {
+          sessionDuration = 1.0;
+        } else if (presentCount === 6 || presentCount === 7) {
+          sessionDuration = 1.5;
+        } else {
+          sessionDuration = 2.0;
+        }
+
+        // Cap by original session duration
+        if (session.time_start && session.time_end) {
+          const [startH, startM] = session.time_start.split(':').map(Number);
+          const [endH, endM] = session.time_end.split(':').map(Number);
+          const diffMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+          if (diffMinutes > 0) {
+            const originalHours = diffMinutes / 60;
+            if (sessionDuration > originalHours) {
+              sessionDuration = originalHours;
+            }
+          }
+        }
+
+        totalHours += sessionDuration;
+      });
+    });
+
+    return {
+      assignedCount: mohfezSessions.length,
+      actualSessionsCount,
+      totalHours
+    };
+  };
+
+  const handleExportMohfezs = () => {
+    const exportData = filteredMohfezs.map(m => {
+      const stats = getMohfezMonthlyStats(m);
+      return {
+        'اسم المحفظ': m.name || '',
+        'الإدارة': m.admin || '',
+        'المركز': m.center || '',
+        'الفرع': m.branch || '',
+        'عدد الحلقات المسندة': stats.assignedCount,
+        'عدد الجلسات الفعلية': stats.actualSessionsCount,
+        'إجمالي الساعات المنجزة': stats.totalHours,
+      };
+    });
+    exportToXLSX(exportData, 'التقرير_الشهري_للمحفظين', 'التقرير الشهري للمحفظين');
+  };
+
+  if (isMohfez) {
+    return (
+      <div className="management-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px', direction: 'rtl' }}>
+        <div className="box-card" style={{ textAlign: 'center', maxWidth: '500px', padding: '40px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+          <h3 style={{ color: '#ef4444', marginBottom: '15px' }}>عذراً، ليس لديك صلاحية لعرض هذا القسم</h3>
+          <p style={{ color: 'var(--text-secondary)' }}>يرجى التواصل مع مدير النظام للحصول على الصلاحيات اللازمة.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="management-page" style={{ direction: 'rtl' }}>
       <div className="page-header">
@@ -159,7 +278,7 @@ function StatisticsList() {
         <div className="table-stats">النتائج ({filtered.length})</div>
       </div>
 
-      <div className="table-wrapper box-card">
+      <div className="table-wrapper box-card" style={{ marginBottom: '40px' }}>
         <table className="management-table">
           <thead>
             <tr>
@@ -189,6 +308,61 @@ function StatisticsList() {
                     <td style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--text-secondary)' }}>{stats.plannedCount}</td>
                     <td style={{ textAlign: 'center', fontWeight: 'bold', color: '#10b981' }}>{stats.createdCount}</td>
                     <td style={{ textAlign: 'center', fontWeight: 'bold', color: '#047857' }}>{stats.confirmedCount}</td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* --- Mohfez Monthly Report Section --- */}
+      <div className="page-header" style={{ marginTop: '20px', borderTop: '2px solid var(--border-subtle)', paddingTop: '20px' }}>
+        <div className="title-section">
+          <h2>التقرير الشهري للمحفظين</h2>
+          <p>عرض وحساب عدد الجلسات الفعلية وإجمالي الساعات المنجزة للمحفظين وفقاً للحضور وزمن الحلقة الأصلي</p>
+        </div>
+      </div>
+
+      <div className="table-controls" style={{ justifyContent: 'space-between', flexDirection: 'row-reverse' }}>
+        <div className="action-buttons">
+          <button className="btn btn-outline" onClick={handleExportMohfezs}><Download size={16} /> تصدير تقرير المحفظين</button>
+        </div>
+        <div className="table-stats">عدد المحفظين ({filteredMohfezs.length})</div>
+      </div>
+
+      <div className="table-wrapper box-card">
+        <table className="management-table">
+          <thead>
+            <tr>
+              <th style={{ textAlign: 'center' }}>اسم المحفظ</th>
+              <th style={{ textAlign: 'center' }}>الإدارة</th>
+              <th style={{ textAlign: 'center' }}>المركز</th>
+              <th style={{ textAlign: 'center' }}>الفرع</th>
+              <th style={{ textAlign: 'center' }}>الحلقات المسندة</th>
+              <th style={{ textAlign: 'center' }}>الجلسات الفعلية</th>
+              <th style={{ textAlign: 'center' }}>إجمالي الساعات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredMohfezs.length === 0 ? (
+              <tr>
+                <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>
+                  لا توجد بيانات محفظين مطابقة للفلاتر النشطة أو نطاق صلاحيتك.
+                </td>
+              </tr>
+            ) : (
+              filteredMohfezs.map(m => {
+                const stats = getMohfezMonthlyStats(m);
+                return (
+                  <tr key={m.id}>
+                    <td style={{ textAlign: 'center' }}>{m.name}</td>
+                    <td style={{ textAlign: 'center' }}>{m.admin}</td>
+                    <td style={{ textAlign: 'center' }}>{m.center}</td>
+                    <td style={{ textAlign: 'center' }}>{m.branch}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{stats.assignedCount}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 'bold', color: '#3b82f6' }}>{stats.actualSessionsCount}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 'bold', color: '#10b981' }}>{stats.totalHours.toFixed(1)} ساعة</td>
                   </tr>
                 );
               })
