@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { Users, Search, GraduationCap } from 'lucide-react';
+import { useAppData } from '../context/AppDataContext';
 
 function ShariaStudents() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [students, setStudents] = useState([]);
+  const { shariaStudents = [], shariaAttendance = [] } = useAppData();
+  const [searchTerm = '', setSearchTerm] = useState('');
 
-  const filteredStudents = students.filter(s => 
-    s.name.includes(searchTerm) || 
-    s.course.includes(searchTerm) || 
-    s.nationalId.includes(searchTerm)
+  const filteredStudents = shariaStudents.filter(s => 
+    (s.name || '').includes(searchTerm) || 
+    (s.course || '').includes(searchTerm) || 
+    (s.nationalId || '').includes(searchTerm)
   );
 
   return (
@@ -74,7 +75,7 @@ function ShariaStudents() {
               <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '14px' }}>الرقم القومي</th>
               <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '14px' }}>رقم الجوال</th>
               <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '14px' }}>المقرر المسجل فيه</th>
-              <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '14px', textAlign: 'center' }}>نسبة حضور المحاضرات</th>
+              <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '14px', textAlign: 'center' }}>المحاضرات المحضورة</th>
               <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', fontSize: '14px' }}>تاريخ التسجيل</th>
             </tr>
           </thead>
@@ -100,11 +101,13 @@ function ShariaStudents() {
                       fontSize: '12px',
                       fontWeight: '500'
                     }}>
-                      {s.course}
+                      {s.course || `${s.stage} - ${s.level}`}
                     </span>
                   </td>
-                  <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: '#10b981', textAlign: 'center' }}>{s.progress}</td>
-                  <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-muted)' }}>{s.regDate}</td>
+                  <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: '#10b981', textAlign: 'center' }}>
+                    {shariaAttendance.filter(att => String(att.studentId) === String(s.id)).length} محاضرات
+                  </td>
+                  <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-muted)' }}>{s.regDate || '—'}</td>
                 </tr>
               ))
             )}

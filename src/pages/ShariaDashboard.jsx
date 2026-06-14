@@ -2839,13 +2839,14 @@ function ShariaDashboard() {
                   <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>المستوى</th>
                   <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>التخصص</th>
                   <th style={{ padding: '12px 10px', color: 'var(--text-secondary)' }}>المذهب الفقهي</th>
+                  <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', textAlign: 'center' }}>المحاضرات المحضورة</th>
                   <th style={{ padding: '12px 10px', color: 'var(--text-secondary)', textAlign: 'center' }}>إجراءات</th>
                 </tr>
               </thead>
               <tbody>
                 {getFilteredStudents().length === 0 ? (
                   <tr>
-                    <td colSpan="12" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+                    <td colSpan="13" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
                       لا يوجد دارسين مسجلين في {selectedGov === 'الكل' ? 'أي موقع' : selectedGov} حالياً.
                     </td>
                   </tr>
@@ -2882,6 +2883,9 @@ function ShariaDashboard() {
                           fontSize: '12px',
                           fontWeight: 'bold'
                         }}>{student.fiqhSchool}</span>
+                      </td>
+                      <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: '#10b981', textAlign: 'center' }}>
+                        {shariaAttendance.filter(att => String(att.studentId) === String(student.id)).length} محاضرات
                       </td>
                       <td style={{ padding: '14px 10px', textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
                         <button 
