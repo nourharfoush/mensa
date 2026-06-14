@@ -308,18 +308,31 @@ function ShariaDashboard() {
 
   const handleFileChange = (e, isEdit = false) => {
     const files = Array.from(e.target.files);
-    const pdfFiles = files.filter(file => file.type === 'application/pdf');
+    const allowedExtensions = ['.pdf', '.zip', '.rar', '.7z', '.png', '.jpg', '.jpeg', '.gif', '.webp'];
+    const validFiles = files.filter(file => {
+      const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      const isImage = file.type.startsWith('image/');
+      const isZip = file.type === 'application/zip' || 
+                    file.type === 'application/x-zip-compressed' || 
+                    file.type === 'application/x-rar-compressed' || 
+                    file.type === 'application/x-7z-compressed' ||
+                    file.type.includes('zip') || 
+                    file.type.includes('rar') || 
+                    file.type.includes('7z');
+      const isPdf = file.type === 'application/pdf';
+      return isPdf || isImage || isZip || allowedExtensions.includes(ext);
+    });
     
-    if (pdfFiles.length === 0) {
+    if (validFiles.length === 0) {
       if (files.length > 0) {
-        alert('يرجى اختيار ملفات PDF فقط');
+        alert('يرجى اختيار ملفات مدعومة فقط (PDF، صور، أو ملفات مضغوطة zip/rar/7z)');
       }
       return;
     }
     
     let loadedPdfs = [];
     let count = 0;
-    pdfFiles.forEach(file => {
+    validFiles.forEach(file => {
       const reader = new FileReader();
       reader.onload = (event) => {
         loadedPdfs.push({
@@ -328,7 +341,7 @@ function ShariaDashboard() {
         });
         
         count++;
-        if (count === pdfFiles.length) {
+        if (count === validFiles.length) {
           if (isEdit) {
             setEditingCourse(prev => ({
               ...prev,
@@ -3650,12 +3663,12 @@ function ShariaDashboard() {
                   />
                 </div>
 
-                {/* PDF Files Upload */}
+                {/* PDF/Files Upload */}
                 <div>
-                  <label style={labelStyle}>المرفقات (ملفات PDF)</label>
+                  <label style={labelStyle}>المرفقات (ملفات PDF، صور، ملفات مضغوطة)</label>
                   <input 
                     type="file" 
-                    accept=".pdf" 
+                    accept=".pdf,image/*,.zip,.rar,.7z" 
                     multiple 
                     onChange={(e) => handleFileChange(e, false)} 
                     style={{ ...inputStyle, padding: '6px 10px' }} 
@@ -5477,12 +5490,12 @@ function ShariaDashboard() {
                   />
                 </div>
 
-                {/* PDF Files Upload */}
+                {/* PDF/Files Upload */}
                 <div>
-                  <label style={labelStyle}>المرفقات (ملفات PDF)</label>
+                  <label style={labelStyle}>المرفقات (ملفات PDF، صور، ملفات مضغوطة)</label>
                   <input 
                     type="file" 
-                    accept=".pdf" 
+                    accept=".pdf,image/*,.zip,.rar,.7z" 
                     multiple 
                     onChange={(e) => handleFileChange(e, true)} 
                     style={{ ...inputStyle, padding: '6px 10px' }} 
