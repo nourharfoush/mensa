@@ -157,7 +157,7 @@ function ShariaDashboard() {
       spec === 'العضو العلمي علوم شرعية وعربية'
     );
   });
-  const [selectedCourseStage, setSelectedCourseStage] = useState('تمهيدية');
+  const [selectedCourseStage, setSelectedCourseStage] = useState('التمهيدية');
   const [selectedCourseLevel, setSelectedCourseLevel] = useState('المستوى الأول');
   const [selectedCourseDiscipline, setSelectedCourseDiscipline] = useState('fiqh');
 
@@ -167,7 +167,7 @@ function ShariaDashboard() {
 
   useEffect(() => {
     if (isShariaStudent && loggedInStudent) {
-      setSelectedCourseStage(loggedInStudent.stage || 'تمهيدية');
+      setSelectedCourseStage(loggedInStudent.stage || 'التمهيدية');
       setSelectedCourseLevel(loggedInStudent.level || 'المستوى الأول');
       setSelectedCourseDiscipline(loggedInStudent.discipline || 'fiqh');
       setSelectedGov(loggedInStudent.governorate || 'الجامع الأزهر');
@@ -197,13 +197,13 @@ function ShariaDashboard() {
     record_no: '', job_title: '', workplace: '', job_grade: '',
     qualification: '', decision_no: '', governorate: 'الجامع الأزهر', address: '', status: 'نشط', branchCount: 1
   });
-  const [courseForm, setCourseForm] = useState({ stage: 'تمهيدية', level: 'المستوى الأول', discipline: 'fiqh', name: '', teacher: '', hours: 20, pdfs: [] });
+  const [courseForm, setCourseForm] = useState({ stage: 'التمهيدية', level: 'المستوى الأول', discipline: 'fiqh', name: '', teacher: '', hours: 20, pdfs: [] });
   const [studentForm, setStudentForm] = useState({ 
     name: '', 
     nationalId: '', 
     governorate: 'الجامع الأزهر', 
     branch: '',
-    stage: 'تمهيدية', 
+    stage: 'التمهيدية', 
     level: 'المستوى الأول', 
     discipline: '—', 
     fiqhSchool: 'شافعي', 
@@ -218,7 +218,7 @@ function ShariaDashboard() {
   const [liveForm, setLiveForm] = useState({
     title: '',
     governorate: 'الجامع الأزهر',
-    stage: 'تمهيدية',
+    stage: 'التمهيدية',
     level: 'المستوى الأول',
     discipline: '—',
     teacher: '',
@@ -244,7 +244,7 @@ function ShariaDashboard() {
   const [scheduleForm, setScheduleForm] = useState({
     governorate: 'الجامع الأزهر',
     branch: '',
-    stage: 'تمهيدية',
+    stage: 'التمهيدية',
     level: 'المستوى الأول',
     discipline: '—',
     day: 'السبت',
@@ -294,7 +294,7 @@ function ShariaDashboard() {
     const formattedCourse = {
       stage: courseForm.stage,
       level: courseForm.level,
-      discipline: courseForm.stage === 'متقدمة' ? courseForm.discipline : '—',
+      discipline: courseForm.stage === 'المتقدمة' ? courseForm.discipline : '—',
       name: courseForm.name,
       teacher: '',
       studentsCount: 0,
@@ -303,7 +303,7 @@ function ShariaDashboard() {
     };
     addShariaCourse(formattedCourse);
     setShowAddModal(null);
-    setCourseForm({ stage: 'تمهيدية', level: 'المستوى الأول', discipline: 'fiqh', name: '', teacher: '', hours: 20, pdfs: [] });
+    setCourseForm({ stage: 'التمهيدية', level: 'المستوى الأول', discipline: 'fiqh', name: '', teacher: '', hours: 20, pdfs: [] });
   };
 
   const handleFileChange = (e, isEdit = false) => {
@@ -390,7 +390,7 @@ function ShariaDashboard() {
       nationalId: '', 
       governorate: 'الجامع الأزهر', 
       branch: '',
-      stage: 'تمهيدية', 
+      stage: 'التمهيدية', 
       level: 'المستوى الأول', 
       discipline: '—', 
       fiqhSchool: 'شافعي', 
@@ -503,7 +503,7 @@ function ShariaDashboard() {
       // Conflict Type B: Same level (stage + level + discipline)
       const sameStage = l.stage === newLive.stage;
       const sameLevel = l.level === newLive.level;
-      const sameDiscipline = l.stage !== 'متقدمة' || l.discipline === newLive.discipline;
+      const sameDiscipline = l.stage !== 'المتقدمة' || l.discipline === newLive.discipline;
       if (sameStage && sameLevel && sameDiscipline) {
         return `تعارض في جدول المستوى: هذا المستوى لديه محاضرة أخرى مجدولة في نفس الوقت ("${l.title}")`;
       }
@@ -523,7 +523,7 @@ function ShariaDashboard() {
     setLiveForm({
       title: '',
       governorate: 'الجامع الأزهر',
-      stage: 'تمهيدية',
+      stage: 'التمهيدية',
       level: 'المستوى الأول',
       discipline: '—',
       teacher: '',
@@ -577,7 +577,7 @@ function ShariaDashboard() {
     if (!editingCourse) return;
     updateShariaCourse(editingCourse.id, {
       ...editingCourse,
-      discipline: editingCourse.stage === 'متقدمة' ? editingCourse.discipline : '—',
+      discipline: editingCourse.stage === 'المتقدمة' ? editingCourse.discipline : '—',
       hours: 20
     });
     setEditingCourse(null);
@@ -616,7 +616,7 @@ function ShariaDashboard() {
     setScheduleForm({
       governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov,
       branch: '',
-      stage: 'تمهيدية',
+      stage: 'التمهيدية',
       level: 'المستوى الأول',
       discipline: '—',
       day: 'السبت',
@@ -839,7 +839,7 @@ function ShariaDashboard() {
           nationalId: natId,
           governorate: govVal,
           branch: row['الفرع'] || '',
-          stage: row['المرحلة'] || 'تمهيدية',
+          stage: row['المرحلة'] || 'التمهيدية',
           level: row['المستوى'] || 'المستوى الأول',
           discipline: row['التخصص'] || '—',
           fiqhSchool: row['المذهب الفقهي'] || row['المذهب'] || 'شافعي',
@@ -973,7 +973,7 @@ function ShariaDashboard() {
     for (let i = 0; i < maxLen; i++) {
       helperData.push({
         'المحافظة المعتمدة': GOVERNORATES[i] || '',
-        'المرحلة المعتمدة': ['تمهيدية', 'متوسطة', 'متقدمة'][i] || '',
+        'المرحلة المعتمدة': ['التمهيدية', 'المتوسطة', 'المتقدمة'][i] || '',
         'المستوى المعتمد': ['المستوى الأول', 'المستوى الثاني', 'المستوى الثالث', 'المستوى الرابع'][i] || '',
         'التخصص المعتمد': ['فقه وأصوله', 'تفسير وحديث', 'عقيدة', 'لغة عربية', 'عامة', '—'][i] || '',
         'المذهب المعتمد': ['شافعي', 'حنفي', 'مالكي', 'حنبلي'][i] || '',
@@ -1002,8 +1002,8 @@ function ShariaDashboard() {
       }
 
       validRows.forEach(row => {
-        const stageVal = row['المرحلة'] || 'تمهيدية';
-        const disciplineVal = stageVal === 'متقدمة' ? getDisciplineKey(row['التخصص'] || 'fiqh') : '—';
+        const stageVal = row['المرحلة'] || 'التمهيدية';
+        const disciplineVal = stageVal === 'المتقدمة' ? getDisciplineKey(row['التخصص'] || 'fiqh') : '—';
         
         const formattedCourse = {
           stage: stageVal,
@@ -1051,7 +1051,7 @@ function ShariaDashboard() {
     const helperData = [];
     for (let i = 0; i < maxLen; i++) {
       helperData.push({
-        'المرحلة المعتمدة': ['تمهيدية', 'متوسطة', 'متقدمة'][i] || '',
+        'المرحلة المعتمدة': ['التمهيدية', 'المتوسطة', 'المتقدمة'][i] || '',
         'المستوى المعتمد': ['المستوى الأول', 'المستوى الثاني', 'المستوى الثالث', 'المستوى الرابع'][i] || '',
         'التخصص المعتمد': ['فقه وأصوله', 'تفسير وحديث', 'عقيدة', 'لغة عربية', 'عامة', '—'][i] || ''
       });
@@ -1080,8 +1080,8 @@ function ShariaDashboard() {
       let conflictCount = 0;
 
       validRows.forEach(row => {
-        const stageVal = row['المرحلة'] || 'تمهيدية';
-        const disciplineVal = stageVal === 'متقدمة' ? getDisciplineKey(row['التخصص'] || 'fiqh') : '—';
+        const stageVal = row['المرحلة'] || 'التمهيدية';
+        const disciplineVal = stageVal === 'المتقدمة' ? getDisciplineKey(row['التخصص'] || 'fiqh') : '—';
         
         const liveItem = {
           title: row['عنوان البث'] || row['اسم المادة'] || '',
@@ -1158,7 +1158,7 @@ function ShariaDashboard() {
     for (let i = 0; i < maxLen; i++) {
       helperData.push({
         'المحافظة المعتمدة': GOVERNORATES[i] || '',
-        'المرحلة المعتمدة': ['تمهيدية', 'متوسطة', 'متقدمة'][i] || '',
+        'المرحلة المعتمدة': ['التمهيدية', 'المتوسطة', 'المتقدمة'][i] || '',
         'المستوى المعتمد': ['المستوى الأول', 'المستوى الثاني', 'المستوى الثالث', 'المستوى الرابع'][i] || '',
         'التخصص المعتمد': ['فقه وأصوله', 'تفسير وحديث', 'عقيدة', 'لغة عربية', 'عامة', '—'][i] || '',
         'اليوم المعتمد': ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'][i] || '',
@@ -1205,7 +1205,7 @@ function ShariaDashboard() {
                          (loggedInStudent.level === 'المستوى الثالث' && (lectureLevel.includes('الثالث') || lectureLevel.includes('ثالث'))) ||
                          (loggedInStudent.level === 'المستوى الرابع' && (lectureLevel.includes('الرابع') || lectureLevel.includes('رابع')));
 
-        const matchDiscipline = loggedInStudent.stage !== 'متقدمة' || 
+        const matchDiscipline = loggedInStudent.stage !== 'المتقدمة' || 
                                 !l.discipline || 
                                 l.discipline === '—' || 
                                 getDisciplineKey(l.discipline) === getDisciplineKey(loggedInStudent.discipline);
@@ -2227,7 +2227,7 @@ function ShariaDashboard() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
                 <div style={{ fontSize: '15px', color: 'var(--text-primary)', fontWeight: 'bold' }}>
                   مرحلتك ومستواك الدراسي الحالي: <strong style={{ color: 'var(--accent-gold)' }}>
-                    المرحلة {selectedCourseStage} {selectedCourseStage === 'متقدمة' && `(${[
+                    المرحلة {selectedCourseStage} {selectedCourseStage === 'المتقدمة' && `(${[
                       { id: 'fiqh', name: 'فقه وأصوله' },
                       { id: 'tafsir', name: 'تفسير وحديث' },
                       { id: 'aqeedah', name: 'عقيدة' },
@@ -2254,16 +2254,16 @@ function ShariaDashboard() {
                   <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-secondary)', minWidth: '100px' }}>المرحلة الدراسية:</span>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {[
-                      { key: 'تمهيدية', label: 'المرحلة التمهيدية' },
-                      { key: 'متوسطة', label: 'المرحلة المتوسطة' },
-                      { key: 'متقدمة', label: 'المرحلة المتقدمة' }
+                      { key: 'التمهيدية', label: 'المرحلة التمهيدية' },
+                      { key: 'المتوسطة', label: 'المرحلة المتوسطة' },
+                      { key: 'المتقدمة', label: 'المرحلة المتقدمة' }
                     ].map(stage => (
                       <button
                         key={stage.key}
                         onClick={() => {
                           setSelectedCourseStage(stage.key);
                           // Reset level if moving to prep/intermediate from level 3/4
-                          if ((stage.key === 'تمهيدية' || stage.key === 'متوسطة') && 
+                          if ((stage.key === 'التمهيدية' || stage.key === 'المتوسطة') && 
                               (selectedCourseLevel === 'المستوى الثالث' || selectedCourseLevel === 'المستوى الرابع')) {
                             setSelectedCourseLevel('المستوى الأول');
                           }
@@ -2288,7 +2288,7 @@ function ShariaDashboard() {
                 </div>
 
                 {/* Specialization/Discipline Row - Only visible for Advanced Stage */}
-                {selectedCourseStage === 'متقدمة' && (
+                {selectedCourseStage === 'المتقدمة' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', borderTop: '1px dashed var(--border-subtle)', paddingTop: '12px' }}>
                     <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-secondary)', minWidth: '100px' }}>التخصص الدراسي:</span>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -2326,7 +2326,7 @@ function ShariaDashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', borderTop: '1px dashed var(--border-subtle)', paddingTop: '12px' }}>
                   <span style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-secondary)', minWidth: '100px' }}>المستوى الدراسي:</span>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {(selectedCourseStage === 'متقدمة'
+                    {(selectedCourseStage === 'المتقدمة'
                       ? ['المستوى الأول', 'المستوى الثاني', 'المستوى الثالث', 'المستوى الرابع']
                       : ['المستوى الأول', 'المستوى الثاني']
                     ).map(lvl => (
@@ -2365,7 +2365,7 @@ function ShariaDashboard() {
                 }}>
                   <div style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
                     المستوى المحدد حالياً: <strong style={{ color: 'var(--accent-gold)' }}>
-                      المرحلة {selectedCourseStage} {selectedCourseStage === 'متقدمة' && `(${[
+                      المرحلة {selectedCourseStage} {selectedCourseStage === 'المتقدمة' && `(${[
                         { id: 'fiqh', name: 'فقه وأصوله' },
                         { id: 'tafsir', name: 'تفسير وحديث' },
                         { id: 'aqeedah', name: 'عقيدة' },
@@ -2381,7 +2381,7 @@ function ShariaDashboard() {
                         setCourseForm({
                           stage: selectedCourseStage,
                           level: selectedCourseLevel,
-                          discipline: selectedCourseStage === 'متقدمة' ? selectedCourseDiscipline : 'fiqh',
+                          discipline: selectedCourseStage === 'المتقدمة' ? selectedCourseDiscipline : 'fiqh',
                           name: '',
                           teacher: '',
                           hours: 20
@@ -2425,7 +2425,7 @@ function ShariaDashboard() {
               const filteredList = courses.filter(c => 
                 c.stage === selectedCourseStage &&
                 c.level === selectedCourseLevel &&
-                (selectedCourseStage !== 'متقدمة' || c.discipline === selectedCourseDiscipline)
+                (selectedCourseStage !== 'المتقدمة' || c.discipline === selectedCourseDiscipline)
               );
 
               if (filteredList.length === 0) {
@@ -3375,7 +3375,7 @@ function ShariaDashboard() {
                         <span style={{ fontSize: '11px', backgroundColor: 'var(--border-subtle)', color: 'var(--text-secondary)', padding: '2px 8px', borderRadius: '4px' }}>
                           المستوى: {live.level || 'الأول'}
                         </span>
-                        {live.stage === 'متقدمة' && live.discipline && live.discipline !== '—' && (
+                        {live.stage === 'المتقدمة' && live.discipline && live.discipline !== '—' && (
                           <span style={{ fontSize: '11px', backgroundColor: 'rgba(249, 115, 22, 0.1)', color: '#f97316', padding: '2px 8px', borderRadius: '4px' }}>
                             التخصص: {live.discipline}
                           </span>
@@ -3442,7 +3442,7 @@ function ShariaDashboard() {
                     ...scheduleForm,
                     governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov,
                     branch: firstBranch,
-                    stage: 'تمهيدية',
+                    stage: 'التمهيدية',
                     level: 'المستوى الأول',
                     discipline: '—',
                     day: 'السبت',
@@ -3523,7 +3523,7 @@ function ShariaDashboard() {
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{sched.level}</div>
                       </td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', color: 'var(--text-primary)' }}>
-                        <div>{sched.stage === 'متقدمة' && sched.discipline ? getDisciplineKey(sched.discipline) : 'عامة'}</div>
+                        <div>{sched.stage === 'المتقدمة' && sched.discipline ? getDisciplineKey(sched.discipline) : 'عامة'}</div>
                       </td>
                       <td style={{ padding: '14px 10px', fontSize: '13px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
                         {sched.teacher}
@@ -3615,22 +3615,22 @@ function ShariaDashboard() {
                       setCourseForm({ 
                         ...courseForm, 
                         stage: stageVal,
-                        level: (stageVal !== 'متقدمة' && (courseForm.level === 'المستوى الثالث' || courseForm.level === 'المستوى الرابع')) 
+                        level: (stageVal !== 'المتقدمة' && (courseForm.level === 'المستوى الثالث' || courseForm.level === 'المستوى الرابع')) 
                           ? 'المستوى الأول' 
                           : courseForm.level,
-                        discipline: stageVal === 'متقدمة' ? 'fiqh' : '—'
+                        discipline: stageVal === 'المتقدمة' ? 'fiqh' : '—'
                       });
                     }} 
                     style={selectStyle}
                   >
-                    <option value="تمهيدية">المرحلة التمهيدية</option>
-                    <option value="متوسطة">المرحلة المتوسطة</option>
-                    <option value="متقدمة">المرحلة المتقدمة</option>
+                    <option value="التمهيدية">المرحلة التمهيدية</option>
+                    <option value="المتوسطة">المرحلة المتوسطة</option>
+                    <option value="المتقدمة">المرحلة المتقدمة</option>
                   </select>
                 </div>
 
                 {/* Specialization / Discipline Selection - Only for Advanced Stage */}
-                {courseForm.stage === 'متقدمة' && (
+                {courseForm.stage === 'المتقدمة' && (
                   <div>
                     <label style={labelStyle}>التخصص الدراسي</label>
                     <select 
@@ -3657,7 +3657,7 @@ function ShariaDashboard() {
                   >
                     <option value="المستوى الأول">المستوى الأول</option>
                     <option value="المستوى الثاني">المستوى الثاني</option>
-                    {courseForm.stage === 'متقدمة' && (
+                    {courseForm.stage === 'المتقدمة' && (
                       <>
                         <option value="المستوى الثالث">المستوى الثالث</option>
                         <option value="المستوى الرابع">المستوى الرابع</option>
@@ -3799,7 +3799,7 @@ function ShariaDashboard() {
                   </div>
                 </div>
 
-                {studentForm.stage === 'متقدمة' ? (
+                {studentForm.stage === 'المتقدمة' ? (
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <div style={{ flex: 1 }}>
                       <label style={labelStyle}>المرحلة</label>
@@ -3810,15 +3810,15 @@ function ShariaDashboard() {
                           setStudentForm({
                             ...studentForm,
                             stage: val,
-                            discipline: val === 'متقدمة' ? 'فقه وأصوله' : '—',
+                            discipline: val === 'المتقدمة' ? 'فقه وأصوله' : '—',
                             level: 'المستوى الأول'
                           });
                         }} 
                         style={selectStyle}
                       >
-                        <option value="تمهيدية">تمهيدية</option>
-                        <option value="متوسطة">متوسطة</option>
-                        <option value="متقدمة">متقدمة</option>
+                        <option value="التمهيدية">التمهيدية</option>
+                        <option value="المتوسطة">المتوسطة</option>
+                        <option value="المتقدمة">المتقدمة</option>
                       </select>
                     </div>
                     <div style={{ flex: 1 }}>
@@ -3860,15 +3860,15 @@ function ShariaDashboard() {
                           setStudentForm({
                             ...studentForm,
                             stage: val,
-                            discipline: val === 'متقدمة' ? 'فقه وأصوله' : '—',
+                            discipline: val === 'المتقدمة' ? 'فقه وأصوله' : '—',
                             level: 'المستوى الأول'
                           });
                         }} 
                         style={selectStyle}
                       >
-                        <option value="تمهيدية">تمهيدية</option>
-                        <option value="متوسطة">متوسطة</option>
-                        <option value="متقدمة">متقدمة</option>
+                        <option value="التمهيدية">التمهيدية</option>
+                        <option value="المتوسطة">المتوسطة</option>
+                        <option value="المتقدمة">المتقدمة</option>
                       </select>
                     </div>
                     <div style={{ flex: 1 }}>
@@ -3977,7 +3977,7 @@ function ShariaDashboard() {
                   </div>
                 </div>
 
-                {editingStudent.stage === 'متقدمة' ? (
+                {editingStudent.stage === 'المتقدمة' ? (
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <div style={{ flex: 1 }}>
                       <label style={labelStyle}>المرحلة</label>
@@ -3988,15 +3988,15 @@ function ShariaDashboard() {
                           setEditingStudent({
                             ...editingStudent,
                             stage: val,
-                            discipline: val === 'متقدمة' ? 'فقه وأصوله' : '—',
+                            discipline: val === 'المتقدمة' ? 'فقه وأصوله' : '—',
                             level: 'المستوى الأول'
                           });
                         }} 
                         style={selectStyle}
                       >
-                        <option value="تمهيدية">تمهيدية</option>
-                        <option value="متوسطة">متوسطة</option>
-                        <option value="متقدمة">متقدمة</option>
+                        <option value="التمهيدية">التمهيدية</option>
+                        <option value="المتوسطة">المتوسطة</option>
+                        <option value="المتقدمة">المتقدمة</option>
                       </select>
                     </div>
                     <div style={{ flex: 1 }}>
@@ -4038,15 +4038,15 @@ function ShariaDashboard() {
                           setEditingStudent({
                             ...editingStudent,
                             stage: val,
-                            discipline: val === 'متقدمة' ? 'فقه وأصوله' : '—',
+                            discipline: val === 'المتقدمة' ? 'فقه وأصوله' : '—',
                             level: 'المستوى الأول'
                           });
                         }} 
                         style={selectStyle}
                       >
-                        <option value="تمهيدية">تمهيدية</option>
-                        <option value="متوسطة">متوسطة</option>
-                        <option value="متقدمة">متقدمة</option>
+                        <option value="التمهيدية">التمهيدية</option>
+                        <option value="المتوسطة">المتوسطة</option>
+                        <option value="المتقدمة">المتقدمة</option>
                       </select>
                     </div>
                     <div style={{ flex: 1 }}>
@@ -4238,7 +4238,7 @@ function ShariaDashboard() {
         const filteredCoursesForAddLive = courses.filter(c => 
           c.stage === liveForm.stage && 
           c.level === liveForm.level &&
-          (liveForm.stage !== 'متقدمة' || c.discipline === getDisciplineKey(liveForm.discipline))
+          (liveForm.stage !== 'المتقدمة' || c.discipline === getDisciplineKey(liveForm.discipline))
         );
 
         return (
@@ -4278,15 +4278,15 @@ function ShariaDashboard() {
                             ...liveForm,
                             stage: val,
                             level: 'المستوى الأول',
-                            discipline: val === 'متقدمة' ? 'فقه وأصوله' : '—',
+                            discipline: val === 'المتقدمة' ? 'فقه وأصوله' : '—',
                             title: ''
                           });
                         }} 
                         style={selectStyle}
                       >
-                        <option value="تمهيدية">تمهيدية</option>
-                        <option value="متوسطة">متوسطة</option>
-                        <option value="متقدمة">متقدمة</option>
+                        <option value="التمهيدية">التمهيدية</option>
+                        <option value="المتوسطة">المتوسطة</option>
+                        <option value="المتقدمة">المتقدمة</option>
                       </select>
                     </div>
 
@@ -4299,7 +4299,7 @@ function ShariaDashboard() {
                       >
                         <option value="المستوى الأول">المستوى الأول</option>
                         <option value="المستوى الثاني">المستوى الثاني</option>
-                        {liveForm.stage === 'متقدمة' && (
+                        {liveForm.stage === 'المتقدمة' && (
                           <>
                             <option value="المستوى الثالث">المستوى الثالث</option>
                             <option value="المستوى الرابع">المستوى الرابع</option>
@@ -4308,7 +4308,7 @@ function ShariaDashboard() {
                       </select>
                     </div>
 
-                    {liveForm.stage === 'متقدمة' && (
+                    {liveForm.stage === 'المتقدمة' && (
                       <div style={{ flex: 1, minWidth: '120px' }}>
                         <label style={labelStyle}>التخصص الدراسي</label>
                         <select 
@@ -4516,22 +4516,22 @@ function ShariaDashboard() {
                         setScheduleForm({ 
                           ...scheduleForm, 
                           stage: stageVal,
-                          level: (stageVal !== 'متقدمة' && (scheduleForm.level === 'المستوى الثالث' || scheduleForm.level === 'المستوى الرابع')) 
+                          level: (stageVal !== 'المتقدمة' && (scheduleForm.level === 'المستوى الثالث' || scheduleForm.level === 'المستوى الرابع')) 
                             ? 'المستوى الأول' 
                             : scheduleForm.level,
-                          discipline: stageVal === 'متقدمة' ? 'fiqh' : '—'
+                          discipline: stageVal === 'المتقدمة' ? 'fiqh' : '—'
                         });
                       }} 
                       style={selectStyle}
                     >
-                      <option value="تمهيدية">المرحلة التمهيدية</option>
-                      <option value="متوسطة">المرحلة المتوسطة</option>
-                      <option value="متقدمة">المرحلة المتقدمة</option>
+                      <option value="التمهيدية">المرحلة التمهيدية</option>
+                      <option value="المتوسطة">المرحلة المتوسطة</option>
+                      <option value="المتقدمة">المرحلة المتقدمة</option>
                     </select>
                   </div>
 
                   {/* Discipline (for Advanced Stage) */}
-                  {scheduleForm.stage === 'متقدمة' && (
+                  {scheduleForm.stage === 'المتقدمة' && (
                     <div>
                       <label style={labelStyle}>التخصص</label>
                       <select 
@@ -4558,7 +4558,7 @@ function ShariaDashboard() {
                     >
                       <option value="المستوى الأول">المستوى الأول</option>
                       <option value="المستوى الثاني">المستوى الثاني</option>
-                      {scheduleForm.stage === 'متقدمة' && (
+                      {scheduleForm.stage === 'المتقدمة' && (
                         <>
                           <option value="المستوى الثالث">المستوى الثالث</option>
                           <option value="المستوى الرابع">المستوى الرابع</option>
@@ -4732,22 +4732,22 @@ function ShariaDashboard() {
                         setEditingSchedule({ 
                           ...editingSchedule, 
                           stage: stageVal,
-                          level: (stageVal !== 'متقدمة' && (editingSchedule.level === 'المستوى الثالث' || editingSchedule.level === 'المستوى الرابع')) 
+                          level: (stageVal !== 'المتقدمة' && (editingSchedule.level === 'المستوى الثالث' || editingSchedule.level === 'المستوى الرابع')) 
                             ? 'المستوى الأول' 
                             : editingSchedule.level,
-                          discipline: stageVal === 'متقدمة' ? 'fiqh' : '—'
+                          discipline: stageVal === 'المتقدمة' ? 'fiqh' : '—'
                         });
                       }} 
                       style={selectStyle}
                     >
-                      <option value="تمهيدية">المرحلة التمهيدية</option>
-                      <option value="متوسطة">المرحلة المتوسطة</option>
-                      <option value="متقدمة">المرحلة المتقدمة</option>
+                      <option value="التمهيدية">المرحلة التمهيدية</option>
+                      <option value="المتوسطة">المرحلة المتوسطة</option>
+                      <option value="المتقدمة">المرحلة المتقدمة</option>
                     </select>
                   </div>
 
                   {/* Discipline (for Advanced Stage) */}
-                  {editingSchedule.stage === 'متقدمة' && (
+                  {editingSchedule.stage === 'المتقدمة' && (
                     <div>
                       <label style={labelStyle}>التخصص</label>
                       <select 
@@ -4774,7 +4774,7 @@ function ShariaDashboard() {
                     >
                       <option value="المستوى الأول">المستوى الأول</option>
                       <option value="المستوى الثاني">المستوى الثاني</option>
-                      {editingSchedule.stage === 'متقدمة' && (
+                      {editingSchedule.stage === 'المتقدمة' && (
                         <>
                           <option value="المستوى الثالث">المستوى الثالث</option>
                           <option value="المستوى الرابع">المستوى الرابع</option>
@@ -4899,7 +4899,7 @@ function ShariaDashboard() {
         const filteredCoursesForEditLive = courses.filter(c => 
           c.stage === editingLive.stage && 
           c.level === editingLive.level &&
-          (editingLive.stage !== 'متقدمة' || c.discipline === getDisciplineKey(editingLive.discipline))
+          (editingLive.stage !== 'المتقدمة' || c.discipline === getDisciplineKey(editingLive.discipline))
         );
 
         return (
@@ -4939,15 +4939,15 @@ function ShariaDashboard() {
                             ...editingLive,
                             stage: val,
                             level: 'المستوى الأول',
-                            discipline: val === 'متقدمة' ? 'فقه وأصوله' : '—',
+                            discipline: val === 'المتقدمة' ? 'فقه وأصوله' : '—',
                             title: ''
                           });
                         }} 
                         style={selectStyle}
                       >
-                        <option value="تمهيدية">تمهيدية</option>
-                        <option value="متوسطة">متوسطة</option>
-                        <option value="متقدمة">متقدمة</option>
+                        <option value="التمهيدية">التمهيدية</option>
+                        <option value="المتوسطة">المتوسطة</option>
+                        <option value="المتقدمة">المتقدمة</option>
                       </select>
                     </div>
 
@@ -4960,7 +4960,7 @@ function ShariaDashboard() {
                       >
                         <option value="المستوى الأول">المستوى الأول</option>
                         <option value="المستوى الثاني">المستوى الثاني</option>
-                        {editingLive.stage === 'متقدمة' && (
+                        {editingLive.stage === 'المتقدمة' && (
                           <>
                             <option value="المستوى الثالث">المستوى الثالث</option>
                             <option value="المستوى الرابع">المستوى الرابع</option>
@@ -4969,7 +4969,7 @@ function ShariaDashboard() {
                       </select>
                     </div>
 
-                    {editingLive.stage === 'متقدمة' && (
+                    {editingLive.stage === 'المتقدمة' && (
                       <div style={{ flex: 1, minWidth: '120px' }}>
                         <label style={labelStyle}>التخصص الدراسي</label>
                         <select 
@@ -5442,22 +5442,22 @@ function ShariaDashboard() {
                       setEditingCourse({ 
                         ...editingCourse, 
                         stage: stageVal,
-                        level: (stageVal !== 'متقدمة' && (editingCourse.level === 'المستوى الثالث' || editingCourse.level === 'المستوى الرابع')) 
+                        level: (stageVal !== 'المتقدمة' && (editingCourse.level === 'المستوى الثالث' || editingCourse.level === 'المستوى الرابع')) 
                           ? 'المستوى الأول' 
                           : editingCourse.level,
-                        discipline: stageVal === 'متقدمة' ? 'fiqh' : '—'
+                        discipline: stageVal === 'المتقدمة' ? 'fiqh' : '—'
                       });
                     }} 
                     style={selectStyle}
                   >
-                    <option value="تمهيدية">المرحلة التمهيدية</option>
-                    <option value="متوسطة">المرحلة المتوسطة</option>
-                    <option value="متقدمة">المرحلة المتقدمة</option>
+                    <option value="التمهيدية">المرحلة التمهيدية</option>
+                    <option value="المتوسطة">المرحلة المتوسطة</option>
+                    <option value="المتقدمة">المرحلة المتقدمة</option>
                   </select>
                 </div>
 
                 {/* Specialization / Discipline Selection - Only for Advanced Stage */}
-                {editingCourse.stage === 'متقدمة' && (
+                {editingCourse.stage === 'المتقدمة' && (
                   <div>
                     <label style={labelStyle}>التخصص الدراسي</label>
                     <select 
@@ -5484,7 +5484,7 @@ function ShariaDashboard() {
                   >
                     <option value="المستوى الأول">المستوى الأول</option>
                     <option value="المستوى الثاني">المستوى الثاني</option>
-                    {editingCourse.stage === 'متقدمة' && (
+                    {editingCourse.stage === 'المتقدمة' && (
                       <>
                         <option value="المستوى الثالث">المستوى الثالث</option>
                         <option value="المستوى الرابع">المستوى الرابع</option>
