@@ -137,6 +137,15 @@ const defaultPermissions = {
   }
 };
 
+const normalizeStage = (stage) => {
+  if (!stage) return 'التمهيدية';
+  const clean = String(stage).trim();
+  if (clean === 'تمهيدية') return 'التمهيدية';
+  if (clean === 'متوسطة') return 'المتوسطة';
+  if (clean === 'متقدمة') return 'المتقدمة';
+  return clean;
+};
+
 export function AppDataProvider({ children }) {
   // Load data from localStorage or use default values
   const [managers, setManagers] = useState(() => getFromLocalStorage('managers', []));
@@ -265,47 +274,59 @@ export function AppDataProvider({ children }) {
   });
 
   // Sharia Dashboard States
-  const [shariaCourses, setShariaCourses] = useState(() => getFromLocalStorage('sharia_courses', []));
+  const [shariaCourses, setShariaCourses] = useState(() => {
+    const raw = getFromLocalStorage('sharia_courses', []);
+    return raw.map(c => ({ ...c, stage: normalizeStage(c.stage) }));
+  });
   const [shariaBranches, setShariaBranches] = useState(() => getFromLocalStorage('sharia_branches', [
     { id: 'sb-1', name: 'فرع معهد تفهنا الأشراف الشرعي', governorate: 'الدقهلية', code: 'SH-DK01', address: 'معهد فتيات تفهنا الأشراف' },
     { id: 'sb-2', name: 'فرع الجامع الأزهر الرئيسي', governorate: 'الجامع الأزهر', code: 'SH-AZ01', address: 'مقر الجامع الأزهر الشريف بالقاهرة' }
   ]));
-  const [shariaStudents, setShariaStudents] = useState(() => getFromLocalStorage('sharia_students', []));
+  const [shariaStudents, setShariaStudents] = useState(() => {
+    const raw = getFromLocalStorage('sharia_students', []);
+    return raw.map(s => ({ ...s, stage: normalizeStage(s.stage) }));
+  });
   const [shariaTeachers, setShariaTeachers] = useState(() => getFromLocalStorage('sharia_teachers', []));
-  const [shariaLiveLectures, setShariaLiveLectures] = useState(() => getFromLocalStorage('sharia_live', [
-    {
-      id: 1,
-      title: 'شرح كتاب التوحيد من صحيح البخاري',
-      governorate: 'الجامع الأزهر',
-      stage: 'التمهيدية',
-      level: 'المستوى الأول',
-      discipline: '—',
-      teacher: 'أ.د. أحمد المعتز بالله',
-      day: 'الأحد',
-      timeStart: '18:00',
-      timeEnd: '20:00',
-      link: 'https://zoom.us/j/123456789',
-      isWeekly: true,
-      status: 'بث مباشر الآن'
-    }
-  ]));
+  const [shariaLiveLectures, setShariaLiveLectures] = useState(() => {
+    const raw = getFromLocalStorage('sharia_live', [
+      {
+        id: 1,
+        title: 'شرح كتاب التوحيد من صحيح البخاري',
+        governorate: 'الجامع الأزهر',
+        stage: 'التمهيدية',
+        level: 'المستوى الأول',
+        discipline: '—',
+        teacher: 'أ.د. أحمد المعتز بالله',
+        day: 'الأحد',
+        timeStart: '18:00',
+        timeEnd: '20:00',
+        link: 'https://zoom.us/j/123456789',
+        isWeekly: true,
+        status: 'بث مباشر الآن'
+      }
+    ]);
+    return raw.map(l => ({ ...l, stage: normalizeStage(l.stage) }));
+  });
 
-  const [shariaSchedules, setShariaSchedules] = useState(() => getFromLocalStorage('sharia_schedules', [
-    {
-      id: 'sched-1',
-      governorate: 'الجامع الأزهر',
-      branch: 'فرع الجامع الأزهر الرئيسي',
-      stage: 'التمهيدية',
-      level: 'المستوى الأول',
-      discipline: '—',
-      day: 'الأحد',
-      timeStart: '10:00',
-      timeEnd: '12:00',
-      teacher: 'أ.د. أحمد المعتز بالله',
-      place: 'الرواق العباسي',
-      isWeekly: true
-    }
-  ]));
+  const [shariaSchedules, setShariaSchedules] = useState(() => {
+    const raw = getFromLocalStorage('sharia_schedules', [
+      {
+        id: 'sched-1',
+        governorate: 'الجامع الأزهر',
+        branch: 'فرع الجامع الأزهر الرئيسي',
+        stage: 'التمهيدية',
+        level: 'المستوى الأول',
+        discipline: '—',
+        day: 'الأحد',
+        timeStart: '10:00',
+        timeEnd: '12:00',
+        teacher: 'أ.د. أحمد المعتز بالله',
+        place: 'الرواق العباسي',
+        isWeekly: true
+      }
+    ]);
+    return raw.map(s => ({ ...s, stage: normalizeStage(s.stage) }));
+  });
 
   const [shariaAttendance, setShariaAttendance] = useState(() => getFromLocalStorage('sharia_attendance', []));
   const [lectureAccessLogs, setLectureAccessLogs] = useState(() => getFromLocalStorage('lecture_access_logs', []));
@@ -329,7 +350,7 @@ export function AppDataProvider({ children }) {
       try {
         console.log('🔄 Syncing with backend database...');
 
-        const syncCollection = async (api, state, setState, key) => {
+        const syncCollection = async (api, state, setState, key, mapper = null) => {
           const remoteData = await api.getAll().catch(() => null);
           if (remoteData) {
             const localData = getFromLocalStorage(key, []);
@@ -341,7 +362,8 @@ export function AppDataProvider({ children }) {
                 await api.bulkImport(sanitizedLocal);
                 const refetched = await api.getAll().catch(() => null);
                 if (refetched) {
-                  const normalized = refetched.map(item => ({ ...item, id: item.id || item._id }));
+                  let normalized = refetched.map(item => ({ ...item, id: item.id || item._id }));
+                  if (mapper) normalized = normalized.map(mapper);
                   setState(normalized);
                   saveToLocalStorage(key, normalized);
                   return;
@@ -351,10 +373,11 @@ export function AppDataProvider({ children }) {
               }
             }
 
-            const normalizedData = remoteData.map(item => ({
+            let normalizedData = remoteData.map(item => ({
               ...item,
               id: item.id || item._id
             }));
+            if (mapper) normalizedData = normalizedData.map(mapper);
             setState(normalizedData);
             saveToLocalStorage(key, normalizedData);
             if (remoteData.length > 0) {
@@ -401,11 +424,11 @@ export function AppDataProvider({ children }) {
         await syncCollection(rolePermissionsAPI, rolePermissions, setRolePermissions, 'rolePermissions');
 
         // Sync Sharia Collections
-        await syncCollection(shariaCoursesAPI, shariaCourses, setShariaCourses, 'sharia_courses');
+        await syncCollection(shariaCoursesAPI, shariaCourses, setShariaCourses, 'sharia_courses', c => ({ ...c, stage: normalizeStage(c.stage) }));
         await syncCollection(shariaBranchesAPI, shariaBranches, setShariaBranches, 'sharia_branches');
-        await syncCollection(shariaStudentsAPI, shariaStudents, setShariaStudents, 'sharia_students');
+        await syncCollection(shariaStudentsAPI, shariaStudents, setShariaStudents, 'sharia_students', s => ({ ...s, stage: normalizeStage(s.stage) }));
         await syncCollection(shariaTeachersAPI, shariaTeachers, setShariaTeachers, 'sharia_teachers');
-        await syncCollection(shariaLivesAPI, shariaLiveLectures, setShariaLiveLectures, 'sharia_live');
+        await syncCollection(shariaLivesAPI, shariaLiveLectures, setShariaLiveLectures, 'sharia_live', l => ({ ...l, stage: normalizeStage(l.stage) }));
 
         setDbSynced(true);
         console.log('✓ Database synchronization complete!');
