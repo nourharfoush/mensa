@@ -66,6 +66,10 @@ function StudentsCreate() {
       alert('الرجاء ملء الحقول المطلوبة');
       return;
     }
+    if (form.phone.length !== 11) {
+      alert('رقم الهاتف يجب أن يكون مكوناً من 11 رقماً');
+      return;
+    }
 
     // Check duplicate national ID
     const duplicateStudent = students.find(s => 
@@ -188,7 +192,17 @@ function StudentsCreate() {
             <label>رقم الهاتف <span className="req">*</span></label>
             <div style={{ display: 'flex' }}>
                <span style={{ padding: '0 10px', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderLeft: 'none', borderRadius: '0 6px 6px 0', display: 'flex', alignItems: 'center', direction: 'ltr' }}>+20 <img src="https://flagcdn.com/w20/eg.png" alt="Egypt" style={{ marginLeft: '5px' }}/></span>
-               <input name="phone" type="text" className="form-input" placeholder="أدخل رقم الهاتف" value={form.phone} onChange={handleChange} style={{ borderRadius: '6px 0 0 6px', flex: 1 }} dir="ltr" />
+               <input 
+                 name="phone" 
+                 type="text" 
+                 className="form-input" 
+                 placeholder="أدخل رقم الهاتف (11 رقم)" 
+                 value={form.phone} 
+                 maxLength={11}
+                 onChange={e => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })} 
+                 style={{ borderRadius: '6px 0 0 6px', flex: 1 }} 
+                 dir="ltr" 
+               />
             </div>
           </div>
 

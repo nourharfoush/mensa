@@ -55,6 +55,8 @@ function Signup() {
     
     if (!formData.phone.trim()) {
       errors.phone = 'رقم الهاتف مطلوب';
+    } else if (formData.phone.trim().length !== 11) {
+      errors.phone = 'رقم الهاتف يجب أن يكون مكوناً من 11 رقماً';
     }
     
     if (!formData.branch) {
@@ -186,8 +188,9 @@ function Signup() {
                   id="phone"
                   name="phone"
                   value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="+20 أدخل رقم الهاتف"
+                  maxLength={11}
+                  onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '') })}
+                  placeholder="أدخل رقم الهاتف (11 رقم)"
                   className={validationErrors.phone ? 'error-input' : ''}
                 />
                 {validationErrors.phone && (

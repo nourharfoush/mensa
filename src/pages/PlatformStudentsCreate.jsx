@@ -19,7 +19,14 @@ function PlatformStudentsCreate() {
   const [countrySearch, setCountrySearch] = useState('');
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = e => {
+    const { name, value } = e.target;
+    if (name === 'phone') {
+      setForm({ ...form, phone: value.replace(/\D/g, '').slice(0, 11) });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
+  };
 
   const selectCountry = (country) => {
     setForm(prev => ({ ...prev, country }));
@@ -51,6 +58,11 @@ function PlatformStudentsCreate() {
   }, [isEditing, studentId, platformStudents]);
 
   const handleSubmit = () => {
+    if (form.phone && form.phone.length !== 11) {
+      alert('رقم الهاتف يجب أن يكون مكوناً من 11 رقماً');
+      return;
+    }
+
     if (!form.name || !form.passport_no || !form.phone || !form.session_id || !form.country) {
       alert('الرجاء ملء الحقول المطلوبة');
       return;
@@ -147,7 +159,7 @@ function PlatformStudentsCreate() {
           <div className="form-group"><label>الاسم الكامل <span className="req">*</span></label><input name="name" type="text" className="form-input" placeholder="أدخل الاسم الكامل" value={form.name} onChange={handleChange} /></div>
           <div className="form-group"><label>رقم جواز السفر <span className="req">*</span></label><input name="passport_no" type="text" className="form-input" placeholder="أدخل رقم جواز السفر" value={form.passport_no} onChange={handleChange} /></div>
           <div className="form-group"><label>تاريخ الميلاد</label><input name="birth_date" type="date" className="form-input" value={form.birth_date} onChange={handleChange} /></div>
-          <div className="form-group"><label>رقم الهاتف <span className="req">*</span></label><input name="phone" type="text" className="form-input" placeholder="أدخل رقم الهاتف" value={form.phone} onChange={handleChange} dir="ltr" /></div>
+          <div className="form-group"><label>رقم الهاتف <span className="req">*</span></label><input name="phone" type="text" className="form-input" placeholder="أدخل رقم الهاتف" value={form.phone} onChange={handleChange} dir="ltr" maxLength="11" /></div>
           <div className="form-group"><label>البريد الإلكتروني</label><input name="email" type="email" className="form-input" placeholder="example@email.com" value={form.email} onChange={handleChange} dir="ltr" /></div>
           <div className="form-group"><label>الوظيفة (اختياري)</label><input name="job" type="text" className="form-input" placeholder="أدخل الوظيفة" value={form.job} onChange={handleChange} /></div>
           <div className="form-group" style={{ position: 'relative' }}>

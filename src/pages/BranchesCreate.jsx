@@ -24,7 +24,14 @@ function BranchesCreate() {
 
   const availableCenters = form.admin ? (egyptCenters[form.admin] || []) : [];
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = e => {
+    const { name, value } = e.target;
+    if (name === 'phone') {
+      setForm({ ...form, phone: value.replace(/\D/g, '').slice(0, 11) });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
+  };
 
   const handleAdminChange = e => setForm({ ...form, admin: e.target.value, center: '' });
 
@@ -58,6 +65,11 @@ function BranchesCreate() {
   }, [isEditing, branchId, branches]);
 
   const handleSubmit = () => {
+    if (form.phone && form.phone.length !== 11) {
+      alert('رقم الهاتف يجب أن يكون مكوناً من 11 رقماً');
+      return;
+    }
+
     if (!form.admin || !form.center || !form.name) {
       alert('الرجاء ملء الحقول المطلوبة: الإدارة، القسم، الاسم');
       return;
@@ -143,7 +155,7 @@ function BranchesCreate() {
         {/* Phone */}
         <div className="form-group" style={{ marginBottom: '20px' }}>
           <label>الهاتف <span className="req">*</span></label>
-          <input name="phone" type="text" className="form-input" placeholder="ادخل رقم الهاتف" value={form.phone} onChange={handleChange} />
+          <input name="phone" type="text" className="form-input" placeholder="ادخل رقم الهاتف" value={form.phone} onChange={handleChange} maxLength="11" />
         </div>
 
         {/* Decision No */}

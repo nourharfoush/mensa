@@ -28,7 +28,14 @@ function ManagementCreate() {
     qualification: '', decision_no: '', admin: '', address: '', username: '', password: ''
   });
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = e => {
+    const { name, value } = e.target;
+    if (name === 'phone') {
+      setForm({ ...form, phone: value.replace(/\D/g, '').slice(0, 11) });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
+  };
 
   useEffect(() => {
     if (isEditing && managerId) {
@@ -56,6 +63,11 @@ function ManagementCreate() {
   }, [isEditing, managerId, managers]);
 
   const handleSubmit = () => {
+    if (form.phone && form.phone.length !== 11) {
+      alert('رقم الهاتف يجب أن يكون مكوناً من 11 رقماً');
+      return;
+    }
+
     const required = ['name', 'email', 'phone', 'national_id', 'specialty', 'record_no', 'job_title', 'workplace', 'job_grade', 'qualification', 'decision_no', 'admin', 'address'];
     for (const f of required) {
       if (!form[f]) {
@@ -162,7 +174,7 @@ function ManagementCreate() {
               <label>رقم الهاتف <span className="req">*</span></label>
               <div className="phone-input-wrapper">
                 <div className="country-code">🇪🇬 +20</div>
-                <input name="phone" type="text" className="form-input phone-input" onChange={handleChange} value={form.phone} />
+                <input name="phone" type="text" className="form-input phone-input" onChange={handleChange} value={form.phone} maxLength="11" />
               </div>
             </div>
             <div className="form-group">

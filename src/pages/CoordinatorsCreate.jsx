@@ -25,7 +25,14 @@ function CoordinatorsCreate() {
     return normalize(b.admin) === normalize(form.admin) && normalize(b.center) === normalize(form.center);
   });
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = e => {
+    const { name, value } = e.target;
+    if (name === 'phone') {
+      setForm({ ...form, phone: value.replace(/\D/g, '').slice(0, 11) });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
+  };
 
   const handleAdminChange = e => setForm({ ...form, admin: e.target.value, center: '', branch: '' });
   const handleCenterChange = e => setForm({ ...form, center: e.target.value, branch: '' });
@@ -59,6 +66,11 @@ function CoordinatorsCreate() {
   }, [isEditing, coordinatorId, coordinators]);
 
   const handleSubmit = () => {
+    if (form.phone && form.phone.length !== 11) {
+      alert('رقم الهاتف يجب أن يكون مكوناً من 11 رقماً');
+      return;
+    }
+
     if (!form.name || !form.admin || !form.center || !form.national_id || !form.registry_no) {
       alert('الرجاء ملء الحقول المطلوبة');
       return;
@@ -168,7 +180,7 @@ function CoordinatorsCreate() {
             <label>رقم الهاتف <span className="req">*</span></label>
             <div style={{ display: 'flex' }}>
                <span style={{ padding: '0 10px', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderLeft: 'none', borderRadius: '0 6px 6px 0', display: 'flex', alignItems: 'center', direction: 'ltr' }}>+20 <img src="https://flagcdn.com/w20/eg.png" alt="Egypt" style={{ marginLeft: '5px' }}/></span>
-               <input name="phone" type="text" className="form-input" placeholder="أدخل رقم الهاتف" value={form.phone} onChange={handleChange} style={{ borderRadius: '6px 0 0 6px', flex: 1 }} dir="ltr" />
+               <input name="phone" type="text" className="form-input" placeholder="أدخل رقم الهاتف" value={form.phone} onChange={handleChange} style={{ borderRadius: '6px 0 0 6px', flex: 1 }} dir="ltr" maxLength="11" />
             </div>
           </div>
           <div className="form-group">

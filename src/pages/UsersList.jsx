@@ -163,6 +163,10 @@ function UsersList() {
         alert('يرجى ملء الاسم الكامل ورقم الهاتف على الأقل (*)');
         return;
       }
+      if (modalForm.phone.length !== 11) {
+        alert('رقم الهاتف يجب أن يكون مكوناً من 11 رقماً');
+        return;
+      }
       
       // إعداد بيانات التحديث
       const updateData = {
@@ -205,6 +209,10 @@ function UsersList() {
     } else {
       if (!modalForm.name || !modalForm.phone || !modalForm.national_id || !modalForm.record_number) {
         alert('يرجى ملء الاسم الكامل، رقم الهاتف، الرقم القومي، ورقم السجل (*)');
+        return;
+      }
+      if (modalForm.phone.length !== 11) {
+        alert('رقم الهاتف يجب أن يكون مكوناً من 11 رقماً');
         return;
       }
       
@@ -417,8 +425,10 @@ function UsersList() {
             <div className="form-group" style={{ marginBottom: '15px', textAlign: 'right' }}>
               <label>رقم الهاتف <span className="req">*</span></label>
               <input 
-                type="text" className="form-input" placeholder="رقم الهاتف" dir="ltr" style={{ textAlign: 'right' }}
-                value={modalForm.phone} onChange={e => setModalForm({...modalForm, phone: e.target.value})}
+                type="text" className="form-input" placeholder="رقم الهاتف (11 رقم)" dir="ltr" style={{ textAlign: 'right' }}
+                value={modalForm.phone} 
+                maxLength={11}
+                onChange={e => setModalForm({...modalForm, phone: e.target.value.replace(/\D/g, '')})}
               />
             </div>
 

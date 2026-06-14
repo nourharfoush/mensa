@@ -16,7 +16,14 @@ function PlatformCoordinatorsCreate() {
     address: '', username: '', password: ''
   });
 
-  const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = e => {
+    const { name, value } = e.target;
+    if (name === 'phone') {
+      setForm({ ...form, phone: value.replace(/\D/g, '').slice(0, 11) });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
+  };
 
   useEffect(() => {
     if (isEditing && itemId) {
@@ -36,6 +43,11 @@ function PlatformCoordinatorsCreate() {
   }, [isEditing, itemId, platformCoordinators]);
 
   const handleSubmit = () => {
+    if (form.phone && form.phone.length !== 11) {
+      alert('رقم الهاتف يجب أن يكون مكوناً من 11 رقماً');
+      return;
+    }
+
     if (!form.name || !form.national_id || !form.registry_no) {
       alert('الرجاء ملء الحقول المطلوبة');
       return;
@@ -119,7 +131,7 @@ function PlatformCoordinatorsCreate() {
         <div className="form-grid" style={{ marginBottom: '30px' }}>
           <div className="form-group"><label>الاسم <span className="req">*</span></label><input name="name" type="text" className="form-input" placeholder="أدخل الاسم الكامل" value={form.name} onChange={handleChange} /></div>
           <div className="form-group"><label>البريد الإلكتروني</label><input name="email" type="email" className="form-input" placeholder="example@email.com" value={form.email} onChange={handleChange} dir="ltr" /></div>
-          <div className="form-group"><label>رقم الهاتف</label><input name="phone" type="text" className="form-input" placeholder="أدخل رقم الهاتف" value={form.phone} onChange={handleChange} dir="ltr" /></div>
+          <div className="form-group"><label>رقم الهاتف</label><input name="phone" type="text" className="form-input" placeholder="أدخل رقم الهاتف" value={form.phone} onChange={handleChange} dir="ltr" maxLength="11" /></div>
           <div className="form-group"><label>الرقم القومي <span className="req">*</span></label><input name="national_id" type="text" className="form-input" placeholder="أدخل الرقم القومي" value={form.national_id} onChange={handleChange} /></div>
           <div className="form-group"><label>التخصص</label><select name="specialization" className="form-select" value={form.specialization} onChange={handleChange}><option value="">اختار التخصص</option><option value="إداري">إداري</option><option value="علمي">علمي</option></select></div>
           <div className="form-group"><label>رقم السجل <span className="req">*</span></label><input name="registry_no" type="number" className="form-input" placeholder="أدخل رقم السجل" value={form.registry_no} onChange={handleChange} /></div>

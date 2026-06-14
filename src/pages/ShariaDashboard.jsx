@@ -362,6 +362,10 @@ function ShariaDashboard() {
 
   const handleAddStudent = (e) => {
     e.preventDefault();
+    if (studentForm.phone && studentForm.phone.length !== 11) {
+      alert('رقم الجوال يجب أن يكون مكوناً من 11 رقماً');
+      return;
+    }
     addShariaStudent(studentForm);
     
     // Auto-create user account
@@ -400,6 +404,10 @@ function ShariaDashboard() {
   const handleEditStudent = (e) => {
     e.preventDefault();
     if (!editingStudent) return;
+    if (editingStudent.phone && editingStudent.phone.length !== 11) {
+      alert('رقم الجوال يجب أن يكون مكوناً من 11 رقماً');
+      return;
+    }
     
     const originalStudent = students.find(s => s.id === editingStudent.id);
     const oldNationalId = originalStudent ? originalStudent.nationalId : null;
@@ -530,6 +538,10 @@ function ShariaDashboard() {
 
   const handleAddTeacher = (e) => {
     e.preventDefault();
+    if (teacherForm.phone && teacherForm.phone.length !== 11) {
+      alert('رقم الهاتف يجب أن يكون مكوناً من 11 رقماً');
+      return;
+    }
     const finalForm = {
       ...teacherForm,
       branch: (teacherForm.branches || []).join('، ')
@@ -552,6 +564,10 @@ function ShariaDashboard() {
   const handleEditTeacher = (e) => {
     e.preventDefault();
     if (!editingTeacher) return;
+    if (editingTeacher.phone && editingTeacher.phone.length !== 11) {
+      alert('رقم الهاتف يجب أن يكون مكوناً من 11 رقماً');
+      return;
+    }
     updateShariaTeacher(editingTeacher.id, editingTeacher);
     setEditingTeacher(null);
   };
@@ -3753,7 +3769,7 @@ function ShariaDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>رقم الجوال</label>
-                    <input type="text" required value={studentForm.phone} onChange={(e) => setStudentForm({ ...studentForm, phone: e.target.value })} style={inputStyle} />
+                    <input type="text" required maxLength={11} value={studentForm.phone} onChange={(e) => setStudentForm({ ...studentForm, phone: e.target.value.replace(/\D/g, '') })} style={inputStyle} />
                   </div>
                 </div>
 
@@ -3931,7 +3947,7 @@ function ShariaDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>رقم الجوال</label>
-                    <input type="text" required value={editingStudent.phone || ''} onChange={(e) => setEditingStudent({ ...editingStudent, phone: e.target.value })} style={inputStyle} />
+                    <input type="text" required maxLength={11} value={editingStudent.phone || ''} onChange={(e) => setEditingStudent({ ...editingStudent, phone: e.target.value.replace(/\D/g, '') })} style={inputStyle} />
                   </div>
                 </div>
 
@@ -5169,7 +5185,7 @@ function ShariaDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>رقم الهاتف</label>
-                    <input type="text" required value={teacherForm.phone} onChange={(e) => setTeacherForm({ ...teacherForm, phone: e.target.value })} style={inputStyle} />
+                    <input type="text" required maxLength={11} value={teacherForm.phone} onChange={(e) => setTeacherForm({ ...teacherForm, phone: e.target.value.replace(/\D/g, '') })} style={inputStyle} />
                   </div>
                 </div>
 
@@ -5372,7 +5388,7 @@ function ShariaDashboard() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>رقم الهاتف</label>
-                    <input type="text" required value={editingTeacher.phone || ''} onChange={(e) => setEditingTeacher({ ...editingTeacher, phone: e.target.value })} style={inputStyle} />
+                    <input type="text" required maxLength={11} value={editingTeacher.phone || ''} onChange={(e) => setEditingTeacher({ ...editingTeacher, phone: e.target.value.replace(/\D/g, '') })} style={inputStyle} />
                   </div>
                 </div>
 
