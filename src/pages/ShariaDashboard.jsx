@@ -48,7 +48,9 @@ function ShariaDashboard() {
     shariaStudents = [], addShariaStudent, updateShariaStudent, deleteShariaStudent, bulkImportShariaStudents,
     shariaTeachers = [], addShariaTeacher, updateShariaTeacher, deleteShariaTeacher, bulkImportShariaTeachers,
     shariaLiveLectures = [], addShariaLive, updateShariaLive, deleteShariaLive,
-    shariaSchedules = [], addShariaSchedule, updateShariaSchedule, deleteShariaSchedule
+    shariaSchedules = [], addShariaSchedule, updateShariaSchedule, deleteShariaSchedule,
+    shariaAttendance = [], addShariaAttendance,
+    lectureAccessLogs = [], addLectureAccessLog
   } = useAppData();
 
   const location = useLocation();
@@ -253,6 +255,12 @@ function ShariaDashboard() {
     teacher: '',
     place: '',
     isWeekly: true
+  });
+
+  const [attForm, setAttForm] = useState({
+    courseName: '',
+    date: new Date().toISOString().split('T')[0],
+    liveId: ''
   });
 
   // --- HANDLERS FOR ADDING ITEMS ---
@@ -1310,8 +1318,17 @@ function ShariaDashboard() {
     { key: 'schedules', name: 'جدول المحاضرات الحضورية', desc: 'جدولة وإدارة المحاضرات الأسبوعية الحضورية وتوزيعها بالفروع والمحافظات.', icon: Calendar, color: '#6366f1' },
     { key: 'exams', name: 'قسم الاختبارات والامتحانات', desc: 'تنظيم وجدولة الامتحانات، وتصميم أوراق الاختبارات الفترية والنهائية.', icon: FileText, color: '#14b8a6' },
     { key: 'results', name: 'قسم النتائج والتقديرات', desc: 'إصدار نتائج المحافظة وعرض درجات الدارسين ونسب النجاح والرسوب.', icon: Award, color: '#06b6d4' },
-    { key: 'news', name: 'قسم الأخبار والإعلانات', desc: 'إضافة الإعلانات الهامة وتعميم المواعيد وجداول الفصول الدراسية العامة للرواق.', icon: Newspaper, color: '#84cc16' },
   ];
+
+  if (isShariaStudent) {
+    allSectionGridItems.push({
+      key: 'registerAttendance',
+      name: 'تسجيل حضور المحاضرات',
+      desc: 'تسجيل وإثبات حضورك للمحاضرات التفاعلية بعد انتهائها.',
+      icon: Check,
+      color: '#10b981'
+    });
+  }
 
   const sectionGridItems = isShariaStudent
     ? allSectionGridItems.filter(item => !['admins', 'externalAdmins', 'students', 'teachers'].includes(item.key))
@@ -3395,6 +3412,14 @@ function ShariaDashboard() {
                         href={live.link} 
                         target="_blank" 
                         rel="noreferrer"
+                        onClick={() => {
+                          if (isShariaStudent && loggedInStudent && isActive) {
+                            addLectureAccessLog({
+                              studentId: loggedInStudent.id,
+                              lectureId: String(live.id)
+                            });
+                          }
+                        }}
                         style={{
                           backgroundColor: isActive ? '#ef4444' : 'var(--border-subtle)',
                           color: 'white',
@@ -3589,6 +3614,232 @@ function ShariaDashboard() {
           </div>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* 12. TAB: REGISTER ATTENDANCE (تسجيل حضور المحاضرات للدارسين) */}
+      {/* ========================================================================= */}
+      {activeTab === 'registerAttendance' && isShariaStudent && loggedInStudent && (() => {
+        const studentCourses = courses.filter(c => 
+          c.stage === loggedInStudent.stage && 
+          c.level === loggedInStudent.level &&
+          (loggedInStudent.stage !== 'المتقدمة' || c.discipline === loggedInStudent.discipline)
+        );
+
+        const getArabicDayOfWeek = (dateString) => {
+          if (!dateString) return '';
+          const [y, m, d] = dateString.split('-').map(Number);
+          const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+          const dayIndex = new Date(y, m - 1, d).getDay();
+          return days[dayIndex];
+        };
+
+        const selectedDay = getArabicDayOfWeek(attForm.date);
+
+        const matchingLives = shariaLiveLectures.filter(live => 
+          live.stage === loggedInStudent.stage &&
+          live.level === loggedInStudent.level &&
+          live.day === selectedDay &&
+          (attForm.courseName ? live.title.includes(attForm.courseName) || attForm.courseName.includes(live.title) : true)
+        );
+
+        const handleRegisterAttendanceSubmit = (e) => {
+          e.preventDefault();
+          if (!attForm.courseName) {
+            alert('يرجى اختيار المادة الدراسية');
+            return;
+          }
+          if (!attForm.liveId) {
+            alert('يرجى اختيار المحاضرة والمحاضر');
+            return;
+          }
+
+          const selectedLive = shariaLiveLectures.find(l => String(l.id) === String(attForm.liveId));
+          if (!selectedLive) {
+            alert('المحاضرة المحددة غير موجودة');
+            return;
+          }
+
+          const hasPressedLink = lectureAccessLogs.some(log => 
+            log.studentId === loggedInStudent.id && 
+            String(log.lectureId) === String(selectedLive.id)
+          );
+
+          if (!hasPressedLink) {
+            alert('عذراً، لا يمكنك تسجيل الحضور لأنك لم تقم بالضغط على رابط دخول المحاضرة في وقتها المحدد.');
+            return;
+          }
+
+          const [y, m, d] = attForm.date.split('-').map(Number);
+          const [endHour, endMin] = selectedLive.timeEnd.split(':').map(Number);
+          const lectureEndTime = new Date(y, m - 1, d, endHour, endMin, 0);
+          const now = new Date();
+
+          if (now < lectureEndTime) {
+            alert('عذراً، لا يمكن تسجيل الحضور إلا بعد انتهاء وقت المحاضرة.');
+            return;
+          }
+
+          const limitTime = new Date(lectureEndTime.getTime() + 24 * 60 * 60 * 1000);
+          if (now > limitTime) {
+            alert('عذراً، انتهت المهلة المحددة لتسجيل الحضور لهذه المحاضرة (24 ساعة من نهاية المحاضرة).');
+            return;
+          }
+
+          const alreadyRegistered = shariaAttendance.some(att => 
+            att.studentId === loggedInStudent.id && 
+            String(att.lectureId) === String(selectedLive.id) &&
+            att.date === attForm.date
+          );
+
+          if (alreadyRegistered) {
+            alert('لقد قمت بتسجيل حضور هذه المحاضرة بالفعل مسبقاً.');
+            return;
+          }
+
+          addShariaAttendance({
+            studentId: loggedInStudent.id,
+            studentName: loggedInStudent.name,
+            courseName: attForm.courseName,
+            lectureId: selectedLive.id,
+            lectureTitle: selectedLive.title,
+            teacher: selectedLive.teacher,
+            date: attForm.date,
+            timestamp: new Date().toISOString()
+          });
+
+          alert('✅ تم تسجيل حضورك للمحاضرة بنجاح.');
+          setAttForm(prev => ({ ...prev, liveId: '' }));
+        };
+
+        const myHistory = shariaAttendance.filter(att => att.studentId === loggedInStudent.id);
+
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', alignItems: 'start' }}>
+            
+            {/* Form Card */}
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '24px' }}>
+              <h3 style={{ fontSize: '16px', color: 'var(--accent-gold)', fontWeight: 'bold', marginBottom: '20px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '10px' }}>
+                تسجيل حضور محاضرة اليوم
+              </h3>
+
+              <form onSubmit={handleRegisterAttendanceSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <div>
+                  <label style={labelStyle}>المادة / المقرر الدراسي</label>
+                  <select 
+                    value={attForm.courseName}
+                    onChange={(e) => setAttForm({ ...attForm, courseName: e.target.value, liveId: '' })}
+                    style={selectStyle}
+                    required
+                  >
+                    <option value="">-- اختر المادة --</option>
+                    {studentCourses.map(c => (
+                      <option key={c.id} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>التاريخ</label>
+                  <input 
+                    type="date"
+                    value={attForm.date}
+                    onChange={(e) => setAttForm({ ...attForm, date: e.target.value, liveId: '' })}
+                    style={inputStyle}
+                    required
+                  />
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    يوافق يوم: <strong style={{ color: 'var(--accent-gold)' }}>{selectedDay || '—'}</strong>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>المحاضرة والمحاضر المجدول</label>
+                  <select 
+                    value={attForm.liveId}
+                    onChange={(e) => setAttForm({ ...attForm, liveId: e.target.value })}
+                    style={selectStyle}
+                    required
+                    disabled={!attForm.courseName}
+                  >
+                    <option value="">-- اختر المحاضرة المجدولة --</option>
+                    {matchingLives.map(live => (
+                      <option key={live.id} value={live.id}>
+                        {live.teacher} - {live.title} ({live.timeStart} - {live.timeEnd})
+                      </option>
+                    ))}
+                  </select>
+                  {attForm.courseName && matchingLives.length === 0 && (
+                    <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '5px' }}>
+                      لا توجد محاضرات مجدولة أونلاين لهذا المقرر في يوم {selectedDay}.
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  style={{
+                    padding: '12px',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    marginTop: '10px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <Check size={16} />
+                  تسجيل الحضور
+                </button>
+              </form>
+            </div>
+
+            {/* History Card */}
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '24px' }}>
+              <h3 style={{ fontSize: '16px', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '20px', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '10px' }}>
+                سجل حضورك المعتمد
+              </h3>
+
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                      <th style={{ padding: '10px 5px', color: 'var(--text-secondary)' }}>المادة</th>
+                      <th style={{ padding: '10px 5px', color: 'var(--text-secondary)' }}>المحاضر</th>
+                      <th style={{ padding: '10px 5px', color: 'var(--text-secondary)' }}>التاريخ</th>
+                      <th style={{ padding: '10px 5px', color: 'var(--text-secondary)', textAlign: 'center' }}>الحالة</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {myHistory.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                          لم تقم بتسجيل حضور أي محاضرات بعد.
+                        </td>
+                      </tr>
+                    ) : (
+                      myHistory.map(h => (
+                        <tr key={h.id} style={{ borderBottom: '1px dotted var(--border-subtle)' }}>
+                          <td style={{ padding: '10px 5px', color: 'var(--text-primary)' }}>{h.courseName}</td>
+                          <td style={{ padding: '10px 5px', color: 'var(--text-secondary)' }}>{h.teacher}</td>
+                          <td style={{ padding: '10px 5px', color: 'var(--text-muted)' }}>{h.date}</td>
+                          <td style={{ padding: '10px 5px', textAlign: 'center' }}>
+                            <span style={{ backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' }}>
+                              حاضر
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        );
+      })()}
 
       {/* ========================================================================= */}
       {/* --- ALL POPUP MODALS / FORM VIEWS --- */}

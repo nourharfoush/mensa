@@ -307,6 +307,9 @@ export function AppDataProvider({ children }) {
     }
   ]));
 
+  const [shariaAttendance, setShariaAttendance] = useState(() => getFromLocalStorage('sharia_attendance', []));
+  const [lectureAccessLogs, setLectureAccessLogs] = useState(() => getFromLocalStorage('lecture_access_logs', []));
+
   // Save permissions to localStorage
   useEffect(() => {
     saveToLocalStorage('rolePermissions', rolePermissions);
@@ -760,6 +763,14 @@ export function AppDataProvider({ children }) {
   useEffect(() => {
     saveToLocalStorage('sharia_schedules', shariaSchedules);
   }, [shariaSchedules]);
+
+  useEffect(() => {
+    saveToLocalStorage('sharia_attendance', shariaAttendance);
+  }, [shariaAttendance]);
+
+  useEffect(() => {
+    saveToLocalStorage('lecture_access_logs', lectureAccessLogs);
+  }, [lectureAccessLogs]);
 
   useEffect(() => {
     setAdministrations(prev => {
@@ -1541,6 +1552,20 @@ export function AppDataProvider({ children }) {
     }
   };
 
+  const addShariaAttendance = (record) => {
+    const newRecord = { ...record, id: String(Date.now() + Math.random()) };
+    setShariaAttendance(prev => [...prev, newRecord]);
+  };
+
+  const addLectureAccessLog = (log) => {
+    const newLog = { ...log, id: String(Date.now() + Math.random()), timestamp: new Date().toISOString() };
+    setLectureAccessLogs(prev => {
+      const exists = prev.some(l => l.studentId === log.studentId && l.lectureId === log.lectureId);
+      if (exists) return prev;
+      return [...prev, newLog];
+    });
+  };
+
   const updateRolePermissions = (newPermissions) => {
     setRolePermissions(newPermissions);
   };
@@ -1593,6 +1618,8 @@ export function AppDataProvider({ children }) {
       shariaTeachers, addShariaTeacher, updateShariaTeacher, deleteShariaTeacher, bulkImportShariaTeachers,
       shariaLiveLectures, addShariaLive, updateShariaLive, deleteShariaLive,
       shariaSchedules, addShariaSchedule, updateShariaSchedule, deleteShariaSchedule,
+      shariaAttendance, addShariaAttendance,
+      lectureAccessLogs, addLectureAccessLog,
 
       theme, toggleTheme,
       rolePermissions, updateRolePermissions, hasPermission,
