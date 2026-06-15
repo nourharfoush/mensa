@@ -1301,11 +1301,15 @@ function ShariaDashboard() {
     return getFilteredLiveLectures().filter(isLectureActiveNow).length;
   };
 
-  const dynamicStats = [
-    { id: 3, title: 'الدارسين بالموقع المختار', value: getTotalStudents(), iconColor: '#f97316', iconType: 'users', tab: 'students' },
-    { id: 5, title: 'أعضاء هيئة التدريس بالموقع', value: getFilteredTeachers().length, iconColor: '#f59e0b', iconType: 'users', tab: 'teachers' },
-    { id: 4, title: 'البثوث بالموقع المختار', value: getFilteredLiveLectures().length, iconColor: '#3b82f6', iconType: 'book-open', tab: 'live' }
-  ];
+  const dynamicStats = isShariaStudent
+    ? [
+        { id: 4, title: 'البثوث بالموقع المختار', value: getFilteredLiveLectures().length, iconColor: '#3b82f6', iconType: 'book-open', tab: 'live' }
+      ]
+    : [
+        { id: 3, title: 'الدارسين بالموقع المختار', value: getTotalStudents(), iconColor: '#f97316', iconType: 'users', tab: 'students' },
+        { id: 5, title: 'أعضاء هيئة التدريس بالموقع', value: getFilteredTeachers().length, iconColor: '#f59e0b', iconType: 'users', tab: 'teachers' },
+        { id: 4, title: 'البثوث بالموقع المختار', value: getFilteredLiveLectures().length, iconColor: '#3b82f6', iconType: 'book-open', tab: 'live' }
+      ];
 
   const allSectionGridItems = [
     { key: 'admins', name: 'الادارة العليا الادمن', desc: 'إدارة مدراء الرواق ومستشاري المواد وصلاحياتهم العلمية والإدارية.', icon: Shield, color: '#a855f7' },
