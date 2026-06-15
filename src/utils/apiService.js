@@ -3,9 +3,15 @@ const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  // Detect host IP dynamically so other devices on the same Wi-Fi connect to this computer's backend instead of localhost
-  const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-  return `http://${hostname}:5000/api`;
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    // If deployed on Vercel or any public domain, use relative path
+    if (hostname.includes('vercel.app') || (!['localhost', '127.0.0.1'].includes(hostname) && !/^\d+\.\d+\.\d+\.\d+$/.test(hostname))) {
+      return '/api';
+    }
+    return `http://${hostname}:5000/api`;
+  }
+  return 'http://localhost:5000/api';
 };
 const API_BASE_URL = getApiBaseUrl();
 
