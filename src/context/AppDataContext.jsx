@@ -451,8 +451,10 @@ export function AppDataProvider({ children }) {
           return {
             ...u,
             username: 'admin',
+            email: 'admin',
+            national_id: 'admin',
+            record_number: 'admin',
             password: u.password || u.record_number || '',
-            record_number: u.record_number || u.password || '',
           };
         }
 
@@ -1057,9 +1059,19 @@ export function AppDataProvider({ children }) {
 
   const normalizeUserFields = (user) => {
     const isAdminRole = user.role === 'admin';
+    if (isAdminRole) {
+      return {
+        ...user,
+        username: 'admin',
+        email: 'admin',
+        national_id: 'admin',
+        record_number: 'admin',
+        password: user.password || user.record_number || '',
+      };
+    }
     return {
       ...user,
-      username: isAdminRole ? 'admin' : (user.username || user.national_id || user.email || ''),
+      username: user.username || user.national_id || user.email || '',
       email: user.email || user.national_id || '',
       password: user.password || user.record_number || '',
       record_number: user.record_number || user.password || '',
@@ -1092,9 +1104,19 @@ export function AppDataProvider({ children }) {
     const mergeAndNormalize = (u) => {
       const merged = { ...u, ...updatedUser };
       const isAdminRole = merged.role === 'admin';
+      if (isAdminRole) {
+        return {
+          ...merged,
+          username: 'admin',
+          email: 'admin',
+          national_id: 'admin',
+          record_number: 'admin',
+          password: merged.password || merged.record_number || '',
+        };
+      }
       return {
         ...merged,
-        username: isAdminRole ? 'admin' : (merged.national_id || merged.email || merged.username || ''),
+        username: merged.national_id || merged.email || merged.username || '',
         email: merged.email || merged.national_id || '',
         password: merged.password || merged.record_number || '',
         record_number: merged.record_number || merged.password || '',

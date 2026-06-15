@@ -158,49 +158,73 @@ function UsersList() {
 
   const handleModalSave = () => {
     if (editingUser) {
-      // في حالة التعديل: الاسم الكامل ورقم الهاتف فقط مطلوبان
-      if (!modalForm.name || !modalForm.phone) {
-        alert('يرجى ملء الاسم الكامل ورقم الهاتف على الأقل (*)');
-        return;
-      }
-      if (modalForm.phone.length !== 11) {
-        alert('رقم الهاتف يجب أن يكون مكوناً من 11 رقماً');
-        return;
+      const isSystemAdmin = editingUser.role === 'admin' || editingUser.username === 'admin';
+
+      if (!isSystemAdmin) {
+        // في حالة التعديل: الاسم الكامل ورقم الهاتف فقط مطلوبان
+        if (!modalForm.name || !modalForm.phone) {
+          alert('يرجى ملء الاسم الكامل ورقم الهاتف على الأقل (*)');
+          return;
+        }
+        if (modalForm.phone.length !== 11) {
+          alert('رقم الهاتف يجب أن يكون مكوناً من 11 رقماً');
+          return;
+        }
+      } else {
+        if (!modalForm.name) {
+          alert('يرجى ملء الاسم الكامل للأدمن (*)');
+          return;
+        }
       }
       
       // إعداد بيانات التحديث
-      const updateData = {
-        name: modalForm.name,
-        phone: modalForm.phone,
-        role: modalForm.role,
-        userAdmin: modalForm.userAdmin,
-        userCenter: modalForm.userCenter,
-        userBranch: modalForm.userBranch,
-        userSession: modalForm.userSession
-      };
-      
-      // تحديث اليوزر (email) إذا تم تغييره
-      if (modalForm.email) {
-        updateData.email = modalForm.email;
-        updateData.username = modalForm.email;
-      }
-      
-      // تحديث كلمة المرور إذا أُدخلت
-      if (modalForm.password) {
-        updateData.password = modalForm.password;
-        updateData.record_number = modalForm.password;
-      }
-      
-      // تحديث الرقم القومي إذا أُدخل
-      if (modalForm.national_id) {
-        updateData.national_id = modalForm.national_id;
-      }
-      
-      // تحديث رقم السجل إذا أُدخل
-      if (modalForm.record_number) {
-        updateData.record_number = modalForm.record_number;
-        if (!modalForm.password) {
-          updateData.password = modalForm.record_number;
+      let updateData;
+      if (isSystemAdmin) {
+        updateData = {
+          name: modalForm.name,
+          role: 'admin',
+          username: 'admin',
+          email: 'admin',
+          national_id: 'admin',
+          record_number: 'admin'
+        };
+        if (modalForm.password) {
+          updateData.password = modalForm.password;
+        }
+      } else {
+        updateData = {
+          name: modalForm.name,
+          phone: modalForm.phone,
+          role: modalForm.role,
+          userAdmin: modalForm.userAdmin,
+          userCenter: modalForm.userCenter,
+          userBranch: modalForm.userBranch,
+          userSession: modalForm.userSession
+        };
+        
+        // تحديث اليوزر (email) إذا تم تغييره
+        if (modalForm.email) {
+          updateData.email = modalForm.email;
+          updateData.username = modalForm.email;
+        }
+        
+        // تحديث كلمة المرور إذا أُدخلت
+        if (modalForm.password) {
+          updateData.password = modalForm.password;
+          updateData.record_number = modalForm.password;
+        }
+        
+        // تحديث الرقم القومي إذا أُدخل
+        if (modalForm.national_id) {
+          updateData.national_id = modalForm.national_id;
+        }
+        
+        // تحديث رقم السجل إذا أُدخل
+        if (modalForm.record_number) {
+          updateData.record_number = modalForm.record_number;
+          if (!modalForm.password) {
+            updateData.password = modalForm.record_number;
+          }
         }
       }
       
@@ -404,13 +428,15 @@ function UsersList() {
             {/* في حالة التعديل، نعرض حقول تغيير اسم المستخدم وكلمة المرور */}
             {editingUser && (
               <>
-                <div className="form-group" style={{ marginBottom: '15px', textAlign: 'right' }}>
-                  <label>اسم المستخدم (اليوزر) <span className="req">*</span></label>
-                  <input 
-                    type="text" className="form-input" placeholder="اسم المستخدم أو البريد" dir="ltr" style={{ textAlign: 'right' }}
-                    value={modalForm.email} onChange={e => setModalForm({...modalForm, email: e.target.value})}
-                  />
-                </div>
+                {editingUser.role !== 'admin' && (
+                  <div className="form-group" style={{ marginBottom: '15px', textAlign: 'right' }}>
+                    <label>اسم المستخدم (اليوزر) <span className="req">*</span></label>
+                    <input 
+                      type="text" className="form-input" placeholder="اسم المستخدم أو البريد" dir="ltr" style={{ textAlign: 'right' }}
+                      value={modalForm.email} onChange={e => setModalForm({...modalForm, email: e.target.value})}
+                    />
+                  </div>
+                )}
 
                 <div className="form-group" style={{ marginBottom: '15px', textAlign: 'right' }}>
                   <label>كلمة المرور الجديدة (اتركه فارغاً للاحتفاظ بالحالية)</label>
@@ -422,57 +448,61 @@ function UsersList() {
               </>
             )}
 
-            <div className="form-group" style={{ marginBottom: '15px', textAlign: 'right' }}>
-              <label>رقم الهاتف <span className="req">*</span></label>
-              <input 
-                type="text" className="form-input" placeholder="رقم الهاتف (11 رقم)" dir="ltr" style={{ textAlign: 'right' }}
-                value={modalForm.phone} 
-                maxLength={11}
-                onChange={e => setModalForm({...modalForm, phone: e.target.value.replace(/\D/g, '')})}
-              />
-            </div>
+            {(!editingUser || editingUser.role !== 'admin') && (
+              <>
+                <div className="form-group" style={{ marginBottom: '15px', textAlign: 'right' }}>
+                  <label>رقم الهاتف <span className="req">*</span></label>
+                  <input 
+                    type="text" className="form-input" placeholder="رقم الهاتف (11 رقم)" dir="ltr" style={{ textAlign: 'right' }}
+                    value={modalForm.phone} 
+                    maxLength={11}
+                    onChange={e => setModalForm({...modalForm, phone: e.target.value.replace(/\D/g, '')})}
+                  />
+                </div>
 
-            <div className="form-group" style={{ marginBottom: '15px', textAlign: 'right' }}>
-              <label>الرقم القومي {!editingUser && <span className="req">*</span>}</label>
-              <input 
-                type="text" className="form-input" placeholder="الرقم القومي (سيكون اسم المستخدم)"
-                value={modalForm.national_id} onChange={e => setModalForm({...modalForm, national_id: e.target.value})}
-              />
-            </div>
+                <div className="form-group" style={{ marginBottom: '15px', textAlign: 'right' }}>
+                  <label>الرقم القومي {!editingUser && <span className="req">*</span>}</label>
+                  <input 
+                    type="text" className="form-input" placeholder="الرقم القومي (سيكون اسم المستخدم)"
+                    value={modalForm.national_id} onChange={e => setModalForm({...modalForm, national_id: e.target.value})}
+                  />
+                </div>
 
-            <div className="form-group" style={{ marginBottom: '15px', textAlign: 'right' }}>
-              <label>رقم السجل {!editingUser && <span className="req">*</span>}</label>
-              <input 
-                type="text" className="form-input" placeholder="رقم السجل (سيكون كلمة المرور)"
-                value={modalForm.record_number} onChange={e => setModalForm({...modalForm, record_number: e.target.value})}
-              />
-            </div>
+                <div className="form-group" style={{ marginBottom: '15px', textAlign: 'right' }}>
+                  <label>رقم السجل {!editingUser && <span className="req">*</span>}</label>
+                  <input 
+                    type="text" className="form-input" placeholder="رقم السجل (سيكون كلمة المرور)"
+                    value={modalForm.record_number} onChange={e => setModalForm({...modalForm, record_number: e.target.value})}
+                  />
+                </div>
 
-            <div className="form-group" style={{ marginBottom: '25px', textAlign: 'right' }}>
-              <label>الدور <span className="req">*</span></label>
-              <select 
-                className="form-select"
-                value={modalForm.role} onChange={e => setModalForm({...modalForm, role: e.target.value})}
-              >
-                {allowedRoles.filter(r => r.group === 'system').map(r => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
-                ))}
-                {allowedRoles.some(r => r.group === 'rowaq') && (
-                  <optgroup label="شؤون الأروقة">
-                    {allowedRoles.filter(r => r.group === 'rowaq').map(r => (
+                <div className="form-group" style={{ marginBottom: '25px', textAlign: 'right' }}>
+                  <label>الدور <span className="req">*</span></label>
+                  <select 
+                    className="form-select"
+                    value={modalForm.role} onChange={e => setModalForm({...modalForm, role: e.target.value})}
+                  >
+                    {allowedRoles.filter(r => r.group === 'system').map(r => (
                       <option key={r.value} value={r.value}>{r.label}</option>
                     ))}
-                  </optgroup>
-                )}
-                {allowedRoles.some(r => r.group === 'platform') && (
-                  <optgroup label="المنصة">
-                    {allowedRoles.filter(r => r.group === 'platform').map(r => (
-                      <option key={r.value} value={r.value}>{r.label}</option>
-                    ))}
-                  </optgroup>
-                )}
-              </select>
-            </div>
+                    {allowedRoles.some(r => r.group === 'rowaq') && (
+                      <optgroup label="شؤون الأروقة">
+                        {allowedRoles.filter(r => r.group === 'rowaq').map(r => (
+                          <option key={r.value} value={r.value}>{r.label}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {allowedRoles.some(r => r.group === 'platform') && (
+                      <optgroup label="المنصة">
+                        {allowedRoles.filter(r => r.group === 'platform').map(r => (
+                          <option key={r.value} value={r.value}>{r.label}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                </div>
+              </>
+            )}
 
             {/* الحقول الديناميكية بناءً على الدور المختار */}
             
