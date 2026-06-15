@@ -446,6 +446,18 @@ export function AppDataProvider({ children }) {
     setUsers(prev => {
       // 1) تطبيع المستخدمين الحاليين
       let normalized = prev.map(u => {
+        const isSystemAdmin = u.role === 'admin' || u.username === 'admin' || u.national_id === 'admin';
+        if (isSystemAdmin) {
+          return {
+            ...u,
+            username: 'admin',
+            email: 'admin',
+            national_id: 'admin',
+            password: u.password || u.record_number || '',
+            record_number: u.record_number || u.password || '',
+          };
+        }
+
         const nid = String(u.national_id || '').trim();
         const em = String(u.email || '').trim();
         const uname = String(u.username || '').trim();
@@ -1045,13 +1057,17 @@ export function AppDataProvider({ children }) {
     }
   };
 
-  const normalizeUserFields = (user) => ({
-    ...user,
-    username: user.username || user.national_id || user.email || '',
-    email: user.email || user.national_id || '',
-    password: user.password || user.record_number || '',
-    record_number: user.record_number || user.password || '',
-  });
+  const normalizeUserFields = (user) => {
+    const isSystemAdmin = user.role === 'admin' || user.username === 'admin' || user.national_id === 'admin';
+    return {
+      ...user,
+      username: isSystemAdmin ? 'admin' : (user.username || user.national_id || user.email || ''),
+      email: isSystemAdmin ? 'admin' : (user.email || user.national_id || ''),
+      national_id: isSystemAdmin ? 'admin' : (user.national_id || user.email || user.username || ''),
+      password: user.password || user.record_number || '',
+      record_number: user.record_number || user.password || '',
+    };
+  };
 
   const addUser = (user) => {
     const normalizedUser = {
@@ -1078,10 +1094,12 @@ export function AppDataProvider({ children }) {
   const updateUser = (id, updatedUser) => {
     const mergeAndNormalize = (u) => {
       const merged = { ...u, ...updatedUser };
+      const isSystemAdmin = merged.role === 'admin' || merged.username === 'admin' || merged.national_id === 'admin';
       return {
         ...merged,
-        username: merged.national_id || merged.email || merged.username || '',
-        email: merged.email || merged.national_id || '',
+        username: isSystemAdmin ? 'admin' : (merged.national_id || merged.email || merged.username || ''),
+        email: isSystemAdmin ? 'admin' : (merged.email || merged.national_id || ''),
+        national_id: isSystemAdmin ? 'admin' : (merged.national_id || merged.email || merged.username || ''),
         password: merged.password || merged.record_number || '',
         record_number: merged.record_number || merged.password || '',
       };
