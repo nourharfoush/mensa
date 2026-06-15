@@ -349,10 +349,10 @@ function SelectSection() {
           {/* Leadership Roles Grid */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '20px',
             width: '100%',
-            maxWidth: '900px'
+            maxWidth: '1100px'
           }}>
             {/* Role 1 */}
             <div style={{
@@ -383,6 +383,24 @@ function SelectSection() {
               transition: 'all 0.3s ease'
             }}>
               <div style={{ color: 'var(--accent-gold)', fontSize: '13px', marginBottom: '6px' }}>
+                مدير إدارة الشؤون الدينية
+              </div>
+              <div style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 'bold' }}>
+                الشيخ / إبراهيم حلس
+              </div>
+            </div>
+
+            {/* Role 3 */}
+            <div style={{
+              background: theme === 'light' ? 'var(--bg-card)' : 'rgba(28, 32, 43, 0.8)',
+              border: theme === 'light' ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.05)',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              textAlign: 'center',
+              boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
+              transition: 'all 0.3s ease'
+            }}>
+              <div style={{ color: 'var(--accent-gold)', fontSize: '13px', marginBottom: '6px' }}>
                 مدير عام الجامع الأزهر
               </div>
               <div style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 'bold' }}>
@@ -390,7 +408,7 @@ function SelectSection() {
               </div>
             </div>
 
-            {/* Role 3 */}
+            {/* Role 4 */}
             <div style={{
               background: theme === 'light' ? 'var(--bg-card)' : 'rgba(28, 32, 43, 0.8)',
               border: theme === 'light' ? '1px solid rgba(0, 0, 0, 0.08)' : '1px solid rgba(255, 255, 255, 0.05)',
