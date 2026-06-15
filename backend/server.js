@@ -87,8 +87,32 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+import User from './models/User.js';
+
 // MongoDB Connection configuration
 let cachedConnection = null;
+
+async function seedAdmin() {
+  try {
+    const adminExists = await User.findOne({ $or: [{ username: 'admin' }, { national_id: 'admin' }] });
+    if (!adminExists) {
+      const defaultAdmin = new User({
+        name: 'Admin',
+        username: 'admin',
+        email: 'admin',
+        national_id: 'admin',
+        password: '123',
+        record_number: '123',
+        role: 'admin',
+        created_at: new Date()
+      });
+      await defaultAdmin.save();
+      console.log('✓ Default admin user seeded in MongoDB');
+    }
+  } catch (error) {
+    console.error('✗ Error seeding default admin:', error.message);
+  }
+}
 
 async function connectDB() {
   if (mongoose.connection.readyState === 1) {
@@ -99,8 +123,9 @@ async function connectDB() {
     cachedConnection = mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-    }).then((conn) => {
+    }).then(async (conn) => {
       console.log('✓ MongoDB connected successfully');
+      await seedAdmin();
       return conn;
     }).catch(err => {
       cachedConnection = null;
