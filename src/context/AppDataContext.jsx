@@ -444,8 +444,61 @@ export function AppDataProvider({ children }) {
   // يعمل كلما تغيرت بيانات المنسقين أو المحفظين أو المدراء
   useEffect(() => {
     setUsers(prev => {
-      // 1) تطبيع المستخدمين الحاليين
-      let normalized = prev.map(u => {
+      const coordinatorNids = new Set(coordinators.map(c => String(c.national_id || '').trim()).filter(Boolean));
+      const mohfezNids = new Set(mohfezs.map(m => String(m.national_id || '').trim()).filter(Boolean));
+      const managerNids = new Set(managers.map(mg => String(mg.national_id || '').trim()).filter(Boolean));
+      const platformCoordinatorNids = new Set(platformCoordinators.map(c => String(c.national_id || '').trim()).filter(Boolean));
+      const platformSupervisorNids = new Set(platformSupervisors.map(s => String(s.national_id || '').trim()).filter(Boolean));
+      const platformMohfezNids = new Set(platformMohfezs.map(m => String(m.national_id || '').trim()).filter(Boolean));
+      const platformAdminNids = new Set(platformTopManagement.map(t => String(t.national_id || '').trim()).filter(Boolean));
+      const platformStudentPassports = new Set(platformStudents.map(s => String(s.passport_no || s.national_id || '').trim()).filter(Boolean));
+      const shariaStudentNids = new Set(shariaStudents.map(s => String(s.nationalId || '').trim()).filter(Boolean));
+      const shariaTeacherNids = new Set(shariaTeachers.map(t => String(t.nationalId || '').trim()).filter(Boolean));
+
+      // 1) تصفية وتطبيع المستخدمين الحاليين
+      let filteredPrev = prev.filter(u => {
+        const role = u.role || '';
+        const nid = String(u.national_id || u.username || '').trim();
+        if (!nid) return false;
+
+        // Keep super admin
+        if (role === 'admin' || nid === 'admin') return true;
+
+        if (role === 'branch_admin_coordinator' || role === 'branch_scientific_coordinator') {
+          return coordinatorNids.has(nid);
+        }
+        if (role === 'mohfez') {
+          return mohfezNids.has(nid);
+        }
+        if (role === 'rowaq_manager' || role === 'rowaq_tech' || role === 'rowaq_member') {
+          return managerNids.has(nid);
+        }
+        if (role === 'platform_coordinator') {
+          return platformCoordinatorNids.has(nid);
+        }
+        if (role === 'platform_supervisor') {
+          return platformSupervisorNids.has(nid);
+        }
+        if (role === 'platform_mohfez') {
+          return platformMohfezNids.has(nid);
+        }
+        if (role === 'platform_admin') {
+          return platformAdminNids.has(nid);
+        }
+        if (role === 'student') {
+          return platformStudentPassports.has(nid);
+        }
+        if (role === 'sharia_student') {
+          return shariaStudentNids.has(nid);
+        }
+        if (role === 'sharia_teacher') {
+          return shariaTeacherNids.has(nid);
+        }
+
+        return true;
+      });
+
+      let normalized = filteredPrev.map(u => {
         const isAdminRole = u.role === 'admin';
         if (isAdminRole) {
           return {
@@ -837,6 +890,8 @@ export function AppDataProvider({ children }) {
   };
   const deleteManager = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      const item = managers.find(m => String(m.id) === String(id));
+      if (item && item.national_id) deleteUserByNationalId(item.national_id);
       setManagers(prev => prev.filter(m => String(m.id) !== String(id)));
       managersAPI.delete(id).catch(err => console.error(err));
     }
@@ -918,6 +973,8 @@ export function AppDataProvider({ children }) {
   };
   const deleteCoordinator = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      const item = coordinators.find(c => String(c.id) === String(id));
+      if (item && item.national_id) deleteUserByNationalId(item.national_id);
       setCoordinators(prev => prev.filter(c => String(c.id) !== String(id)));
       coordinatorsAPI.delete(id).catch(err => console.error(err));
     }
@@ -934,6 +991,8 @@ export function AppDataProvider({ children }) {
   };
   const deleteMohfez = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      const item = mohfezs.find(m => String(m.id) === String(id));
+      if (item && item.national_id) deleteUserByNationalId(item.national_id);
       setMohfezs(prev => prev.filter(m => String(m.id) !== String(id)));
       mohfezsAPI.delete(id).catch(err => console.error(err));
     }
@@ -966,6 +1025,8 @@ export function AppDataProvider({ children }) {
   };
   const deleteStudent = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      const item = students.find(s => String(s.id) === String(id));
+      if (item && item.national_id) deleteUserByNationalId(item.national_id);
       setStudents(prev => prev.filter(s => String(s.id) !== String(id)));
       studentsAPI.delete(id).catch(err => console.error(err));
     }
@@ -1055,6 +1116,21 @@ export function AppDataProvider({ children }) {
       });
       usersAPI.delete(id).catch(err => console.error(err));
     }
+  };
+
+  const deleteUserByNationalId = (nationalId) => {
+    if (!nationalId) return;
+    const nid = String(nationalId).trim();
+    setUsers(prev => {
+      const user = prev.find(u => String(u.national_id || u.username || '').trim() === nid);
+      if (user) {
+        usersAPI.delete(user.id || user._id).catch(err => console.error(err));
+        const next = prev.filter(u => String(u.id) !== String(user.id));
+        saveToLocalStorage('users', next);
+        return next;
+      }
+      return prev;
+    });
   };
 
   const normalizeUserFields = (user) => {
@@ -1187,6 +1263,8 @@ export function AppDataProvider({ children }) {
   };
   const deletePlatformTopManagement = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      const item = platformTopManagement.find(m => String(m.id) === String(id));
+      if (item && item.national_id) deleteUserByNationalId(item.national_id);
       setPlatformTopManagement(prev => prev.filter(m => String(m.id) !== String(id)));
       platformTopManagementAPI.delete(id).catch(err => console.error(err));
     }
@@ -1203,6 +1281,8 @@ export function AppDataProvider({ children }) {
   };
   const deletePlatformSupervisor = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      const item = platformSupervisors.find(m => String(m.id) === String(id));
+      if (item && item.national_id) deleteUserByNationalId(item.national_id);
       setPlatformSupervisors(prev => prev.filter(m => String(m.id) !== String(id)));
       platformSupervisorsAPI.delete(id).catch(err => console.error(err));
     }
@@ -1219,6 +1299,8 @@ export function AppDataProvider({ children }) {
   };
   const deletePlatformCoordinator = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      const item = platformCoordinators.find(m => String(m.id) === String(id));
+      if (item && item.national_id) deleteUserByNationalId(item.national_id);
       setPlatformCoordinators(prev => prev.filter(m => String(m.id) !== String(id)));
       platformCoordinatorsAPI.delete(id).catch(err => console.error(err));
     }
@@ -1235,6 +1317,8 @@ export function AppDataProvider({ children }) {
   };
   const deletePlatformMohfez = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      const item = platformMohfezs.find(m => String(m.id) === String(id));
+      if (item && item.national_id) deleteUserByNationalId(item.national_id);
       setPlatformMohfezs(prev => prev.filter(m => String(m.id) !== String(id)));
       platformMohfezsAPI.delete(id).catch(err => console.error(err));
     }
@@ -1267,6 +1351,8 @@ export function AppDataProvider({ children }) {
   };
   const deletePlatformStudent = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      const item = platformStudents.find(m => String(m.id) === String(id));
+      if (item) deleteUserByNationalId(item.passport_no || item.national_id);
       setPlatformStudents(prev => prev.filter(m => String(m.id) !== String(id)));
       platformStudentsAPI.delete(id).catch(err => console.error(err));
     }
@@ -1521,6 +1607,8 @@ export function AppDataProvider({ children }) {
   };
   const deleteShariaStudent = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      const item = shariaStudents.find(s => String(s.id) === String(id));
+      if (item && item.nationalId) deleteUserByNationalId(item.nationalId);
       setShariaStudents(prev => prev.filter(s => String(s.id) !== String(id)));
       shariaStudentsAPI.delete(id).catch(err => console.error(err));
     }
@@ -1561,6 +1649,8 @@ export function AppDataProvider({ children }) {
   };
   const deleteShariaTeacher = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      const item = shariaTeachers.find(t => String(t.id) === String(id));
+      if (item && item.nationalId) deleteUserByNationalId(item.nationalId);
       setShariaTeachers(prev => prev.filter(t => String(t.id) !== String(id)));
       shariaTeachersAPI.delete(id).catch(err => console.error(err));
     }
