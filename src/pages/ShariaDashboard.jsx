@@ -9,6 +9,7 @@ import {
 import { exportToXLSX, importFromXLSX, exportMultiSheetToXLSX } from '../utils/xlsxHelper';
 import Footer from '../components/Footer';
 import { useAppData } from '../context/AppDataContext';
+import JitsiMeeting from '../components/JitsiMeeting';
 
 // All Egyptian governorates + Al-Azhar Mosque
 const GOVERNORATES = [
@@ -50,7 +51,7 @@ function ShariaDashboard() {
     shariaLiveLectures = [], addShariaLive, updateShariaLive, deleteShariaLive,
     shariaSchedules = [], addShariaSchedule, updateShariaSchedule, deleteShariaSchedule,
     shariaAttendance = [], addShariaAttendance,
-    lectureAccessLogs = [], addLectureAccessLog
+    lectureAccessLogs = [], addLectureAccessLog, updateLectureAccessDuration
   } = useAppData();
 
   const location = useLocation();
@@ -76,6 +77,7 @@ function ShariaDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(null); // 'admin', 'externalAdmin', 'course', 'student', 'exam', 'result', 'news', 'live'
   const [showOnlyActiveLives, setShowOnlyActiveLives] = useState(false);
+  const [activeMeeting, setActiveMeeting] = useState(null);
   
   // Governorate filter selection (Students & Live Lectures & Attendance vary per governorate)
   const [selectedGov, setSelectedGov] = useState(() => {
@@ -228,6 +230,7 @@ function ShariaDashboard() {
     timeStart: '',
     timeEnd: '',
     link: '',
+    streamType: 'embedded',
     isWeekly: true,
     status: 'مجدول'
   });
@@ -539,6 +542,7 @@ function ShariaDashboard() {
       timeStart: '',
       timeEnd: '',
       link: '',
+      streamType: 'embedded',
       isWeekly: true,
       status: 'مجدول'
     });
@@ -2889,7 +2893,14 @@ function ShariaDashboard() {
                         }}>{student.fiqhSchool}</span>
                       </td>
                       <td style={{ padding: '14px 10px', fontSize: '14px', fontWeight: 'bold', color: '#10b981', textAlign: 'center' }}>
-                        {shariaAttendance.filter(att => String(att.studentId) === String(student.id)).length} محاضرات
+                        <div>{shariaAttendance.filter(att => String(att.studentId) === String(student.id)).length} محاضرات</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 'normal', marginTop: '4px' }}>
+                          (بث: {
+                            lectureAccessLogs
+                              .filter(log => log.studentId === student.id)
+                              .reduce((total, log) => total + (log.durationMinutes || 0), 0)
+                          } دقيقة)
+                        </div>
                       </td>
                       <td style={{ padding: '14px 10px', textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
                         <button 
@@ -3416,10 +3427,7 @@ function ShariaDashboard() {
                       borderTop: '1px solid var(--border-subtle)'
                     }}>
                       <span style={{ fontSize: '12px', color: 'var(--accent-gold)', fontWeight: 'bold' }}>{formattedSchedule}</span>
-                      <a 
-                        href={live.link} 
-                        target="_blank" 
-                        rel="noreferrer"
+                      <button 
                         onClick={() => {
                           if (isShariaStudent && loggedInStudent && isActive) {
                             addLectureAccessLog({
@@ -3427,11 +3435,17 @@ function ShariaDashboard() {
                               lectureId: String(live.id)
                             });
                           }
+                          if (live.streamType === 'external') {
+                            window.open(live.link, '_blank');
+                          } else {
+                            setActiveMeeting(live);
+                          }
                         }}
                         style={{
                           backgroundColor: isActive ? '#ef4444' : 'var(--border-subtle)',
                           color: 'white',
-                          textDecoration: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
                           padding: '6px 12px',
                           borderRadius: '6px',
                           fontSize: '11px',
@@ -3441,9 +3455,9 @@ function ShariaDashboard() {
                           gap: '4px'
                         }}
                       >
-                        {isActive ? <Play size={12} /> : <ExternalLink size={12} />}
+                        {isActive ? <Play size={12} /> : (live.streamType === 'external' ? <ExternalLink size={12} /> : <Play size={12} />)}
                         دخول المحاضرة
-                      </a>
+                      </button>
                     </div>
                   </div>
                 );
@@ -4681,11 +4695,33 @@ function ShariaDashboard() {
                   </div>
                 </div>
 
-                {/* Link */}
+                {/* Stream Type */}
                 <div>
-                  <label style={labelStyle}>رابط المحاضرة (زووم، تيمز، إلخ)</label>
-                  <input type="url" required placeholder="https://zoom.us/j/..." value={liveForm.link} onChange={(e) => setLiveForm({ ...liveForm, link: e.target.value })} style={inputStyle} />
+                  <label style={labelStyle}>نوع البث المباشر</label>
+                  <select 
+                    value={liveForm.streamType || 'embedded'} 
+                    onChange={(e) => setLiveForm({ ...liveForm, streamType: e.target.value, link: e.target.value === 'embedded' ? '' : liveForm.link })} 
+                    style={selectStyle}
+                  >
+                    <option value="embedded">بث مدمج داخل الموقع (Jitsi Meet - مجاني وموصى به)</option>
+                    <option value="external">رابط خارجي (Microsoft Teams / Zoom / إلخ)</option>
+                  </select>
                 </div>
+
+                {/* Link */}
+                {liveForm.streamType === 'external' && (
+                  <div>
+                    <label style={labelStyle}>رابط المحاضرة الخارجي</label>
+                    <input 
+                      type="url" 
+                      required 
+                      placeholder="https://zoom.us/j/..." 
+                      value={liveForm.link} 
+                      onChange={(e) => setLiveForm({ ...liveForm, link: e.target.value })} 
+                      style={inputStyle} 
+                    />
+                  </div>
+                )}
 
                 {/* Weekly Renewal */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' }}>
@@ -5342,11 +5378,33 @@ function ShariaDashboard() {
                     </div>
                   </div>
 
-                  {/* Link */}
+                  {/* Stream Type */}
                   <div>
-                    <label style={labelStyle}>رابط المحاضرة (زووم، تيمز، إلخ)</label>
-                    <input type="url" required placeholder="https://zoom.us/j/..." value={editingLive.link} onChange={(e) => setEditingLive({ ...editingLive, link: e.target.value })} style={inputStyle} />
+                    <label style={labelStyle}>نوع البث المباشر</label>
+                    <select 
+                      value={editingLive.streamType || 'embedded'} 
+                      onChange={(e) => setEditingLive({ ...editingLive, streamType: e.target.value, link: e.target.value === 'embedded' ? '' : editingLive.link })} 
+                      style={selectStyle}
+                    >
+                      <option value="embedded">بث مدمج داخل الموقع (Jitsi Meet - مجاني وموصى به)</option>
+                      <option value="external">رابط خارجي (Microsoft Teams / Zoom / إلخ)</option>
+                    </select>
                   </div>
+
+                  {/* Link */}
+                  {(editingLive.streamType || 'embedded') === 'external' && (
+                    <div>
+                      <label style={labelStyle}>رابط المحاضرة الخارجي</label>
+                      <input 
+                        type="url" 
+                        required 
+                        placeholder="https://zoom.us/j/..." 
+                        value={editingLive.link || ''} 
+                        onChange={(e) => setEditingLive({ ...editingLive, link: e.target.value })} 
+                        style={inputStyle} 
+                      />
+                    </div>
+                  )}
 
                   {/* Weekly Renewal */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' }}>
@@ -5812,6 +5870,17 @@ function ShariaDashboard() {
             </form>
           </div>
         </div>
+      )}
+
+      {activeMeeting && (
+        <JitsiMeeting 
+          meeting={activeMeeting}
+          currentUser={currentUser}
+          onClose={() => setActiveMeeting(null)}
+          addLectureAccessLog={addLectureAccessLog}
+          updateLectureAccessDuration={updateLectureAccessDuration}
+          loggedInStudent={loggedInStudent}
+        />
       )}
 
       <Footer />

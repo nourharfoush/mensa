@@ -1673,13 +1673,24 @@ export function AppDataProvider({ children }) {
   };
 
   const addShariaLive = (live) => {
-    const newLive = { ...live, id: String(Date.now() + Math.random()) };
+    const id = String(Date.now() + Math.random());
+    const cleanId = id.replace(/[^a-zA-Z0-9-_]/g, '');
+    const newLive = { 
+      ...live, 
+      id,
+      link: live.streamType === 'external' ? live.link : `https://meet.jit.si/RowaqShariaLive${cleanId}`
+    };
     setShariaLiveLectures(prev => [...prev, newLive]);
     shariaLivesAPI.create(newLive).catch(err => console.error(err));
   };
   const updateShariaLive = (id, updatedLive) => {
-    setShariaLiveLectures(prev => prev.map(l => String(l.id) === String(id) ? { ...l, ...updatedLive } : l));
-    shariaLivesAPI.update(id, updatedLive).catch(err => console.error(err));
+    const cleanId = String(id).replace(/[^a-zA-Z0-9-_]/g, '');
+    const finalLive = {
+      ...updatedLive,
+      link: updatedLive.streamType === 'external' ? updatedLive.link : `https://meet.jit.si/RowaqShariaLive${cleanId}`
+    };
+    setShariaLiveLectures(prev => prev.map(l => String(l.id) === String(id) ? { ...l, ...finalLive } : l));
+    shariaLivesAPI.update(id, finalLive).catch(err => console.error(err));
   };
   const deleteShariaLive = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
@@ -1707,11 +1718,22 @@ export function AppDataProvider({ children }) {
   };
 
   const addLectureAccessLog = (log) => {
-    const newLog = { ...log, id: String(Date.now() + Math.random()), timestamp: new Date().toISOString() };
+    const newLog = { ...log, id: String(Date.now() + Math.random()), timestamp: new Date().toISOString(), durationMinutes: log.durationMinutes || 0 };
     setLectureAccessLogs(prev => {
       const exists = prev.some(l => l.studentId === log.studentId && l.lectureId === log.lectureId);
       if (exists) return prev;
       return [...prev, newLog];
+    });
+  };
+
+  const updateLectureAccessDuration = (studentId, lectureId, durationMinutes) => {
+    setLectureAccessLogs(prev => {
+      return prev.map(log => {
+        if (log.studentId === studentId && String(log.lectureId) === String(lectureId)) {
+          return { ...log, durationMinutes: Math.max(log.durationMinutes || 0, durationMinutes) };
+        }
+        return log;
+      });
     });
   };
 
@@ -1768,7 +1790,7 @@ export function AppDataProvider({ children }) {
       shariaLiveLectures, addShariaLive, updateShariaLive, deleteShariaLive,
       shariaSchedules, addShariaSchedule, updateShariaSchedule, deleteShariaSchedule,
       shariaAttendance, addShariaAttendance,
-      lectureAccessLogs, addLectureAccessLog,
+      lectureAccessLogs, addLectureAccessLog, updateLectureAccessDuration,
 
       theme, toggleTheme,
       rolePermissions, updateRolePermissions, hasPermission,
