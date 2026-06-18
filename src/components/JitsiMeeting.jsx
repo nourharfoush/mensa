@@ -56,6 +56,13 @@ function JitsiMeeting({ meeting, currentUser, onClose, addLectureAccessLog, upda
             },
             prejoinPageEnabled: false, // Skip prejoin for quick access
             disableDeepLinking: true,
+            disableRemoteMute: !isTeacher,
+            remoteVideoMenu: {
+              disabled: !isTeacher,
+              disableKick: !isTeacher,
+              disableGrantModerator: !isTeacher,
+              disableDemote: !isTeacher
+            },
             // Teachers have moderation permissions, students are muted by default
             startAudioMuted: !isTeacher,
             startVideoMuted: !isTeacher,
