@@ -51,6 +51,9 @@ function JitsiMeeting({ meeting, currentUser, onClose, addLectureAccessLog, upda
           configOverwrite: {
             startWithAudioMuted: true,
             startWithVideoMuted: true,
+            prejoinConfig: {
+              enabled: false
+            },
             prejoinPageEnabled: false, // Skip prejoin for quick access
             disableDeepLinking: true,
             // Teachers have moderation permissions, students are muted by default
