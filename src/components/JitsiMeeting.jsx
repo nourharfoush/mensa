@@ -59,13 +59,17 @@ function JitsiMeeting({ meeting, currentUser, onClose, addLectureAccessLog, upda
             // Teachers have moderation permissions, students are muted by default
             startAudioMuted: !isTeacher,
             startVideoMuted: !isTeacher,
-            toolbarButtons: [
+            toolbarButtons: isTeacher ? [
               'microphone', 'camera', 'closedcaptions', 'desktop', 'embedmeeting', 'fullscreen',
               'fodeviceselection', 'hangup', 'profile', 'chat', 'recording',
               'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
               'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
               'tileview', 'select-background', 'download', 'help', 'mute-everyone',
-              'mute-video-everyone', 'security'
+              'mute-video-everyone', 'security', 'participants-pane'
+            ] : [
+              'microphone', 'camera', 'closedcaptions', 'fullscreen',
+              'fodeviceselection', 'hangup', 'profile', 'chat', 'settings', 'raisehand',
+              'videoquality', 'filmstrip', 'tileview', 'select-background', 'help'
             ]
           },
           interfaceConfigOverwrite: {
