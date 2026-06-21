@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Plus, Download, Upload, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, Download, Upload, Edit, Trash2, Archive } from 'lucide-react';
 import '../components/Management.css';
 import { useAppData } from '../context/AppDataContext';
 import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
@@ -9,7 +9,7 @@ import egyptCenters from '../data/egyptCenters';
 const governorates = Object.keys(egyptCenters);
 
 function CoordinatorsList() {
-  const { coordinators, deleteCoordinator, addCoordinator, branches, hasPermission, deleteAllCoordinators } = useAppData();
+  const { coordinators, deleteCoordinator, addCoordinator, branches, hasPermission, deleteAllCoordinators, updateCoordinator } = useAppData();
   const importRef = useRef(null);
   
   // Get current user and role
@@ -73,7 +73,10 @@ function CoordinatorsList() {
   // Normalize governorates list for consistent comparison
   const normalizedGovernoratesSet = new Set(governorates.map(g => normalizeArabic(g)));
 
+  const isAllowedToArchive = ['admin', 'rowaq_admin', 'rowaq_manager', 'rowaq_tech'].includes(role);
+
   const filtered = coordinators.filter(c => {
+    if (c.isArchived) return false;
     // 1. Geographic role restrictions
     const cAdmin = c.admin || '';
     const cDecision = c.decision_no || '';
@@ -341,6 +344,9 @@ function CoordinatorsList() {
                   <td style={{ direction: 'ltr', textAlign: 'right' }}>{c.national_id}</td>
                   <td style={{ direction: 'ltr', textAlign: 'right' }}>{c.phone}</td>
                   <td className="actions-cell">
+                    {isAllowedToArchive && (
+                      <button className="action-icon edit" title="أرشفة" onClick={() => { if (window.confirm('هل أنت متأكد من أرشفة المنسق؟')) updateCoordinator(c.id, { isArchived: true }); }} style={{ color: 'var(--accent-gold)' }}><Archive size={16}/></button>
+                    )}
                     {hasPermission('coordinators', 'edit') && (
                       <Link to={`/coordinators/create?id=${c.id}`} className="action-icon edit" style={{textDecoration: 'none', color: 'inherit'}}><Edit size={16}/></Link>
                     )}

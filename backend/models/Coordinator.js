@@ -12,6 +12,7 @@ const coordinatorSchema = new mongoose.Schema(
     national_id: { type: String, unique: true, sparse: true },
     phone: String,
     email: String,
+    isArchived: { type: Boolean, default: false },
   },
   { strict: false, timestamps: true }
 );

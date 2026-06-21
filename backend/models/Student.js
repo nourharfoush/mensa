@@ -17,6 +17,7 @@ const studentSchema = new mongoose.Schema(
     address: String,
     guardian_name: String,
     guardian_phone: String,
+    isArchived: { type: Boolean, default: false },
   },
   { strict: false, timestamps: true }
 );

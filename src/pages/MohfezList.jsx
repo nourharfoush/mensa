@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Plus, Download, Upload, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, Download, Upload, Edit, Trash2, Archive } from 'lucide-react';
 import '../components/Management.css';
 import { useAppData } from '../context/AppDataContext';
 import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
@@ -9,7 +9,7 @@ import egyptCenters from '../data/egyptCenters';
 const governorates = Object.keys(egyptCenters);
 
 function MohfezList() {
-  const { mohfezs, deleteMohfez, addMohfez, branches, hasPermission, sessions, updateSession, deleteAllMohfezs } = useAppData();
+  const { mohfezs, deleteMohfez, addMohfez, branches, hasPermission, sessions, updateSession, deleteAllMohfezs, updateMohfez } = useAppData();
   const importRef = useRef(null);
 
   const getStatusStyle = (status) => {
@@ -127,7 +127,10 @@ function MohfezList() {
       .trim();
   };
 
+  const isAllowedToArchive = ['admin', 'rowaq_admin', 'rowaq_manager', 'rowaq_tech'].includes(role);
+
   const filtered = mohfezs.filter(m => {
+    if (m.isArchived) return false;
     // 1. Geographic role restrictions
     if (isRowaqStaff && userAdmin && normalizeArabic(m.admin) !== normalizeArabic(userAdmin)) return false;
     if (isBranchCoordinator && userBranch && normalizeArabic(m.branch) !== normalizeArabic(userBranch)) return false;
@@ -436,6 +439,9 @@ function MohfezList() {
                     </span>
                   </td>
                   <td className="actions-cell">
+                    {isAllowedToArchive && (
+                      <button className="action-icon edit" title="أرشفة" onClick={() => { if (window.confirm('هل أنت متأكد من أرشفة المحفظ؟')) updateMohfez(m.id, { isArchived: true }); }} style={{ color: 'var(--accent-gold)' }}><Archive size={16}/></button>
+                    )}
                     {hasPermission('mohfezs', 'edit') && (
                       <Link to={`/mohfez/create?id=${m.id}`} className="action-icon edit" style={{textDecoration: 'none', color: 'inherit'}}><Edit size={16}/></Link>
                     )}

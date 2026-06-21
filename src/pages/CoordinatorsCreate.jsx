@@ -62,8 +62,20 @@ function CoordinatorsCreate() {
           password: coordinatorToEdit.password || ''
         });
       }
+    } else {
+      const paramAdmin = searchParams.get('admin') || '';
+      const paramCenter = searchParams.get('center') || '';
+      const paramBranch = searchParams.get('branch') || '';
+      if (paramAdmin || paramCenter || paramBranch) {
+        setForm(f => ({
+          ...f,
+          admin: paramAdmin,
+          center: paramCenter,
+          branch: paramBranch
+        }));
+      }
     }
-  }, [isEditing, coordinatorId, coordinators]);
+  }, [isEditing, coordinatorId, coordinators, searchParams]);
 
   const handleSubmit = () => {
     if (form.phone && form.phone.length !== 11) {
@@ -154,7 +166,12 @@ function CoordinatorsCreate() {
       }
       alert('تم إضافة المنسق بنجاح');
     }
-    navigate('/coordinators');
+    const redirectPath = searchParams.get('redirect');
+    if (redirectPath) {
+      navigate(redirectPath);
+    } else {
+      navigate('/coordinators');
+    }
   };
 
   return (
@@ -263,7 +280,7 @@ function CoordinatorsCreate() {
 
       <div className="form-actions" style={{ justifyContent: 'center', marginTop: '30px' }}>
         <button className="btn btn-primary" style={{ padding: '10px 40px' }} onClick={handleSubmit}>حفظ المنسق</button>
-        <Link to="/coordinators" className="btn btn-outline" style={{ textDecoration: 'none', padding: '10px 40px' }}>إلغاء</Link>
+        <Link to={searchParams.get('redirect') || "/coordinators"} className="btn btn-outline" style={{ textDecoration: 'none', padding: '10px 40px' }}>إلغاء</Link>
       </div>
 
     </div>

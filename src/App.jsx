@@ -66,6 +66,7 @@ import ApplicantBranchesCreate from './pages/ApplicantBranchesCreate';
 import WatchtowerList from './pages/WatchtowerList';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
+import ArchiveList from './pages/ArchiveList';
 import PublicHome from './pages/PublicHome';
 import PublicQuran from './pages/PublicQuran';
 import PublicIslamicStudies from './pages/PublicIslamicStudies';
@@ -144,6 +145,7 @@ function DashboardLayout() {
             
             {/* Rowaq Statistics */}
             <Route path="/branches" element={<BranchesList />} />
+            <Route path="/archive" element={<ArchiveList />} />
             <Route path="/branches/create" element={<BranchesCreate />} />
             <Route path="/coordinators" element={<CoordinatorsList />} />
             <Route path="/coordinators/create" element={<CoordinatorsCreate />} />

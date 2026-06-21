@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Plus, Download, Upload, Edit, Trash2, ClipboardCheck, FileText } from 'lucide-react';
+import { Search, Plus, Download, Upload, Edit, Trash2, ClipboardCheck, FileText, Archive } from 'lucide-react';
 import '../components/Management.css';
 import { useAppData } from '../context/AppDataContext';
 import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
@@ -97,7 +97,10 @@ function SessionsList() {
   const availableCenters = filterAdmin ? (egyptCenters[filterAdmin] || []) : [];
   const availableBranches = branches.filter(b => normalizeArabic(b.admin) === normalizeArabic(filterAdmin) && normalizeArabic(b.center) === normalizeArabic(filterCenter));
 
+  const isAllowedToArchive = ['admin', 'rowaq_admin', 'rowaq_manager', 'rowaq_tech'].includes(role);
+
   const filtered = sessions.filter(s => {
+    if (s.isArchived) return false;
     // 1. Geographic role restrictions
     if (isRowaqStaff && userAdmin && normalizeArabic(s.admin) !== normalizeArabic(userAdmin)) return false;
     if (isBranchCoordinator && userBranch && normalizeArabic(s.branch) !== normalizeArabic(userBranch)) return false;
@@ -436,14 +439,14 @@ function SessionsList() {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {filtered.filter(s => !s.isArchived).length === 0 ? (
               <tr>
                 <td colSpan="10" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>
                   لا توجد بيانات.
                 </td>
               </tr>
             ) : (
-              filtered.map(s => {
+              filtered.filter(s => !s.isArchived).map(s => {
                 const studentCount = (students || []).filter(stud => 
                   (stud.session_id && String(stud.session_id) === String(s.id)) ||
                   (String(stud.session_no) === String(s.session_no) &&
@@ -469,6 +472,9 @@ function SessionsList() {
                       <Link to={`/sessions/${s.id}/reports`} title="التقارير اليومية" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', textDecoration: 'none' }}>
                         <FileText size={14}/> التقارير
                       </Link>
+                      {isAllowedToArchive && (
+                        <button className="action-icon edit" title="أرشفة" onClick={() => { if (window.confirm('هل أنت متأكد من أرشفة الحلقة؟')) updateSession(s.id, { isArchived: true }); }} style={{ color: 'var(--accent-gold)' }}><Archive size={16}/></button>
+                      )}
                       {hasPermission('sessions', 'edit') && (
                         <Link to={`/sessions/create?id=${s.id}`} className="action-icon edit" style={{textDecoration: 'none', color: 'inherit'}} title="تعديل"><Edit size={16}/></Link>
                       )}

@@ -58,8 +58,20 @@ function StudentsCreate() {
           password: studentToEdit.password || ''
         });
       }
+    } else {
+      const paramAdmin = searchParams.get('admin') || '';
+      const paramCenter = searchParams.get('center') || '';
+      const paramBranch = searchParams.get('branch') || '';
+      if (paramAdmin || paramCenter || paramBranch) {
+        setForm(f => ({
+          ...f,
+          admin: paramAdmin,
+          center: paramCenter,
+          branch: paramBranch
+        }));
+      }
     }
-  }, [isEditing, studentId, students]);
+  }, [isEditing, studentId, students, searchParams]);
 
   const handleSubmit = () => {
     if (!form.name || !form.national_id || !form.phone || !form.admin || !form.session_id) {
@@ -165,7 +177,12 @@ function StudentsCreate() {
       }
       alert('تم إضافة الطالب بنجاح');
     }
-    navigate('/students');
+    const redirectPath = searchParams.get('redirect');
+    if (redirectPath) {
+      navigate(redirectPath);
+    } else {
+      navigate('/students');
+    }
   };
 
   return (
@@ -259,7 +276,7 @@ function StudentsCreate() {
 
       <div className="form-actions" style={{ justifyContent: 'center', marginTop: '30px' }}>
         <button className="btn btn-primary" style={{ padding: '10px 40px' }} onClick={handleSubmit}>حفظ</button>
-        <Link to="/students" className="btn btn-outline" style={{ textDecoration: 'none', padding: '10px 40px' }}>إلغاء</Link>
+        <Link to={searchParams.get('redirect') || "/students"} className="btn btn-outline" style={{ textDecoration: 'none', padding: '10px 40px' }}>إلغاء</Link>
       </div>
     </div>
   );

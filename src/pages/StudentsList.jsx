@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Plus, Download, Upload, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, Download, Upload, Edit, Trash2, Archive } from 'lucide-react';
 import '../components/Management.css';
 import { useAppData } from '../context/AppDataContext';
 import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
@@ -10,7 +10,7 @@ import { calculateBirthDateFromNationalId } from '../utils/nationalIdHelper';
 const governorates = Object.keys(egyptCenters);
 
 function StudentsList() {
-  const { students, deleteStudent, addStudent, branches, sessions, hasPermission, users, addUser, updateUser, deleteAllStudents, bulkImportStudents, coordinators, mohfezs } = useAppData();
+  const { students, deleteStudent, addStudent, branches, sessions, hasPermission, users, addUser, updateUser, deleteAllStudents, bulkImportStudents, coordinators, mohfezs, updateStudent } = useAppData();
   const importRef = useRef(null);
   
   // Get current user and role
@@ -103,7 +103,10 @@ function StudentsList() {
       .trim();
   };
 
+  const isAllowedToArchive = ['admin', 'rowaq_admin', 'rowaq_manager', 'rowaq_tech'].includes(role);
+
   const filtered = students.filter(s => {
+    if (s.isArchived) return false;
     // 1. Geographic role restrictions
     if (isRowaqStaff && userAdmin && normalizeArabic(s.admin) !== normalizeArabic(userAdmin)) return false;
     if (isBranchCoordinator && userBranch && normalizeArabic(s.branch) !== normalizeArabic(userBranch)) return false;
@@ -454,6 +457,9 @@ function StudentsList() {
                   <td>{s.gender || '-'}</td>
                   <td>{s.level}</td>
                   <td className="actions-cell">
+                    {isAllowedToArchive && (
+                      <button className="action-icon edit" title="أرشفة" onClick={() => { if (window.confirm('هل أنت متأكد من أرشفة الدارس؟')) updateStudent(s.id, { isArchived: true }); }} style={{ color: 'var(--accent-gold)' }}><Archive size={16}/></button>
+                    )}
                     {hasPermission('students', 'edit') && (
                       <Link to={`/students/create?id=${s.id}`} className="action-icon edit" style={{textDecoration: 'none', color: 'inherit'}}><Edit size={16}/></Link>
                     )}

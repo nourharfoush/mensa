@@ -70,8 +70,20 @@ function SessionsCreate() {
           workDays: sessionToEdit.workDays || []
         });
       }
+    } else {
+      const paramAdmin = searchParams.get('admin') || '';
+      const paramCenter = searchParams.get('center') || '';
+      const paramBranch = searchParams.get('branch') || '';
+      if (paramAdmin || paramCenter || paramBranch) {
+        setForm(f => ({
+          ...f,
+          admin: paramAdmin,
+          center: paramCenter,
+          branch: paramBranch
+        }));
+      }
     }
-  }, [isEditing, sessionId, sessions]);
+  }, [isEditing, sessionId, sessions, searchParams]);
 
   const handleSubmit = () => {
     if (!form.session_no || !form.admin || !form.center || !form.branch || !form.rowaq) {
@@ -86,7 +98,12 @@ function SessionsCreate() {
       addSession(form);
       alert('تم إضافة الحلقة بنجاح');
     }
-    navigate('/sessions');
+    const redirectPath = searchParams.get('redirect');
+    if (redirectPath) {
+      navigate(redirectPath);
+    } else {
+      navigate('/sessions');
+    }
   };
 
   return (
@@ -219,7 +236,7 @@ function SessionsCreate() {
 
       <div className="form-actions" style={{ justifyContent: 'center', marginTop: '30px' }}>
         <button className="btn btn-primary" style={{ padding: '10px 40px' }} onClick={handleSubmit}>حفظ</button>
-        <Link to="/sessions" className="btn btn-outline" style={{ textDecoration: 'none', padding: '10px 40px' }}>إلغاء</Link>
+        <Link to={searchParams.get('redirect') || "/sessions"} className="btn btn-outline" style={{ textDecoration: 'none', padding: '10px 40px' }}>إلغاء</Link>
       </div>
     </div>
   );

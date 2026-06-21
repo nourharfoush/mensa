@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, Users, FileText, Calendar, GitBranch, 
-  BookOpen, Building, MapPin, UserPlus, FilePlus, Settings, User, LogOut, Shield, ArrowRightLeft, BookOpen as BookIcon, Award, Video, Newspaper
+  BookOpen, Building, MapPin, UserPlus, FilePlus, Settings, User, LogOut, Shield, ArrowRightLeft, BookOpen as BookIcon, Award, Video, Newspaper, Archive
 } from 'lucide-react';
 import './Sidebar.css';
 import { useAppData } from '../context/AppDataContext';
@@ -36,6 +36,7 @@ const menuGroups = [
       { name: 'تقارير المحفظين', icon: FileText, path: '/mohfez-reports' },
       { name: 'الدارسين', icon: BookOpen, path: '/students' },
       { name: 'المتقدمين الجدد', icon: UserPlus, path: '/applicants' },
+      { name: 'الأرشيف', icon: Archive, path: '/archive' },
     ]
   },
   {
@@ -225,8 +226,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
       return !forbidden.includes(path);
     }
 
-    // 6. rowaq_tech / rowaq_member
-    if (['rowaq_tech', 'rowaq_member'].includes(userRole)) {
+    // 6. rowaq_tech
+    if (userRole === 'rowaq_tech') {
       const forbidden = [
         '/platform-dashboard',
         '/platform-top-management',
@@ -240,6 +241,26 @@ function Sidebar({ isOpen, toggleSidebar }) {
         '/permissions',
         '/settings',
         '/towers'
+      ];
+      return !forbidden.includes(path);
+    }
+
+    // 6b. rowaq_member
+    if (userRole === 'rowaq_member') {
+      const forbidden = [
+        '/platform-dashboard',
+        '/platform-top-management',
+        '/platform-supervisors',
+        '/platform-coordinators',
+        '/platform-mohfez',
+        '/platform-sessions',
+        '/platform-students',
+        '/platform-applicants',
+        '/users',
+        '/permissions',
+        '/settings',
+        '/towers',
+        '/archive'
       ];
       return !forbidden.includes(path);
     }
