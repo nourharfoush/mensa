@@ -127,6 +127,8 @@ function MohfezList() {
       .trim();
   };
 
+  const normalizedGovernoratesSet = new Set(governorates.map(g => normalizeArabic(g)));
+
   const isAllowedToArchive = ['admin', 'rowaq_admin', 'rowaq_manager', 'rowaq_tech'].includes(role);
 
   const filtered = mohfezs.filter(m => {
@@ -241,23 +243,41 @@ function MohfezList() {
 
       validRows.forEach(row => {
         const natId = (row['الرقم القومي'] || row['الرقم القومى'] || '').toString().trim();
+        const branchVal = (row['الفرع'] || row['فرع'] || row['اسم الفرع'] || row['اسم فرع'] || '').toString().trim();
+        let adminVal = (row['إدارة'] || row['الإدارة'] || row['المحافظة'] || row['المحافظه'] || '').toString().trim();
+        const centerVal = (row['المركز'] || row['المركز/القسم'] || row['مركز'] || row['قسم'] || '').toString().trim();
+        const phoneVal = (row['الهاتف'] || row['رقم الهاتف'] || row['رقم التليفون'] || row['التليفون'] || '').toString().trim();
+        let decisionVal = (row['رقم القرار'] || row['القرار'] || '').toString().trim();
+
+        // Swap if decision_no is actually a governorate and admin is not
+        const normalizedAdmin = normalizeArabic(adminVal);
+        const normalizedDecision = normalizeArabic(decisionVal);
+        if (
+          decisionVal &&
+          normalizedGovernoratesSet.has(normalizedDecision) &&
+          !normalizedGovernoratesSet.has(normalizedAdmin)
+        ) {
+          const temp = adminVal;
+          adminVal = decisionVal;
+          decisionVal = temp;
+        }
 
         addMohfez({
           name: row['الاسم'] || '',
           status: row['الحالة'] || '',
           rowaq: row['رواق'] || row['الرواق'] || '',
-          admin: row['إدارة'] || row['الإدارة'] || '',
-          center: row['المركز'] || '',
-          branch: row['الفرع'] || '',
-          registry_no: row['رقم السجل'] || '',
+          admin: adminVal,
+          center: centerVal,
+          branch: branchVal,
+          registry_no: row['رقم السجل'] || row['السجل'] || '',
           national_id: natId,
           job: row['الوظيفة'] || '',
           workplace: row['جهة العمل'] || '',
           job_grade: row['الدرجة الوظيفية'] || '',
           qualification: row['المؤهل'] || '',
-          decision_no: row['رقم القرار'] || '',
+          decision_no: decisionVal,
           address: row['العنوان'] || '',
-          phone: row['الهاتف'] || '',
+          phone: phoneVal,
         });
 
         // Handle sessions mapping if specified

@@ -30,6 +30,33 @@ const saveToLocalStorage = (key, value) => {
   }
 };
 
+const normalizeArabic = (str) => {
+  if (!str) return '';
+  return str
+    .toString()
+    .trim()
+    .normalize('NFKD')
+    .normalize('NFC')
+    .replace(/ً/g, '')
+    .replace(/ٌ/g, '')
+    .replace(/ٍ/g, '')
+    .replace(/َ/g, '')
+    .replace(/ُ/g, '')
+    .replace(/ِ/g, '')
+    .replace(/ّ/g, '')
+    .replace(/ْ/g, '')
+    .replace(/[أإآا]/g, 'ا')
+    .replace(/[ىي]/g, 'ي')
+    .replace(/[ة]/g, 'ه')
+    .replace(/[ـ]/g, '')
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+    .trim();
+};
+
+const governorates = Object.keys(egyptCenters || {});
+const normalizedGovernoratesSet = new Set(governorates.map(g => normalizeArabic(g)));
+
 const defaultPermissions = {
   admin: {
     sessions: { view: true, add: true, edit: true, delete: true },
@@ -429,6 +456,83 @@ export function AppDataProvider({ children }) {
         await syncCollection(shariaStudentsAPI, shariaStudents, setShariaStudents, 'sharia_students', s => ({ ...s, stage: normalizeStage(s.stage) }));
         await syncCollection(shariaTeachersAPI, shariaTeachers, setShariaTeachers, 'sharia_teachers');
         await syncCollection(shariaLivesAPI, shariaLiveLectures, setShariaLiveLectures, 'sharia_live', l => ({ ...l, stage: normalizeStage(l.stage) }));
+
+        // One-time correction for swapped admin and decision_no fields in database
+        try {
+          const storedCoordinators = getFromLocalStorage('coordinators', []);
+          let coordinatorsUpdated = false;
+          const updatedCoordinators = storedCoordinators.map(c => {
+            const cAdmin = c.admin || '';
+            const cDecision = c.decision_no || '';
+            const normAdmin = normalizeArabic(cAdmin);
+            const normDecision = normalizeArabic(cDecision);
+            const isSwapped = 
+              cDecision && 
+              normalizedGovernoratesSet.has(normDecision) && 
+              !normalizedGovernoratesSet.has(normAdmin);
+            if (isSwapped) {
+              coordinatorsUpdated = true;
+              console.log(`[Sync] Correcting swapped coordinator ${c.name}:`, cDecision, cAdmin);
+              coordinatorsAPI.update(c.id, { admin: cDecision, decision_no: cAdmin }).catch(err => console.error(err));
+              return { ...c, admin: cDecision, decision_no: cAdmin };
+            }
+            return c;
+          });
+          if (coordinatorsUpdated) {
+            setCoordinators(updatedCoordinators);
+            saveToLocalStorage('coordinators', updatedCoordinators);
+          }
+
+          const storedMohfezs = getFromLocalStorage('mohfezs', []);
+          let mohfezsUpdated = false;
+          const updatedMohfezs = storedMohfezs.map(m => {
+            const mAdmin = m.admin || '';
+            const mDecision = m.decision_no || '';
+            const normAdmin = normalizeArabic(mAdmin);
+            const normDecision = normalizeArabic(mDecision);
+            const isSwapped = 
+              mDecision && 
+              normalizedGovernoratesSet.has(normDecision) && 
+              !normalizedGovernoratesSet.has(normAdmin);
+            if (isSwapped) {
+              mohfezsUpdated = true;
+              console.log(`[Sync] Correcting swapped mohfez ${m.name}:`, mDecision, mAdmin);
+              mohfezsAPI.update(m.id, { admin: mDecision, decision_no: mAdmin }).catch(err => console.error(err));
+              return { ...m, admin: mDecision, decision_no: mAdmin };
+            }
+            return m;
+          });
+          if (mohfezsUpdated) {
+            setMohfezs(updatedMohfezs);
+            saveToLocalStorage('mohfezs', updatedMohfezs);
+          }
+
+          const storedManagers = getFromLocalStorage('managers', []);
+          let managersUpdated = false;
+          const updatedManagers = storedManagers.map(m => {
+            const mAdmin = m.admin || '';
+            const mDecision = m.decision_no || '';
+            const normAdmin = normalizeArabic(mAdmin);
+            const normDecision = normalizeArabic(mDecision);
+            const isSwapped = 
+              mDecision && 
+              normalizedGovernoratesSet.has(normDecision) && 
+              !normalizedGovernoratesSet.has(normAdmin);
+            if (isSwapped) {
+              managersUpdated = true;
+              console.log(`[Sync] Correcting swapped manager ${m.name}:`, mDecision, mAdmin);
+              managersAPI.update(m.id, { admin: mDecision, decision_no: mAdmin }).catch(err => console.error(err));
+              return { ...m, admin: mDecision, decision_no: mAdmin };
+            }
+            return m;
+          });
+          if (managersUpdated) {
+            setManagers(updatedManagers);
+            saveToLocalStorage('managers', updatedManagers);
+          }
+        } catch (correctErr) {
+          console.error('[Sync] Error during swapped fields correction:', correctErr);
+        }
 
         setDbSynced(true);
         console.log('✓ Database synchronization complete!');

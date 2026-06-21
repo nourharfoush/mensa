@@ -262,9 +262,9 @@ function SessionsList() {
         const sessionNo = (row['رقم الحلقة'] || '').toString().trim();
         if (!sessionNo) return;
         
-        const adminVal = row['إدارة'] || row['الإدارة'] || '';
-        const centerVal = row['المركز'] || '';
-        const branchVal = row['الفرع'] || '';
+        const adminVal = (row['إدارة'] || row['الإدارة'] || row['المحافظة'] || row['المحافظه'] || '').toString().trim();
+        const centerVal = (row['المركز'] || row['المركز/القسم'] || row['مركز'] || row['قسم'] || '').toString().trim();
+        const branchVal = (row['الفرع'] || row['فرع'] || row['اسم الفرع'] || row['اسم فرع'] || '').toString().trim();
 
         const isMatch = (s) => 
           String(s.session_no) === String(sessionNo) &&

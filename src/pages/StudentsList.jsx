@@ -206,9 +206,9 @@ function StudentsList() {
 
       validRows.forEach(row => {
         const sessionNo = (row['الحلقة'] || '').toString().trim();
-        const adminFromRow = (row['المحافظة'] || row['الإدارة'] || row['إدارة'] || '').toString().trim();
-        const centerFromRow = (row['المركز'] || '').toString().trim();
-        const branchFromRow = (row['الفرع'] || '').toString().trim();
+        const adminFromRow = (row['إدارة'] || row['الإدارة'] || row['المحافظة'] || row['المحافظه'] || '').toString().trim();
+        const centerFromRow = (row['المركز'] || row['المركز/القسم'] || row['مركز'] || row['قسم'] || '').toString().trim();
+        const branchFromRow = (row['الفرع'] || row['فرع'] || row['اسم الفرع'] || row['اسم فرع'] || '').toString().trim();
 
         // 1. Strict Match: match by session_no AND branch AND center AND admin
         let matchedSession = sessions.find(s => {

@@ -73,6 +73,8 @@ function BranchesList() {
       .trim();
   };
 
+  const normalizedGovernoratesSet = new Set(governorates.map(g => normalizeArabic(g)));
+
   const isAllowedToArchive = ['admin', 'rowaq_admin', 'rowaq_manager', 'rowaq_tech'].includes(role);
 
   const filtered = branches.filter(b => {
@@ -183,13 +185,33 @@ function BranchesList() {
           : [];
         const cleanWorkDays = workDays.map(d => d === 'الاحد' ? 'الأحد' : d);
 
+        const branchName = (row['الفرع'] || row['فرع'] || row['اسم الفرع'] || row['اسم فرع'] || '').toString().trim();
+        let adminVal = (row['إدارة'] || row['الإدارة'] || row['المحافظة'] || row['المحافظه'] || '').toString().trim();
+        const centerVal = (row['المركز'] || row['المركز/القسم'] || row['مركز'] || row['قسم'] || '').toString().trim();
+        const phoneVal = (row['الهاتف'] || row['رقم الهاتف'] || row['رقم التليفون'] || row['التليفون'] || '').toString().trim();
+        const addressVal = (row['العنوان'] || row['عنوان'] || '').toString().trim();
+        let decisionVal = (row['رقم القرار'] || row['القرار'] || '').toString().trim();
+
+        // Swap if decision_no is actually a governorate and admin is not
+        const normalizedAdmin = normalizeArabic(adminVal);
+        const normalizedDecision = normalizeArabic(decisionVal);
+        if (
+          decisionVal &&
+          normalizedGovernoratesSet.has(normalizedDecision) &&
+          !normalizedGovernoratesSet.has(normalizedAdmin)
+        ) {
+          const temp = adminVal;
+          adminVal = decisionVal;
+          decisionVal = temp;
+        }
+
         addBranch({
-          name: row['فرع'] || row['اسم الفرع'] || '',
-          admin: row['الإدارة'] || '',
-          center: row['المركز'] || '',
-          decision_no: row['رقم القرار'] || '',
-          address: row['العنوان'] || '',
-          phone: row['الهاتف'] || '',
+          name: branchName,
+          admin: adminVal,
+          center: centerVal,
+          decision_no: decisionVal,
+          address: addressVal,
+          phone: phoneVal,
           workDays: cleanWorkDays,
           timeFrom: parseTimeTo24Hour(row['الوقت من'] || row['من'] || ''),
           timeTo: parseTimeTo24Hour(row['الوقت الي'] || row['الوقت إلى'] || row['إلى'] || ''),
@@ -308,12 +330,24 @@ function BranchesList() {
   };
 
   // Calculate counts and items for the specific branch
-  const branchCoordinators = currentBranch ? coordinators.filter(c =>
-    !c.isArchived &&
-    normalizeArabic(c.branch) === normalizeArabic(currentBranch.name) &&
-    normalizeArabic(c.admin) === normalizeArabic(currentBranch.admin) &&
-    normalizeArabic(c.center) === normalizeArabic(currentBranch.center)
-  ) : [];
+  const branchCoordinators = currentBranch ? coordinators.filter(c => {
+    if (c.isArchived) return false;
+    const cAdmin = c.admin || '';
+    const cDecision = c.decision_no || '';
+    const normalizedAdmin = normalizeArabic(cAdmin);
+    const normalizedDecision = normalizeArabic(cDecision);
+    const isSwapped = 
+      cDecision && 
+      normalizedGovernoratesSet.has(normalizedDecision) && 
+      !normalizedGovernoratesSet.has(normalizedAdmin);
+    const actualAdmin = isSwapped ? cDecision : cAdmin;
+
+    return (
+      normalizeArabic(c.branch) === normalizeArabic(currentBranch.name) &&
+      normalizeArabic(actualAdmin) === normalizeArabic(currentBranch.admin) &&
+      normalizeArabic(c.center) === normalizeArabic(currentBranch.center)
+    );
+  }) : [];
 
   const branchMohfezs = currentBranch ? mohfezs.filter(m =>
     !m.isArchived &&
@@ -1229,12 +1263,24 @@ function BranchesList() {
                   <td>{b.decision_no}</td>
                   <td>
                     {(() => {
-                      const branchCoords = coordinators.filter(c => 
-                        !c.isArchived &&
-                        normalizeArabic(c.branch) === normalizeArabic(b.name) &&
-                        normalizeArabic(c.admin) === normalizeArabic(b.admin) &&
-                        normalizeArabic(c.center) === normalizeArabic(b.center)
-                      );
+                      const branchCoords = coordinators.filter(c => {
+                        if (c.isArchived) return false;
+                        const cAdmin = c.admin || '';
+                        const cDecision = c.decision_no || '';
+                        const normalizedAdmin = normalizeArabic(cAdmin);
+                        const normalizedDecision = normalizeArabic(cDecision);
+                        const isSwapped = 
+                          cDecision && 
+                          normalizedGovernoratesSet.has(normalizedDecision) && 
+                          !normalizedGovernoratesSet.has(normalizedAdmin);
+                        const actualAdmin = isSwapped ? cDecision : cAdmin;
+
+                        return (
+                          normalizeArabic(c.branch) === normalizeArabic(b.name) &&
+                          normalizeArabic(actualAdmin) === normalizeArabic(b.admin) &&
+                          normalizeArabic(c.center) === normalizeArabic(b.center)
+                        );
+                      });
                       return branchCoords.length > 0 
                         ? branchCoords.map(c => `${c.name} (${c.specialization || ''})`).join('  ') 
                         : 'لا يوجد منسقين';
