@@ -57,6 +57,55 @@ const normalizeArabic = (str) => {
 const governorates = Object.keys(egyptCenters || {});
 const normalizedGovernoratesSet = new Set(governorates.map(g => normalizeArabic(g)));
 
+const resolveGeographicFields = (adminVal, centerVal, branchVal, branchesList) => {
+  const normAdmin = normalizeArabic(adminVal);
+  const normCenter = normalizeArabic(centerVal);
+  const normBranch = normalizeArabic(branchVal);
+
+  if (!branchesList || branchesList.length === 0) {
+    return { admin: adminVal, center: centerVal, branch: branchVal };
+  }
+
+  // 1. Check if centerVal is a valid branch name, and branchVal is NOT (shifted columns)
+  const isBranchValValid = normBranch && branchesList.some(b => normalizeArabic(b.name) === normBranch);
+  const isCenterValValid = normCenter && branchesList.some(b => normalizeArabic(b.name) === normCenter);
+
+  if (isCenterValValid && !isBranchValValid) {
+    const matchedBranch = branchesList.find(b => 
+      normalizeArabic(b.name) === normCenter &&
+      (normalizeArabic(b.center) === normAdmin || normalizeArabic(b.admin) === normAdmin)
+    ) || branchesList.find(b => normalizeArabic(b.name) === normCenter);
+    
+    if (matchedBranch) {
+      return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+    }
+  }
+
+  // 2. Exact match
+  let matchedBranch = branchesList.find(b => 
+    normalizeArabic(b.name) === normBranch &&
+    normalizeArabic(b.center) === normCenter &&
+    normalizeArabic(b.admin) === normAdmin
+  );
+  if (matchedBranch) {
+    return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+  }
+
+  // 3. Match by branch name (normBranch)
+  if (isBranchValValid) {
+    const matchedBranch = branchesList.find(b => 
+      normalizeArabic(b.name) === normBranch &&
+      (normalizeArabic(b.center) === normCenter || normalizeArabic(b.admin) === normAdmin)
+    ) || branchesList.find(b => normalizeArabic(b.name) === normBranch);
+
+    if (matchedBranch) {
+      return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+    }
+  }
+
+  return { admin: adminVal, center: centerVal, branch: branchVal };
+};
+
 const defaultPermissions = {
   admin: {
     sessions: { view: true, add: true, edit: true, delete: true },
@@ -457,24 +506,50 @@ export function AppDataProvider({ children }) {
         await syncCollection(shariaTeachersAPI, shariaTeachers, setShariaTeachers, 'sharia_teachers');
         await syncCollection(shariaLivesAPI, shariaLiveLectures, setShariaLiveLectures, 'sharia_live', l => ({ ...l, stage: normalizeStage(l.stage) }));
 
-        // One-time correction for swapped admin and decision_no fields in database
+        // One-time correction for swapped admin and decision_no fields and shifted columns in database
         try {
+          const storedBranches = getFromLocalStorage('branches', []);
+
           const storedCoordinators = getFromLocalStorage('coordinators', []);
           let coordinatorsUpdated = false;
           const updatedCoordinators = storedCoordinators.map(c => {
-            const cAdmin = c.admin || '';
-            const cDecision = c.decision_no || '';
-            const normAdmin = normalizeArabic(cAdmin);
-            const normDecision = normalizeArabic(cDecision);
+            let currentAdmin = c.admin || '';
+            let currentDecision = c.decision_no || '';
+            let currentCenter = c.center || '';
+            let currentBranch = c.branch || '';
+            let itemChanged = false;
+
+            const normAdmin = normalizeArabic(currentAdmin);
+            const normDecision = normalizeArabic(currentDecision);
             const isSwapped = 
-              cDecision && 
+              currentDecision && 
               normalizedGovernoratesSet.has(normDecision) && 
               !normalizedGovernoratesSet.has(normAdmin);
             if (isSwapped) {
+              const temp = currentAdmin;
+              currentAdmin = currentDecision;
+              currentDecision = temp;
+              itemChanged = true;
+            }
+
+            const resolved = resolveGeographicFields(currentAdmin, currentCenter, currentBranch, storedBranches);
+            if (resolved.admin !== currentAdmin || resolved.center !== currentCenter || resolved.branch !== currentBranch) {
+              currentAdmin = resolved.admin;
+              currentCenter = resolved.center;
+              currentBranch = resolved.branch;
+              itemChanged = true;
+            }
+
+            if (itemChanged) {
               coordinatorsUpdated = true;
-              console.log(`[Sync] Correcting swapped coordinator ${c.name}:`, cDecision, cAdmin);
-              coordinatorsAPI.update(c.id, { admin: cDecision, decision_no: cAdmin }).catch(err => console.error(err));
-              return { ...c, admin: cDecision, decision_no: cAdmin };
+              console.log(`[Sync] Correcting coordinator ${c.name} fields:`, { admin: currentAdmin, center: currentCenter, branch: currentBranch, decision_no: currentDecision });
+              coordinatorsAPI.update(c.id, { 
+                admin: currentAdmin, 
+                center: currentCenter, 
+                branch: currentBranch, 
+                decision_no: currentDecision 
+              }).catch(err => console.error(err));
+              return { ...c, admin: currentAdmin, center: currentCenter, branch: currentBranch, decision_no: currentDecision };
             }
             return c;
           });
@@ -486,25 +561,115 @@ export function AppDataProvider({ children }) {
           const storedMohfezs = getFromLocalStorage('mohfezs', []);
           let mohfezsUpdated = false;
           const updatedMohfezs = storedMohfezs.map(m => {
-            const mAdmin = m.admin || '';
-            const mDecision = m.decision_no || '';
-            const normAdmin = normalizeArabic(mAdmin);
-            const normDecision = normalizeArabic(mDecision);
+            let currentAdmin = m.admin || '';
+            let currentDecision = m.decision_no || '';
+            let currentCenter = m.center || '';
+            let currentBranch = m.branch || '';
+            let itemChanged = false;
+
+            const normAdmin = normalizeArabic(currentAdmin);
+            const normDecision = normalizeArabic(currentDecision);
             const isSwapped = 
-              mDecision && 
+              currentDecision && 
               normalizedGovernoratesSet.has(normDecision) && 
               !normalizedGovernoratesSet.has(normAdmin);
             if (isSwapped) {
+              const temp = currentAdmin;
+              currentAdmin = currentDecision;
+              currentDecision = temp;
+              itemChanged = true;
+            }
+
+            const resolved = resolveGeographicFields(currentAdmin, currentCenter, currentBranch, storedBranches);
+            if (resolved.admin !== currentAdmin || resolved.center !== currentCenter || resolved.branch !== currentBranch) {
+              currentAdmin = resolved.admin;
+              currentCenter = resolved.center;
+              currentBranch = resolved.branch;
+              itemChanged = true;
+            }
+
+            if (itemChanged) {
               mohfezsUpdated = true;
-              console.log(`[Sync] Correcting swapped mohfez ${m.name}:`, mDecision, mAdmin);
-              mohfezsAPI.update(m.id, { admin: mDecision, decision_no: mAdmin }).catch(err => console.error(err));
-              return { ...m, admin: mDecision, decision_no: mAdmin };
+              console.log(`[Sync] Correcting mohfez ${m.name} fields:`, { admin: currentAdmin, center: currentCenter, branch: currentBranch, decision_no: currentDecision });
+              mohfezsAPI.update(m.id, { 
+                admin: currentAdmin, 
+                center: currentCenter, 
+                branch: currentBranch, 
+                decision_no: currentDecision 
+              }).catch(err => console.error(err));
+              return { ...m, admin: currentAdmin, center: currentCenter, branch: currentBranch, decision_no: currentDecision };
             }
             return m;
           });
           if (mohfezsUpdated) {
             setMohfezs(updatedMohfezs);
             saveToLocalStorage('mohfezs', updatedMohfezs);
+          }
+
+          const storedSessions = getFromLocalStorage('sessions', []);
+          let sessionsUpdated = false;
+          const updatedSessions = storedSessions.map(s => {
+            let currentAdmin = s.admin || '';
+            let currentCenter = s.center || '';
+            let currentBranch = s.branch || '';
+            let itemChanged = false;
+
+            const resolved = resolveGeographicFields(currentAdmin, currentCenter, currentBranch, storedBranches);
+            if (resolved.admin !== currentAdmin || resolved.center !== currentCenter || resolved.branch !== currentBranch) {
+              currentAdmin = resolved.admin;
+              currentCenter = resolved.center;
+              currentBranch = resolved.branch;
+              itemChanged = true;
+            }
+
+            if (itemChanged) {
+              sessionsUpdated = true;
+              console.log(`[Sync] Correcting session ${s.session_no} fields:`, { admin: currentAdmin, center: currentCenter, branch: currentBranch });
+              sessionsAPI.update(s.id, { 
+                admin: currentAdmin, 
+                center: currentCenter, 
+                branch: currentBranch 
+              }).catch(err => console.error(err));
+              return { ...s, admin: currentAdmin, center: currentCenter, branch: currentBranch };
+            }
+            return s;
+          });
+          if (sessionsUpdated) {
+            setSessions(updatedSessions);
+            saveToLocalStorage('sessions', updatedSessions);
+          }
+
+          const storedStudents = getFromLocalStorage('students', []);
+          let studentsUpdated = false;
+          const updatedStudents = storedStudents.map(st => {
+            let currentAdmin = st.admin || '';
+            let currentCenter = st.center || '';
+            let currentBranch = st.branch || '';
+            let itemChanged = false;
+
+            const resolved = resolveGeographicFields(currentAdmin, currentCenter, currentBranch, storedBranches);
+            if (resolved.admin !== currentAdmin || resolved.center !== currentCenter || resolved.branch !== currentBranch) {
+              currentAdmin = resolved.admin;
+              currentCenter = resolved.center;
+              currentBranch = resolved.branch;
+              itemChanged = true;
+            }
+
+            if (itemChanged) {
+              studentsUpdated = true;
+              console.log(`[Sync] Correcting student ${st.name} fields:`, { admin: currentAdmin, center: currentCenter, branch: currentBranch });
+              studentsAPI.update(st.id, { 
+                admin: currentAdmin, 
+                center: currentCenter, 
+                branch: currentBranch 
+              }).catch(err => console.error(err));
+              return { ...st, admin: currentAdmin, center: currentCenter, branch: currentBranch };
+            }
+            return st;
+          });
+          if (studentsUpdated) {
+            setStudents(updatedStudents);
+            saveToLocalStorage('students', updatedStudents);
           }
 
           const storedManagers = getFromLocalStorage('managers', []);
@@ -531,7 +696,7 @@ export function AppDataProvider({ children }) {
             saveToLocalStorage('managers', updatedManagers);
           }
         } catch (correctErr) {
-          console.error('[Sync] Error during swapped fields correction:', correctErr);
+          console.error('[Sync] Error during database correction:', correctErr);
         }
 
         setDbSynced(true);

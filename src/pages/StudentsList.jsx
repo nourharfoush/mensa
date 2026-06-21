@@ -103,6 +103,55 @@ function StudentsList() {
       .trim();
   };
 
+  const resolveGeographicFields = (adminVal, centerVal, branchVal, branchesList) => {
+    const normAdmin = normalizeArabic(adminVal);
+    const normCenter = normalizeArabic(centerVal);
+    const normBranch = normalizeArabic(branchVal);
+
+    if (!branchesList || branchesList.length === 0) {
+      return { admin: adminVal, center: centerVal, branch: branchVal };
+    }
+
+    // 1. Check if centerVal is a valid branch name, and branchVal is NOT (shifted columns)
+    const isBranchValValid = normBranch && branchesList.some(b => normalizeArabic(b.name) === normBranch);
+    const isCenterValValid = normCenter && branchesList.some(b => normalizeArabic(b.name) === normCenter);
+
+    if (isCenterValValid && !isBranchValValid) {
+      const matchedBranch = branchesList.find(b => 
+        normalizeArabic(b.name) === normCenter &&
+        (normalizeArabic(b.center) === normAdmin || normalizeArabic(b.admin) === normAdmin)
+      ) || branchesList.find(b => normalizeArabic(b.name) === normCenter);
+      
+      if (matchedBranch) {
+        return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+      }
+    }
+
+    // 2. Exact match
+    let matchedBranch = branchesList.find(b => 
+      normalizeArabic(b.name) === normBranch &&
+      normalizeArabic(b.center) === normCenter &&
+      normalizeArabic(b.admin) === normAdmin
+    );
+    if (matchedBranch) {
+      return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+    }
+
+    // 3. Match by branch name (normBranch)
+    if (isBranchValValid) {
+      const matchedBranch = branchesList.find(b => 
+        normalizeArabic(b.name) === normBranch &&
+        (normalizeArabic(b.center) === normCenter || normalizeArabic(b.admin) === normAdmin)
+      ) || branchesList.find(b => normalizeArabic(b.name) === normBranch);
+
+      if (matchedBranch) {
+        return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+      }
+    }
+
+    return { admin: adminVal, center: centerVal, branch: branchVal };
+  };
+
   const isAllowedToArchive = ['admin', 'rowaq_admin', 'rowaq_manager', 'rowaq_tech'].includes(role);
 
   const filtered = students.filter(s => {
@@ -210,14 +259,17 @@ function StudentsList() {
         const centerFromRow = (row['المركز'] || row['المركز/القسم'] || row['مركز'] || row['قسم'] || '').toString().trim();
         const branchFromRow = (row['الفرع'] || row['فرع'] || row['اسم الفرع'] || row['اسم فرع'] || '').toString().trim();
 
+        // Resolve geographic fields using branches lookup
+        const resolved = resolveGeographicFields(adminFromRow, centerFromRow, branchFromRow, branches);
+
         // 1. Strict Match: match by session_no AND branch AND center AND admin
         let matchedSession = sessions.find(s => {
           const numMatch = String(s.session_no) === sessionNo || String(s.id) === sessionNo;
           if (!numMatch) return false;
 
-          const adminMatch = adminFromRow ? normalizeArabic(s.admin) === normalizeArabic(adminFromRow) : true;
-          const centerMatch = centerFromRow ? normalizeArabic(s.center) === normalizeArabic(centerFromRow) : true;
-          const branchMatch = branchFromRow ? normalizeArabic(s.branch) === normalizeArabic(branchFromRow) : true;
+          const adminMatch = resolved.admin ? normalizeArabic(s.admin) === normalizeArabic(resolved.admin) : true;
+          const centerMatch = resolved.center ? normalizeArabic(s.center) === normalizeArabic(resolved.center) : true;
+          const branchMatch = resolved.branch ? normalizeArabic(s.branch) === normalizeArabic(resolved.branch) : true;
 
           return adminMatch && centerMatch && branchMatch;
         });

@@ -94,6 +94,55 @@ function SessionsList() {
       .trim();
   };
 
+  const resolveGeographicFields = (adminVal, centerVal, branchVal, branchesList) => {
+    const normAdmin = normalizeArabic(adminVal);
+    const normCenter = normalizeArabic(centerVal);
+    const normBranch = normalizeArabic(branchVal);
+
+    if (!branchesList || branchesList.length === 0) {
+      return { admin: adminVal, center: centerVal, branch: branchVal };
+    }
+
+    // 1. Check if centerVal is a valid branch name, and branchVal is NOT (shifted columns)
+    const isBranchValValid = normBranch && branchesList.some(b => normalizeArabic(b.name) === normBranch);
+    const isCenterValValid = normCenter && branchesList.some(b => normalizeArabic(b.name) === normCenter);
+
+    if (isCenterValValid && !isBranchValValid) {
+      const matchedBranch = branchesList.find(b => 
+        normalizeArabic(b.name) === normCenter &&
+        (normalizeArabic(b.center) === normAdmin || normalizeArabic(b.admin) === normAdmin)
+      ) || branchesList.find(b => normalizeArabic(b.name) === normCenter);
+      
+      if (matchedBranch) {
+        return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+      }
+    }
+
+    // 2. Exact match
+    let matchedBranch = branchesList.find(b => 
+      normalizeArabic(b.name) === normBranch &&
+      normalizeArabic(b.center) === normCenter &&
+      normalizeArabic(b.admin) === normAdmin
+    );
+    if (matchedBranch) {
+      return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+    }
+
+    // 3. Match by branch name (normBranch)
+    if (isBranchValValid) {
+      const matchedBranch = branchesList.find(b => 
+        normalizeArabic(b.name) === normBranch &&
+        (normalizeArabic(b.center) === normCenter || normalizeArabic(b.admin) === normAdmin)
+      ) || branchesList.find(b => normalizeArabic(b.name) === normBranch);
+
+      if (matchedBranch) {
+        return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+      }
+    }
+
+    return { admin: adminVal, center: centerVal, branch: branchVal };
+  };
+
   const availableCenters = filterAdmin ? (egyptCenters[filterAdmin] || []) : [];
   const availableBranches = branches.filter(b => normalizeArabic(b.admin) === normalizeArabic(filterAdmin) && normalizeArabic(b.center) === normalizeArabic(filterCenter));
 
@@ -266,19 +315,22 @@ function SessionsList() {
         const centerVal = (row['المركز'] || row['المركز/القسم'] || row['مركز'] || row['قسم'] || '').toString().trim();
         const branchVal = (row['الفرع'] || row['فرع'] || row['اسم الفرع'] || row['اسم فرع'] || '').toString().trim();
 
+        // Resolve geographic fields using branches lookup
+        const resolved = resolveGeographicFields(adminVal, centerVal, branchVal, branches);
+
         const isMatch = (s) => 
           String(s.session_no) === String(sessionNo) &&
-          normalizeArabic(s.branch) === normalizeArabic(branchVal) &&
-          normalizeArabic(s.center) === normalizeArabic(centerVal) &&
-          normalizeArabic(s.admin) === normalizeArabic(adminVal);
+          normalizeArabic(s.branch) === normalizeArabic(resolved.branch) &&
+          normalizeArabic(s.center) === normalizeArabic(resolved.center) &&
+          normalizeArabic(s.admin) === normalizeArabic(resolved.admin);
 
         const existingSession = sessions.find(isMatch) || processedSessions.find(isMatch);
 
         const sessionData = {
           session_no: sessionNo,
-          admin: adminVal,
-          center: centerVal,
-          branch: branchVal,
+          admin: resolved.admin,
+          center: resolved.center,
+          branch: resolved.branch,
           rowaq: row['الرواق'] || '',
           level: row['المستوى'] || '',
           mohfez_type: mohfezType,

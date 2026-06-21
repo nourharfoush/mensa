@@ -129,6 +129,55 @@ function MohfezList() {
 
   const normalizedGovernoratesSet = new Set(governorates.map(g => normalizeArabic(g)));
 
+  const resolveGeographicFields = (adminVal, centerVal, branchVal, branchesList) => {
+    const normAdmin = normalizeArabic(adminVal);
+    const normCenter = normalizeArabic(centerVal);
+    const normBranch = normalizeArabic(branchVal);
+
+    if (!branchesList || branchesList.length === 0) {
+      return { admin: adminVal, center: centerVal, branch: branchVal };
+    }
+
+    // 1. Check if centerVal is a valid branch name, and branchVal is NOT (shifted columns)
+    const isBranchValValid = normBranch && branchesList.some(b => normalizeArabic(b.name) === normBranch);
+    const isCenterValValid = normCenter && branchesList.some(b => normalizeArabic(b.name) === normCenter);
+
+    if (isCenterValValid && !isBranchValValid) {
+      const matchedBranch = branchesList.find(b => 
+        normalizeArabic(b.name) === normCenter &&
+        (normalizeArabic(b.center) === normAdmin || normalizeArabic(b.admin) === normAdmin)
+      ) || branchesList.find(b => normalizeArabic(b.name) === normCenter);
+      
+      if (matchedBranch) {
+        return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+      }
+    }
+
+    // 2. Exact match
+    let matchedBranch = branchesList.find(b => 
+      normalizeArabic(b.name) === normBranch &&
+      normalizeArabic(b.center) === normCenter &&
+      normalizeArabic(b.admin) === normAdmin
+    );
+    if (matchedBranch) {
+      return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+    }
+
+    // 3. Match by branch name (normBranch)
+    if (isBranchValValid) {
+      const matchedBranch = branchesList.find(b => 
+        normalizeArabic(b.name) === normBranch &&
+        (normalizeArabic(b.center) === normCenter || normalizeArabic(b.admin) === normAdmin)
+      ) || branchesList.find(b => normalizeArabic(b.name) === normBranch);
+
+      if (matchedBranch) {
+        return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+      }
+    }
+
+    return { admin: adminVal, center: centerVal, branch: branchVal };
+  };
+
   const isAllowedToArchive = ['admin', 'rowaq_admin', 'rowaq_manager', 'rowaq_tech'].includes(role);
 
   const filtered = mohfezs.filter(m => {
@@ -262,13 +311,16 @@ function MohfezList() {
           decisionVal = temp;
         }
 
+        // Resolve geographic fields using branches lookup
+        const resolved = resolveGeographicFields(adminVal, centerVal, branchVal, branches);
+
         addMohfez({
           name: row['الاسم'] || '',
           status: row['الحالة'] || '',
           rowaq: row['رواق'] || row['الرواق'] || '',
-          admin: adminVal,
-          center: centerVal,
-          branch: branchVal,
+          admin: resolved.admin,
+          center: resolved.center,
+          branch: resolved.branch,
           registry_no: row['رقم السجل'] || row['السجل'] || '',
           national_id: natId,
           job: row['الوظيفة'] || '',
