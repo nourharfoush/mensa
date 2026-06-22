@@ -159,18 +159,20 @@ function MohfezReportsList() {
   };
 
   const handleExportMohfezs = () => {
-    const exportData = filteredMohfezs.map(m => {
-      const stats = getMohfezMonthlyStats(m);
-      return {
-        'اسم المحفظ': m.name || '',
-        'الإدارة': m.admin || '',
-        'المركز': m.center || '',
-        'الفرع': m.branch || '',
-        'عدد الحلقات المسندة': stats.assignedCount,
-        'عدد الجلسات الفعلية': stats.actualSessionsCount,
-        'إجمالي الساعات المنجزة': stats.totalHours,
-      };
-    });
+    const exportData = filteredMohfezs
+      .filter(m => normalizeArabic(m.status) === 'مسكن')
+      .map(m => {
+        const stats = getMohfezMonthlyStats(m);
+        return {
+          'اسم المحفظ': m.name || '',
+          'الإدارة': m.admin || '',
+          'المركز': m.center || '',
+          'الفرع': m.branch || '',
+          'عدد الحلقات المسندة': stats.assignedCount,
+          'عدد الجلسات الفعلية': stats.actualSessionsCount,
+          'إجمالي الساعات المنجزة': stats.totalHours,
+        };
+      });
     exportToXLSX(exportData, 'التقرير_الشهري_للمحفظين', 'التقرير الشهري للمحفظين');
   };
 
