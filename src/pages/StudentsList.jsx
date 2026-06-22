@@ -191,7 +191,7 @@ function StudentsList() {
       'الرواق': s.rowaq,
       'الجنس': s.gender,
       'المستوى': s.level,
-      'الحلقة': s.session_id,
+      'الحلقة': s.session_no || '',
       'الرقم القومي': s.national_id,
       'رقم التليفون': s.phone || '',
       'العنوان': s.address || '',
