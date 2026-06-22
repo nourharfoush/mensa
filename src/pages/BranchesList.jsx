@@ -9,6 +9,20 @@ import egyptCenters from '../data/egyptCenters';
 const governorates = Object.keys(egyptCenters);
 const workDaysList = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
 
+const formatTimeTo12Hour = (timeStr) => {
+  if (!timeStr) return '';
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return timeStr;
+  let hours = parseInt(parts[0], 10);
+  const minutes = parts[1];
+  if (isNaN(hours)) return timeStr;
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const hourFormatted = String(hours).padStart(2, '0');
+  return `${hourFormatted}:${minutes} ${ampm}`;
+};
+
 function BranchesList() {
   const { 
     branches, deleteBranch, addBranch, hasPermission, sessions, coordinators, mohfezs, students, deleteAllBranches,
@@ -103,20 +117,6 @@ function BranchesList() {
   });
 
   const handleExport = () => {
-    const formatTimeTo12Hour = (timeStr) => {
-      if (!timeStr) return '';
-      const parts = timeStr.split(':');
-      if (parts.length < 2) return timeStr;
-      let hours = parseInt(parts[0], 10);
-      const minutes = parts[1];
-      if (isNaN(hours)) return timeStr;
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12;
-      hours = hours ? hours : 12;
-      const hourFormatted = String(hours).padStart(2, '0');
-      return `${hourFormatted}:${minutes} ${ampm}`;
-    };
-
     const exportData = filtered.map(b => ({
       'الكود': b.id,
       'فرع': b.name,
@@ -828,7 +828,8 @@ function BranchesList() {
                     <th>المحفظ</th>
                     <th>نوع الدارسين</th>
                     <th>نوع الحضور</th>
-                    <th>الوقت</th>
+                    <th>الوقت من</th>
+                    <th>الوقت إلى</th>
                     <th>أيام العمل</th>
                     <th>الإجراءات</th>
                   </tr>
@@ -836,7 +837,7 @@ function BranchesList() {
                 <tbody>
                   {branchSessions.length === 0 ? (
                     <tr>
-                      <td colSpan="9" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>لا توجد حلقات مسجلة في هذا الفرع.</td>
+                      <td colSpan="10" style={{ textAlign: 'center', padding: '30px', color: 'var(--text-muted)' }}>لا توجد حلقات مسجلة في هذا الفرع.</td>
                     </tr>
                   ) : (
                     branchSessions.map(s => (
@@ -847,7 +848,8 @@ function BranchesList() {
                         <td>{s.mohfez}</td>
                         <td>{s.student_type}</td>
                         <td>{s.attendance_type}</td>
-                        <td style={{ direction: 'ltr' }}>{s.time_start} - {s.time_end}</td>
+                        <td style={{ direction: 'ltr', textAlign: 'center' }}>{formatTimeTo12Hour(s.time_start) || '-'}</td>
+                        <td style={{ direction: 'ltr', textAlign: 'center' }}>{formatTimeTo12Hour(s.time_end) || '-'}</td>
                         <td>{(s.workDays || []).join('، ')}</td>
                         <td className="actions-cell" style={{ display: 'flex', gap: '5px' }}>
                           <Link to={`/sessions/${s.id}/attendance`} className="btn btn-outline" style={{ padding: '4px 8px', fontSize: '11px', textDecoration: 'none' }}>التحضير</Link>
