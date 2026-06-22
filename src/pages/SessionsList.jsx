@@ -488,6 +488,8 @@ function SessionsList() {
               <th>الرواق</th>
               <th>المستوى</th>
               <th>نوع الدارسين</th>
+              <th>الوقت من</th>
+              <th>الوقت إلى</th>
               <th>الدارسين</th>
               <th>الإجراءات</th>
             </tr>
@@ -495,7 +497,7 @@ function SessionsList() {
           <tbody>
             {filtered.filter(s => !s.isArchived).length === 0 ? (
               <tr>
-                <td colSpan="10" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>
+                <td colSpan="12" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>
                   لا توجد بيانات.
                 </td>
               </tr>
@@ -520,6 +522,8 @@ function SessionsList() {
                     <td>{s.rowaq}</td>
                     <td>{s.level}</td>
                     <td>{s.student_type}</td>
+                    <td style={{ direction: 'ltr', textAlign: 'center' }}>{formatTimeTo12Hour(s.time_start) || '-'}</td>
+                    <td style={{ direction: 'ltr', textAlign: 'center' }}>{formatTimeTo12Hour(s.time_end) || '-'}</td>
                     <td>{studentCount}</td>
                     <td className="actions-cell" style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
                       <Link to={`/sessions/${s.id}/attendance`} title="الغياب" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#10b981', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', textDecoration: 'none' }}>

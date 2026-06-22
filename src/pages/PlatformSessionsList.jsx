@@ -47,6 +47,20 @@ function PlatformSessionsList() {
       .trim();
   };
 
+  const formatTimeTo12Hour = (timeStr) => {
+    if (!timeStr) return '';
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return timeStr;
+    let hours = parseInt(parts[0], 10);
+    const minutes = parts[1];
+    if (isNaN(hours)) return timeStr;
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const hourFormatted = String(hours).padStart(2, '0');
+    return `${hourFormatted}:${minutes} ${ampm}`;
+  };
+
   const filtered = platformSessions.filter(s => {
     // 1. Geographic / session role restriction
     if (role === 'platform_mohfez') {
@@ -232,13 +246,15 @@ function PlatformSessionsList() {
               <th style={{ textAlign: 'center' }}>الرواق</th>
               <th style={{ textAlign: 'center' }}>المستوى</th>
               <th style={{ textAlign: 'center' }}>الدارسين</th>
+              <th style={{ textAlign: 'center' }}>الوقت من</th>
+              <th style={{ textAlign: 'center' }}>الوقت إلى</th>
               <th style={{ textAlign: 'center' }}>الإجراءات</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>
+                <td colSpan="9" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>
                   لا توجد بيانات.
                 </td>
               </tr>
@@ -251,6 +267,8 @@ function PlatformSessionsList() {
                   <td style={{ textAlign: 'center' }}>{s.rowaq}</td>
                   <td style={{ textAlign: 'center' }}>{s.level}</td>
                   <td style={{ textAlign: 'center' }}>{s.student_type}</td>
+                  <td style={{ direction: 'ltr', textAlign: 'center' }}>{formatTimeTo12Hour(s.time_start) || '-'}</td>
+                  <td style={{ direction: 'ltr', textAlign: 'center' }}>{formatTimeTo12Hour(s.time_end) || '-'}</td>
                   <td className="actions-cell" style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
                     <Link to={`/platform-sessions/${s.id}/attendance`} title="الغياب" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#10b981', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', textDecoration: 'none' }}>
                       <ClipboardCheck size={14}/> الغياب
