@@ -63,13 +63,13 @@ function Dashboard() {
     }
   }
 
-  let filteredCoordinators = coordinators || [];
-  let filteredMohfezs = mohfezs || [];
-  let filteredSessions = sessions || [];
-  let filteredBranches = branches || [];
-  let filteredApplicants = applicants || [];
-  let filteredStudents = students || [];
-  let filteredManagers = managers || [];
+  let filteredCoordinators = (coordinators || []).filter(c => !c.isArchived);
+  let filteredMohfezs = (mohfezs || []).filter(m => !m.isArchived);
+  let filteredSessions = (sessions || []).filter(s => !s.isArchived);
+  let filteredBranches = (branches || []).filter(b => !b.isArchived);
+  let filteredApplicants = (applicants || []).filter(a => !a.isArchived);
+  let filteredStudents = (students || []).filter(s => !s.isArchived);
+  let filteredManagers = (managers || []).filter(m => !m.isArchived);
 
   if (isBranchCoordinator && userBranch) {
     const branchNorm = normalizeArabic(userBranch);

@@ -1188,8 +1188,52 @@ export function AppDataProvider({ children }) {
     branchesAPI.create(newBranch).catch(err => console.error(err));
   };
   const updateBranch = (id, updatedBranch) => {
+    // 1. Update the branch itself
     setBranches(prev => prev.map(b => String(b.id) === String(id) ? { ...b, ...updatedBranch } : b));
     branchesAPI.update(id, updatedBranch).catch(err => console.error(err));
+
+    // 2. Cascade logic
+    if (updatedBranch.isArchived !== undefined) {
+      const targetArchiveState = updatedBranch.isArchived;
+      const branchObj = branches.find(b => String(b.id) === String(id));
+      if (branchObj) {
+        const { admin, center, name } = branchObj;
+        const normAdmin = normalizeArabic(admin);
+        const normCenter = normalizeArabic(center);
+        const normName = normalizeArabic(name);
+
+        const matchesGeographically = (item) => 
+          normalizeArabic(item.admin) === normAdmin &&
+          normalizeArabic(item.center) === normCenter &&
+          normalizeArabic(item.branch) === normName;
+
+        // Fetch matches from current state
+        const matchingStudents = students.filter(s => matchesGeographically(s) && !!s.isArchived !== targetArchiveState);
+        const matchingSessions = sessions.filter(s => matchesGeographically(s) && !!s.isArchived !== targetArchiveState);
+        const matchingCoordinators = coordinators.filter(c => matchesGeographically(c) && !!c.isArchived !== targetArchiveState);
+        const matchingMohfezs = mohfezs.filter(m => matchesGeographically(m) && !!m.isArchived !== targetArchiveState);
+
+        // Fire API calls
+        matchingStudents.forEach(s => studentsAPI.update(s.id, { isArchived: targetArchiveState }).catch(err => console.error(err)));
+        matchingSessions.forEach(s => sessionsAPI.update(s.id, { isArchived: targetArchiveState }).catch(err => console.error(err)));
+        matchingCoordinators.forEach(c => coordinatorsAPI.update(c.id, { isArchived: targetArchiveState }).catch(err => console.error(err)));
+        matchingMohfezs.forEach(m => mohfezsAPI.update(m.id, { isArchived: targetArchiveState }).catch(err => console.error(err)));
+
+        // Update states
+        if (matchingStudents.length > 0) {
+          setStudents(prev => prev.map(s => matchesGeographically(s) ? { ...s, isArchived: targetArchiveState } : s));
+        }
+        if (matchingSessions.length > 0) {
+          setSessions(prev => prev.map(s => matchesGeographically(s) ? { ...s, isArchived: targetArchiveState } : s));
+        }
+        if (matchingCoordinators.length > 0) {
+          setCoordinators(prev => prev.map(c => matchesGeographically(c) ? { ...c, isArchived: targetArchiveState } : c));
+        }
+        if (matchingMohfezs.length > 0) {
+          setMohfezs(prev => prev.map(m => matchesGeographically(m) ? { ...m, isArchived: targetArchiveState } : m));
+        }
+      }
+    }
   };
   const deleteBranch = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
@@ -1237,8 +1281,29 @@ export function AppDataProvider({ children }) {
     coordinatorsAPI.create(newCoordinator).catch(err => console.error(err));
   };
   const updateCoordinator = (id, updatedCoordinator) => {
-    setCoordinators(prev => prev.map(c => String(c.id) === String(id) ? { ...c, ...updatedCoordinator } : c));
-    coordinatorsAPI.update(id, updatedCoordinator).catch(err => console.error(err));
+    let resolvedIsArchived = undefined;
+    const current = coordinators.find(c => String(c.id) === String(id));
+    if (current) {
+      resolvedIsArchived = updatedCoordinator.isArchived !== undefined ? updatedCoordinator.isArchived : current.isArchived;
+      if (updatedCoordinator.admin !== undefined || updatedCoordinator.center !== undefined || updatedCoordinator.branch !== undefined) {
+        const finalAdmin = updatedCoordinator.admin !== undefined ? updatedCoordinator.admin : current.admin;
+        const finalCenter = updatedCoordinator.center !== undefined ? updatedCoordinator.center : current.center;
+        const finalBranch = updatedCoordinator.branch !== undefined ? updatedCoordinator.branch : current.branch;
+        const targetBranch = branches.find(b => 
+          normalizeArabic(b.admin) === normalizeArabic(finalAdmin) &&
+          normalizeArabic(b.center) === normalizeArabic(finalCenter) &&
+          normalizeArabic(b.name) === normalizeArabic(finalBranch)
+        );
+        if (targetBranch && !targetBranch.isArchived) {
+          resolvedIsArchived = false;
+        }
+      }
+    }
+    const payload = resolvedIsArchived !== undefined 
+      ? { ...updatedCoordinator, isArchived: resolvedIsArchived }
+      : updatedCoordinator;
+    setCoordinators(prev => prev.map(c => String(c.id) === String(id) ? { ...c, ...payload } : c));
+    coordinatorsAPI.update(id, payload).catch(err => console.error(err));
   };
   const deleteCoordinator = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
@@ -1255,8 +1320,29 @@ export function AppDataProvider({ children }) {
     mohfezsAPI.create(newMohfez).catch(err => console.error(err));
   };
   const updateMohfez = (id, updatedMohfez) => {
-    setMohfezs(prev => prev.map(m => String(m.id) === String(id) ? { ...m, ...updatedMohfez } : m));
-    mohfezsAPI.update(id, updatedMohfez).catch(err => console.error(err));
+    let resolvedIsArchived = undefined;
+    const current = mohfezs.find(m => String(m.id) === String(id));
+    if (current) {
+      resolvedIsArchived = updatedMohfez.isArchived !== undefined ? updatedMohfez.isArchived : current.isArchived;
+      if (updatedMohfez.admin !== undefined || updatedMohfez.center !== undefined || updatedMohfez.branch !== undefined) {
+        const finalAdmin = updatedMohfez.admin !== undefined ? updatedMohfez.admin : current.admin;
+        const finalCenter = updatedMohfez.center !== undefined ? updatedMohfez.center : current.center;
+        const finalBranch = updatedMohfez.branch !== undefined ? updatedMohfez.branch : current.branch;
+        const targetBranch = branches.find(b => 
+          normalizeArabic(b.admin) === normalizeArabic(finalAdmin) &&
+          normalizeArabic(b.center) === normalizeArabic(finalCenter) &&
+          normalizeArabic(b.name) === normalizeArabic(finalBranch)
+        );
+        if (targetBranch && !targetBranch.isArchived) {
+          resolvedIsArchived = false;
+        }
+      }
+    }
+    const payload = resolvedIsArchived !== undefined 
+      ? { ...updatedMohfez, isArchived: resolvedIsArchived }
+      : updatedMohfez;
+    setMohfezs(prev => prev.map(m => String(m.id) === String(id) ? { ...m, ...payload } : m));
+    mohfezsAPI.update(id, payload).catch(err => console.error(err));
   };
   const deleteMohfez = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
@@ -1273,8 +1359,29 @@ export function AppDataProvider({ children }) {
     sessionsAPI.create(newSession).catch(err => console.error(err));
   };
   const updateSession = (id, updatedSession) => {
-    setSessions(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...updatedSession } : s));
-    sessionsAPI.update(id, updatedSession).catch(err => console.error(err));
+    let resolvedIsArchived = undefined;
+    const current = sessions.find(s => String(s.id) === String(id));
+    if (current) {
+      resolvedIsArchived = updatedSession.isArchived !== undefined ? updatedSession.isArchived : current.isArchived;
+      if (updatedSession.admin !== undefined || updatedSession.center !== undefined || updatedSession.branch !== undefined) {
+        const finalAdmin = updatedSession.admin !== undefined ? updatedSession.admin : current.admin;
+        const finalCenter = updatedSession.center !== undefined ? updatedSession.center : current.center;
+        const finalBranch = updatedSession.branch !== undefined ? updatedSession.branch : current.branch;
+        const targetBranch = branches.find(b => 
+          normalizeArabic(b.admin) === normalizeArabic(finalAdmin) &&
+          normalizeArabic(b.center) === normalizeArabic(finalCenter) &&
+          normalizeArabic(b.name) === normalizeArabic(finalBranch)
+        );
+        if (targetBranch && !targetBranch.isArchived) {
+          resolvedIsArchived = false;
+        }
+      }
+    }
+    const payload = resolvedIsArchived !== undefined 
+      ? { ...updatedSession, isArchived: resolvedIsArchived }
+      : updatedSession;
+    setSessions(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...payload } : s));
+    sessionsAPI.update(id, payload).catch(err => console.error(err));
   };
   const deleteSession = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
@@ -1289,8 +1396,29 @@ export function AppDataProvider({ children }) {
     studentsAPI.create(newStudent).catch(err => console.error(err));
   };
   const updateStudent = (id, updatedStudent) => {
-    setStudents(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...updatedStudent } : s));
-    studentsAPI.update(id, updatedStudent).catch(err => console.error(err));
+    let resolvedIsArchived = undefined;
+    const current = students.find(s => String(s.id) === String(id));
+    if (current) {
+      resolvedIsArchived = updatedStudent.isArchived !== undefined ? updatedStudent.isArchived : current.isArchived;
+      if (updatedStudent.admin !== undefined || updatedStudent.center !== undefined || updatedStudent.branch !== undefined) {
+        const finalAdmin = updatedStudent.admin !== undefined ? updatedStudent.admin : current.admin;
+        const finalCenter = updatedStudent.center !== undefined ? updatedStudent.center : current.center;
+        const finalBranch = updatedStudent.branch !== undefined ? updatedStudent.branch : current.branch;
+        const targetBranch = branches.find(b => 
+          normalizeArabic(b.admin) === normalizeArabic(finalAdmin) &&
+          normalizeArabic(b.center) === normalizeArabic(finalCenter) &&
+          normalizeArabic(b.name) === normalizeArabic(finalBranch)
+        );
+        if (targetBranch && !targetBranch.isArchived) {
+          resolvedIsArchived = false;
+        }
+      }
+    }
+    const payload = resolvedIsArchived !== undefined 
+      ? { ...updatedStudent, isArchived: resolvedIsArchived }
+      : updatedStudent;
+    setStudents(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...payload } : s));
+    studentsAPI.update(id, payload).catch(err => console.error(err));
   };
   const deleteStudent = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {

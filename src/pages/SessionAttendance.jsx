@@ -9,7 +9,7 @@ function SessionAttendance() {
   const { id } = useParams();
   const location = useLocation();
   const isPlatform = location.pathname.startsWith('/platform-sessions');
-  const { sessions, platformSessions, attendances, deleteAttendance, hasPermission } = useAppData();
+  const { sessions, platformSessions, attendances, deleteAttendance, hasPermission, students, platformStudents } = useAppData();
   
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedAttendance, setSelectedAttendance] = useState(null);
@@ -19,6 +19,19 @@ function SessionAttendance() {
     ? platformSessions.find(s => String(s.id) === String(id))
     : sessions.find(s => String(s.id) === String(id));
   const sessionAttendances = attendances.filter(a => String(a.sessionId) === String(sessionId) && !!a.isPlatform === isPlatform);
+
+  const getActiveAttendanceInfo = (attendance) => {
+    if (!attendance) return { presentCount: 0, absentCount: 0, records: [] };
+    const activeRecords = (attendance.records || []).filter(r => {
+      const student = isPlatform 
+        ? platformStudents.find(st => String(st.id) === String(r.studentId))
+        : students.find(st => String(st.id) === String(r.studentId));
+      return !student || !student.isArchived;
+    });
+    const presentCount = activeRecords.filter(r => r.isPresent).length;
+    const absentCount = activeRecords.filter(r => !r.isPresent).length;
+    return { presentCount, absentCount, records: activeRecords };
+  };
 
   // Get current user and role
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
@@ -87,11 +100,14 @@ function SessionAttendance() {
 
 
   const handleExport = () => {
-    const exportData = sessionAttendances.map(a => ({
-      'التاريخ': a.date,
-      'الحاضرين': a.presentCount,
-      'الغائبين': a.absentCount,
-    }));
+    const exportData = sessionAttendances.map(a => {
+      const { presentCount, absentCount } = getActiveAttendanceInfo(a);
+      return {
+        'التاريخ': a.date,
+        'الحاضرين': presentCount,
+        'الغائبين': absentCount,
+      };
+    });
     exportToXLSX(exportData, `غياب_حلقة_${session?.session_no || sessionId}`, `إدارة الغياب - حلقة: ${session?.session_no || sessionId}`);
   };
 
@@ -141,11 +157,13 @@ function SessionAttendance() {
                 </td>
               </tr>
             ) : (
-              sessionAttendances.map(a => (
-                <tr key={a.id}>
-                  <td style={{ direction: 'ltr', textAlign: 'center' }}>{a.date}</td>
-                  <td style={{ textAlign: 'center' }}>{a.presentCount}</td>
-                  <td style={{ textAlign: 'center' }}>{a.absentCount}</td>
+              sessionAttendances.map(a => {
+                const { presentCount, absentCount } = getActiveAttendanceInfo(a);
+                return (
+                  <tr key={a.id}>
+                    <td style={{ direction: 'ltr', textAlign: 'center' }}>{a.date}</td>
+                    <td style={{ textAlign: 'center' }}>{presentCount}</td>
+                    <td style={{ textAlign: 'center' }}>{absentCount}</td>
                   <td className="actions-cell" style={{ display: 'flex', gap: '8px', justifyContent: 'center', alignItems: 'center' }}>
                     <button className="btn" style={{ background: '#374151', color: 'white', padding: '6px 12px', border: 'none', borderRadius: '4px', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }} onClick={handleExport}>
                       تصدير <Download size={14} />
@@ -158,7 +176,8 @@ function SessionAttendance() {
                     </button>
                   </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>
@@ -188,46 +207,53 @@ function SessionAttendance() {
               معاينة غياب وحضور حلقة {session?.session_no || sessionId}
             </h3>
             
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', backgroundColor: 'var(--bg-secondary)', padding: '12px 20px', borderRadius: '8px' }}>
-              <div><strong>تاريخ السجل:</strong> {selectedAttendance.date}</div>
-              <div>
-                <span style={{ color: '#10b981', marginLeft: '15px' }}><strong>حاضر:</strong> {selectedAttendance.presentCount}</span>
-                <span style={{ color: '#ef4444' }}><strong>غائب:</strong> {selectedAttendance.absentCount}</span>
-              </div>
-            </div>
-
-            <h4 style={{ marginBottom: '10px', color: 'var(--text-secondary)' }}>تفاصيل حضور الدارسين:</h4>
-            <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid var(--border-subtle)', borderRadius: '8px', marginBottom: '25px' }}>
-              {!selectedAttendance.records || selectedAttendance.records.length === 0 ? (
-                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  لا توجد تفاصيل تفصيلية مسجلة للدارسين.
-                </div>
-              ) : (
-                selectedAttendance.records.map((record, idx) => (
-                  <div key={idx} style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '10px 20px',
-                    backgroundColor: idx % 2 === 0 ? 'var(--bg-secondary)' : 'var(--bg-card)',
-                    borderBottom: idx < selectedAttendance.records.length - 1 ? '1px solid var(--border-subtle)' : 'none'
-                  }}>
-                    <span>{record.studentName}</span>
-                    <span style={{
-                      padding: '4px 10px',
-                      borderRadius: '4px',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      backgroundColor: record.isPresent ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                      color: record.isPresent ? '#10b981' : '#ef4444',
-                      border: record.isPresent ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)'
-                    }}>
-                      {record.isPresent ? 'حاضر' : 'غائب'}
-                    </span>
+            {(() => {
+              const { presentCount, absentCount, records } = getActiveAttendanceInfo(selectedAttendance);
+              return (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', backgroundColor: 'var(--bg-secondary)', padding: '12px 20px', borderRadius: '8px' }}>
+                    <div><strong>تاريخ السجل:</strong> {selectedAttendance.date}</div>
+                    <div>
+                      <span style={{ color: '#10b981', marginLeft: '15px' }}><strong>حاضر:</strong> {presentCount}</span>
+                      <span style={{ color: '#ef4444' }}><strong>غائب:</strong> {absentCount}</span>
+                    </div>
                   </div>
-                ))
-              )}
-            </div>
+
+                  <h4 style={{ marginBottom: '10px', color: 'var(--text-secondary)' }}>تفاصيل حضور الدارسين:</h4>
+                  <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid var(--border-subtle)', borderRadius: '8px', marginBottom: '25px' }}>
+                    {records.length === 0 ? (
+                      <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                        لا توجد تفاصيل تفصيلية مسجلة للدارسين النشطين.
+                      </div>
+                    ) : (
+                      records.map((record, idx) => (
+                        <div key={idx} style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '10px 20px',
+                          backgroundColor: idx % 2 === 0 ? 'var(--bg-secondary)' : 'var(--bg-card)',
+                          borderBottom: idx < records.length - 1 ? '1px solid var(--border-subtle)' : 'none'
+                        }}>
+                          <span>{record.studentName}</span>
+                          <span style={{
+                            padding: '4px 10px',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            backgroundColor: record.isPresent ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                            color: record.isPresent ? '#10b981' : '#ef4444',
+                            border: record.isPresent ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)'
+                          }}>
+                            {record.isPresent ? 'حاضر' : 'غائب'}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </>
+              );
+            })()}
 
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-start', flexDirection: 'row-reverse' }}>
               <button className="btn btn-outline" onClick={() => { setShowPreviewModal(false); setSelectedAttendance(null); }}>إغلاق</button>

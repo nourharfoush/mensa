@@ -227,11 +227,13 @@ function SessionsList() {
   const handleExport = () => {
     let exportData = filtered.map(s => {
       const studentCount = (students || []).filter(stud => 
-        (stud.session_id && String(stud.session_id) === String(s.id)) ||
-        (String(stud.session_no) === String(s.session_no) &&
-         normalizeArabic(stud.branch) === normalizeArabic(s.branch) &&
-         normalizeArabic(stud.center) === normalizeArabic(s.center) &&
-         normalizeArabic(stud.admin) === normalizeArabic(s.admin))
+        !stud.isArchived && (
+          (stud.session_id && String(stud.session_id) === String(s.id)) ||
+          (String(stud.session_no) === String(s.session_no) &&
+           normalizeArabic(stud.branch) === normalizeArabic(s.branch) &&
+           normalizeArabic(stud.center) === normalizeArabic(s.center) &&
+           normalizeArabic(stud.admin) === normalizeArabic(s.admin))
+        )
       ).length;
       return {
         'رقم الحلقة': s.session_no || '',
@@ -500,11 +502,13 @@ function SessionsList() {
             ) : (
               filtered.filter(s => !s.isArchived).map(s => {
                 const studentCount = (students || []).filter(stud => 
-                  (stud.session_id && String(stud.session_id) === String(s.id)) ||
-                  (String(stud.session_no) === String(s.session_no) &&
-                   normalizeArabic(stud.branch) === normalizeArabic(s.branch) &&
-                   normalizeArabic(stud.center) === normalizeArabic(s.center) &&
-                   normalizeArabic(stud.admin) === normalizeArabic(s.admin))
+                  !stud.isArchived && (
+                    (stud.session_id && String(stud.session_id) === String(s.id)) ||
+                    (String(stud.session_no) === String(s.session_no) &&
+                     normalizeArabic(stud.branch) === normalizeArabic(s.branch) &&
+                     normalizeArabic(stud.center) === normalizeArabic(s.center) &&
+                     normalizeArabic(stud.admin) === normalizeArabic(s.admin))
+                  )
                 ).length;
                 return (
                   <tr key={s.id}>
