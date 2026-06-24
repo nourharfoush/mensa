@@ -237,7 +237,10 @@ function ShariaDailyReports() {
       'سؤال صح وخطأ': r.question2,
       'إجابة صح وخطأ': r.question2Answer,
       'سؤال الاختيار من متعدد': r.question3,
-      'الخيارات المتاحة': r.question3Options ? r.question3Options.join(' - ') : '',
+      'الخيار الأول (أ)': r.question3Options && r.question3Options[0] ? r.question3Options[0] : '',
+      'الخيار الثاني (ب)': r.question3Options && r.question3Options[1] ? r.question3Options[1] : '',
+      'الخيار الثالث (ج)': r.question3Options && r.question3Options[2] ? r.question3Options[2] : '',
+      'الخيار الرابع (د)': r.question3Options && r.question3Options[3] ? r.question3Options[3] : '',
       'الإجابة الصحيحة للاختيار': r.question3Answer,
       'معد التقرير': r.reporter,
       'الصفة': r.reporterRole
