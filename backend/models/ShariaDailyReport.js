@@ -9,6 +9,7 @@ const shariaDailyReportSchema = new mongoose.Schema(
     date: { type: String, required: true }, // YYYY-MM-DD
     teacher: { type: String, required: true }, // Lecturer name
     lectureNumber: { type: Number, required: true },
+    lectureTitle: String,
     
     // Question 1: Essay (مقالي)
     question1: { type: String, required: true },

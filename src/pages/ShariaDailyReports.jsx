@@ -87,6 +87,7 @@ function ShariaDailyReports() {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [teacher, setTeacher] = useState('');
   const [lectureNumber, setLectureNumber] = useState(1);
+  const [lectureTitle, setLectureTitle] = useState('');
 
   // 3 Questions
   const [question1, setQuestion1] = useState('');
@@ -199,6 +200,7 @@ function ShariaDailyReports() {
       date,
       teacher,
       lectureNumber: Number(lectureNumber),
+      lectureTitle,
       question1,
       question2,
       question2Answer,
@@ -213,6 +215,7 @@ function ShariaDailyReports() {
     alert('تم حفظ التقرير بنجاح');
     
     // Reset questions form fields
+    setLectureTitle('');
     setQuestion1('');
     setQuestion2('');
     setQuestion3('');
@@ -233,6 +236,7 @@ function ShariaDailyReports() {
       'التاريخ': r.date,
       'المحاضر': r.teacher,
       'رقم المحاضرة': r.lectureNumber,
+      'عنوان المحاضرة': r.lectureTitle || '',
       'السؤال المقالي': r.question1,
       'سؤال صح وخطأ': r.question2,
       'إجابة صح وخطأ': r.question2Answer,
@@ -260,6 +264,7 @@ function ShariaDailyReports() {
         'التاريخ': new Date().toISOString().split('T')[0],
         'المحاضر': teacher || 'اسم المحاضر',
         'رقم المحاضرة': 1,
+        'عنوان المحاضرة': 'اسم المحاضرة',
         'السؤال المقالي': 'اكتب سؤالك المقالي هنا...',
         'سؤال صح وخطأ': 'اكتب سؤال صح وخطأ هنا...',
         'إجابة صح وخطأ': 'صح',
@@ -433,7 +438,7 @@ function ShariaDailyReports() {
             </tr>
             <tr>
               <td class="label">رقم المحاضرة:</td>
-              <td class="value">${report.lectureNumber}</td>
+              <td class="value">${report.lectureNumber} ${report.lectureTitle ? ' - ' + report.lectureTitle : ''}</td>
               <td class="label">معد التقرير:</td>
               <td class="value">${report.reporter} (${report.reporterRole})</td>
             </tr>
@@ -769,6 +774,27 @@ function ShariaDailyReports() {
                 min="1"
                 value={lectureNumber}
                 onChange={(e) => setLectureNumber(e.target.value)}
+                style={{
+                  padding: '10px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-subtle)',
+                  backgroundColor: 'var(--bg-main)',
+                  color: 'var(--text-primary)',
+                  fontSize: '14px',
+                  outline: 'none'
+                }}
+              />
+            </div>
+
+            {/* Lecture Title */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600' }}>عنوان المحاضرة</label>
+              <input
+                type="text"
+                required
+                placeholder="مثال: مدخل إلى الفقه المالكي"
+                value={lectureTitle}
+                onChange={(e) => setLectureTitle(e.target.value)}
                 style={{
                   padding: '10px',
                   borderRadius: '8px',
@@ -1182,7 +1208,9 @@ function ShariaDailyReports() {
                     <td style={{ padding: '14px 20px', fontSize: '13px', color: 'var(--text-primary)', fontWeight: 'bold' }}>{report.subject}</td>
                     <td style={{ padding: '14px 20px', fontSize: '13px', color: 'var(--text-secondary)' }}>{report.stage} - {report.level}</td>
                     <td style={{ padding: '14px 20px', fontSize: '13px', color: 'var(--text-primary)' }}>{report.teacher}</td>
-                    <td style={{ padding: '14px 20px', fontSize: '13px', color: 'var(--text-primary)', textAlign: 'center' }}>{report.lectureNumber}</td>
+                    <td style={{ padding: '14px 20px', fontSize: '13px', color: 'var(--text-primary)', textAlign: 'center' }}>
+                      {report.lectureNumber} {report.lectureTitle ? ` - ${report.lectureTitle}` : ''}
+                    </td>
                     <td style={{ padding: '14px 20px', fontSize: '12px', color: 'var(--text-secondary)' }}>
                       <div>{report.reporter}</div>
                       <div style={{ fontSize: '10px', opacity: 0.7 }}>{report.reporterRole}</div>
@@ -1297,7 +1325,7 @@ function ShariaDailyReports() {
               <div>المستوى: <strong style={{ color: 'var(--text-primary)' }}>{selectedReport.level}</strong></div>
               <div style={{ gridColumn: 'span 2' }}>المادة: <strong style={{ color: 'var(--accent-gold)' }}>{selectedReport.subject}</strong></div>
               <div>المحاضر: <strong style={{ color: 'var(--text-primary)' }}>{selectedReport.teacher}</strong></div>
-              <div>رقم المحاضرة: <strong style={{ color: 'var(--text-primary)' }}>{selectedReport.lectureNumber}</strong></div>
+              <div>رقم المحاضرة: <strong style={{ color: 'var(--text-primary)' }}>{selectedReport.lectureNumber} {selectedReport.lectureTitle ? ` - ${selectedReport.lectureTitle}` : ''}</strong></div>
               <div style={{ gridColumn: 'span 2', fontSize: '11px', color: 'var(--text-secondary)', borderTop: '1px solid var(--border-subtle)', paddingTop: '8px', marginTop: '4px' }}>
                 بواسطة: {selectedReport.reporter} ({selectedReport.reporterRole})
               </div>
