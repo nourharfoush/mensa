@@ -1478,6 +1478,7 @@ function ShariaDashboard() {
                 ) : (
                   <>
                     <option value="الكل">الكل (جميع المحافظات والجامع الأزهر)</option>
+                    <option value="جميع المحافظات">جميع المحافظات</option>
                     {GOVERNORATES.map(gov => (
                       <option key={gov} value={gov}>{gov}</option>
                     ))}
@@ -4533,6 +4534,7 @@ function ShariaDashboard() {
                       style={selectStyle}
                       disabled={isGovOfficial}
                     >
+                      <option value="جميع المحافظات">جميع المحافظات</option>
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
                       ))}
@@ -4635,18 +4637,18 @@ function ShariaDashboard() {
                     onChange={(e) => setLiveForm({ ...liveForm, teacher: e.target.value })} 
                     style={selectStyle}
                   >
-                    {teachers.filter(t => t.governorate === liveForm.governorate).length === 0 ? (
+                    {teachers.filter(t => liveForm.governorate === 'جميع المحافظات' || t.governorate === liveForm.governorate).length === 0 ? (
                       <option value="">لا يوجد محاضرين مسجلين في هذه الإدارة حالياً</option>
                     ) : (
                       <>
                         <option value="">اختر الأستاذ المحاضر...</option>
-                        {teachers.filter(t => t.governorate === liveForm.governorate).map(t => (
+                        {teachers.filter(t => liveForm.governorate === 'جميع المحافظات' || t.governorate === liveForm.governorate).map(t => (
                           <option key={t.id} value={t.name}>{t.name}</option>
                         ))}
                       </>
                     )}
                   </select>
-                  {teachers.filter(t => t.governorate === liveForm.governorate).length === 0 && (
+                  {teachers.filter(t => liveForm.governorate === 'جميع المحافظات' || t.governorate === liveForm.governorate).length === 0 && (
                     <span style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px', display: 'block' }}>
                       * يرجى إضافة محاضرين لهذه الإدارة أولاً من تبويب "أعضاء هيئة التدريس".
                     </span>
@@ -5450,6 +5452,7 @@ function ShariaDashboard() {
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>الإدارة (الموقع / المحافظة)</label>
                     <select value={teacherForm.governorate} onChange={(e) => setTeacherForm({ ...teacherForm, governorate: e.target.value, branches: [] })} style={selectStyle} disabled={isGovOfficial}>
+                      <option value="جميع المحافظات">جميع المحافظات</option>
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
                       ))}
@@ -5646,6 +5649,7 @@ function ShariaDashboard() {
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>الإدارة (الموقع / المحافظة)</label>
                     <select value={editingTeacher.governorate} onChange={(e) => setEditingTeacher({ ...editingTeacher, governorate: e.target.value, branches: [], branch: '' })} style={selectStyle} disabled={isGovOfficial}>
+                      <option value="جميع المحافظات">جميع المحافظات</option>
                       {GOVERNORATES.map(gov => (
                         <option key={gov} value={gov}>{gov}</option>
                       ))}
