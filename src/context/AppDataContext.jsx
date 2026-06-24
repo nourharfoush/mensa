@@ -6,7 +6,7 @@ import {
   sessionReportsAPI, platformTopManagementAPI, platformSupervisorsAPI, platformCoordinatorsAPI,
   platformMohfezsAPI, platformSessionsAPI, platformStudentsAPI, platformApplicantsAPI,
   platformRowaqsAPI, administrationsAPI, rolePermissionsAPI,
-  shariaCoursesAPI, shariaBranchesAPI, shariaStudentsAPI, shariaTeachersAPI, shariaLivesAPI
+  shariaCoursesAPI, shariaBranchesAPI, shariaStudentsAPI, shariaTeachersAPI, shariaLivesAPI, shariaDailyReportsAPI
 } from '../utils/apiService';
 
 const AppDataContext = createContext(null);
@@ -406,6 +406,7 @@ export function AppDataProvider({ children }) {
 
   const [shariaAttendance, setShariaAttendance] = useState(() => getFromLocalStorage('sharia_attendance', []));
   const [lectureAccessLogs, setLectureAccessLogs] = useState(() => getFromLocalStorage('lecture_access_logs', []));
+  const [shariaDailyReports, setShariaDailyReports] = useState(() => getFromLocalStorage('sharia_daily_reports', []));
 
   // Save permissions to localStorage
   useEffect(() => {
@@ -505,6 +506,7 @@ export function AppDataProvider({ children }) {
         await syncCollection(shariaStudentsAPI, shariaStudents, setShariaStudents, 'sharia_students', s => ({ ...s, stage: normalizeStage(s.stage) }));
         await syncCollection(shariaTeachersAPI, shariaTeachers, setShariaTeachers, 'sharia_teachers');
         await syncCollection(shariaLivesAPI, shariaLiveLectures, setShariaLiveLectures, 'sharia_live', l => ({ ...l, stage: normalizeStage(l.stage) }));
+        await syncCollection(shariaDailyReportsAPI, shariaDailyReports, setShariaDailyReports, 'sharia_daily_reports');
 
         // One-time correction for swapped admin and decision_no fields and shifted columns in database
         try {
@@ -1128,6 +1130,10 @@ export function AppDataProvider({ children }) {
   useEffect(() => {
     saveToLocalStorage('lecture_access_logs', lectureAccessLogs);
   }, [lectureAccessLogs]);
+
+  useEffect(() => {
+    saveToLocalStorage('sharia_daily_reports', shariaDailyReports);
+  }, [shariaDailyReports]);
 
   useEffect(() => {
     setAdministrations(prev => {
@@ -2134,6 +2140,22 @@ export function AppDataProvider({ children }) {
     });
   };
 
+  const addShariaDailyReport = (report) => {
+    const newReport = { ...report, id: String(Date.now() + Math.random()) };
+    setShariaDailyReports(prev => [newReport, ...prev]);
+    shariaDailyReportsAPI.create(newReport).catch(err => console.error(err));
+  };
+  const updateShariaDailyReport = (id, updatedReport) => {
+    setShariaDailyReports(prev => prev.map(r => String(r.id) === String(id) ? { ...r, ...updatedReport } : r));
+    shariaDailyReportsAPI.update(id, updatedReport).catch(err => console.error(err));
+  };
+  const deleteShariaDailyReport = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setShariaDailyReports(prev => prev.filter(r => String(r.id) !== String(id)));
+      shariaDailyReportsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
   const updateRolePermissions = (newPermissions) => {
     setRolePermissions(newPermissions);
   };
@@ -2188,6 +2210,7 @@ export function AppDataProvider({ children }) {
       shariaSchedules, addShariaSchedule, updateShariaSchedule, deleteShariaSchedule,
       shariaAttendance, addShariaAttendance,
       lectureAccessLogs, addLectureAccessLog, updateLectureAccessDuration,
+      shariaDailyReports, addShariaDailyReport, updateShariaDailyReport, deleteShariaDailyReport,
 
       theme, toggleTheme,
       rolePermissions, updateRolePermissions, hasPermission,

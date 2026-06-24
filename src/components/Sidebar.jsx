@@ -77,6 +77,7 @@ const menuGroups = [
       { name: 'قسم الدارسين والطلاب', icon: Users, path: '/sharia-dashboard?tab=students' },
       { name: 'البث المباشر والمحاضرات', icon: Video, path: '/sharia-dashboard?tab=live' },
       { name: 'جدول المحاضرات الحضورية', icon: Calendar, path: '/sharia-dashboard?tab=schedules' },
+      { name: 'التقارير اليومية للمحاضرات', icon: FileText, path: '/sharia-daily-reports' },
       { name: 'الاختبارات والامتحانات', icon: FileText, path: '/sharia-dashboard?tab=exams' },
       { name: 'نتائج الامتحانات', icon: Award, path: '/sharia-dashboard?tab=results' },
       { name: 'الأخبار والإعلانات', icon: Newspaper, path: '/sharia-dashboard?tab=news' },
@@ -143,7 +144,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
     }
 
     // Sharia paths allowed for admin, rowaq_admin, and the four designated specialties
-    if (path.startsWith('/sharia-dashboard') || ['/sharia-courses', '/sharia-teachers', '/sharia-students', '/sharia-sessions'].includes(path)) {
+    if (path.startsWith('/sharia-dashboard') || ['/sharia-courses', '/sharia-teachers', '/sharia-students', '/sharia-sessions', '/sharia-daily-reports'].includes(path)) {
       const shariaSpecialties = [
         'مدير الإدارة',
         'العضو التقني',

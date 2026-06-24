@@ -55,6 +55,7 @@ import ShariaCourses from './pages/ShariaCourses';
 import ShariaTeachers from './pages/ShariaTeachers';
 import ShariaStudents from './pages/ShariaStudents';
 import ShariaSessions from './pages/ShariaSessions';
+import ShariaDailyReports from './pages/ShariaDailyReports';
 
 import AdministrationsList from './pages/AdministrationsList';
 import RowaqsList from './pages/RowaqsList';
@@ -200,6 +201,7 @@ function DashboardLayout() {
             <Route path="/sharia-teachers" element={<ShariaTeachers />} />
             <Route style={{ direction: 'rtl' }} path="/sharia-students" element={<ShariaStudents />} />
             <Route path="/sharia-sessions" element={<ShariaSessions />} />
+            <Route path="/sharia-daily-reports" element={<ShariaDailyReports />} />
           </Routes>
         </div>
       </main>

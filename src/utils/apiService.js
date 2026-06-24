@@ -323,3 +323,13 @@ export const shariaLivesAPI = {
   bulkImport: (items) => apiCall('/sharialives/bulk-import', { method: 'POST', body: { items } })
 };
 
+// Sharia Daily Reports API
+export const shariaDailyReportsAPI = {
+  getAll: () => apiCall('/shariadailyreports'),
+  create: (data) => apiCall('/shariadailyreports', { method: 'POST', body: data }),
+  update: (id, data) => apiCall(`/shariadailyreports/${id}`, { method: 'PUT', body: data }),
+  delete: (id) => apiCall(`/shariadailyreports/${id}`, { method: 'DELETE' }),
+  deleteAll: () => apiCall('/shariadailyreports/all', { method: 'DELETE' }),
+  bulkImport: (items) => apiCall('/shariadailyreports/bulk-import', { method: 'POST', body: { items } })
+};
+
