@@ -23,6 +23,26 @@ const LEVELS_BY_STAGE = {
   'المتقدمة': ['المستوى الأول', 'المستوى الثاني', 'المستوى الثالث', 'المستوى الرابع']
 };
 
+const getDisciplineKey = (arabicVal) => {
+  if (!arabicVal) return '—';
+  const clean = String(arabicVal).trim();
+  if (clean === 'فقه وأصوله' || clean === 'الفقه وأصوله' || clean === 'fiqh') return 'fiqh';
+  if (clean === 'تفسير وحديث' || clean === 'التفسير والحديث' || clean === 'tafsir') return 'tafsir';
+  if (clean === 'عقيدة' || clean === 'العقيدة الإسلامية' || clean === 'aqeedah') return 'aqeedah';
+  if (clean === 'لغة عربية' || clean === 'اللغة العربية وآدابها' || clean === 'arabic') return 'arabic';
+  if (clean === 'عامة' || clean === 'محاضرات عامة / مشتركة' || clean === 'general') return 'general';
+  return clean;
+};
+
+const getDisciplineLabel = (key) => {
+  if (key === 'fiqh') return 'الفقه وأصوله';
+  if (key === 'tafsir') return 'التفسير والحديث';
+  if (key === 'aqeedah') return 'العقيدة الإسلامية';
+  if (key === 'arabic') return 'اللغة العربية وآدابها';
+  if (key === 'general') return 'محاضرات عامة / مشتركة';
+  return key || '—';
+};
+
 function ShariaDailyReports() {
   const { 
     shariaCourses = [], 
@@ -61,6 +81,7 @@ function ShariaDailyReports() {
   });
 
   const [stage, setStage] = useState('التمهيدية');
+  const [discipline, setDiscipline] = useState('—');
   const [level, setLevel] = useState('المستوى الأول');
   const [subject, setSubject] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -95,7 +116,11 @@ function ShariaDailyReports() {
   const levels = LEVELS_BY_STAGE[stage] || [];
   
   // Subjects (Courses) filtered by stage and level
-  const filteredCourses = shariaCourses.filter(c => c.stage === stage && c.level === level);
+  const filteredCourses = shariaCourses.filter(c => 
+    c.stage === stage && 
+    c.level === level &&
+    (stage !== 'المتقدمة' || !c.discipline || c.discipline === '—' || getDisciplineKey(c.discipline) === getDisciplineKey(discipline))
+  );
 
   // Get lecturers housed for the selected subject
   const [availableLecturers, setAvailableLecturers] = useState([]);
@@ -116,7 +141,7 @@ function ShariaDailyReports() {
     } else {
       setSubject('');
     }
-  }, [stage, level, shariaCourses]);
+  }, [stage, level, discipline, shariaCourses]);
 
   // Load teachers assigned to course or governorate
   useEffect(() => {
@@ -152,7 +177,7 @@ function ShariaDailyReports() {
     } else {
       setTeacher('');
     }
-  }, [subject, selectedGov, stage, level, shariaCourses, shariaTeachers, shariaSchedules]);
+  }, [subject, selectedGov, stage, level, discipline, shariaCourses, shariaTeachers, shariaSchedules]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -169,6 +194,7 @@ function ShariaDailyReports() {
       governorate: selectedGov,
       stage,
       level,
+      discipline: stage === 'المتقدمة' ? getDisciplineLabel(discipline) : '—',
       subject,
       date,
       teacher,
@@ -392,7 +418,7 @@ function ShariaDailyReports() {
             </tr>
             <tr>
               <td class="label">المرحلة الدراسية:</td>
-              <td class="value">${report.stage}</td>
+              <td class="value">${report.stage} ${report.discipline && report.discipline !== '—' ? '(' + report.discipline + ')' : ''}</td>
               <td class="label">المستوى الدراسي:</td>
               <td class="value">${report.level}</td>
             </tr>
@@ -550,7 +576,15 @@ function ShariaDailyReports() {
               <label style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600' }}>المرحلة الدراسية</label>
               <select
                 value={stage}
-                onChange={(e) => setStage(e.target.value)}
+                onChange={(e) => {
+                  const newStage = e.target.value;
+                  setStage(newStage);
+                  if (newStage !== 'المتقدمة') {
+                    setDiscipline('—');
+                  } else {
+                    setDiscipline('fiqh');
+                  }
+                }}
                 style={{
                   padding: '10px',
                   borderRadius: '8px',
@@ -567,6 +601,33 @@ function ShariaDailyReports() {
                 ))}
               </select>
             </div>
+
+            {/* Discipline (Specialty) - Only for Advanced Stage */}
+            {stage === 'المتقدمة' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <label style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600' }}>التخصص التخصصي</label>
+                <select
+                  value={discipline}
+                  onChange={(e) => setDiscipline(e.target.value)}
+                  style={{
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border-subtle)',
+                    backgroundColor: 'var(--bg-main)',
+                    color: 'var(--text-primary)',
+                    fontSize: '14px',
+                    outline: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="fiqh">الفقه وأصوله</option>
+                  <option value="tafsir">التفسير والحديث</option>
+                  <option value="aqeedah">العقيدة الإسلامية</option>
+                  <option value="arabic">اللغة العربية وآدابها</option>
+                  <option value="general">محاضرات عامة / مشتركة</option>
+                </select>
+              </div>
+            )}
 
             {/* Level */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -1227,7 +1288,7 @@ function ShariaDailyReports() {
             }}>
               <div>المحافظة: <strong style={{ color: 'var(--text-primary)' }}>{selectedReport.governorate}</strong></div>
               <div>التاريخ: <strong style={{ color: 'var(--text-primary)' }}>{selectedReport.date}</strong></div>
-              <div>المرحلة: <strong style={{ color: 'var(--text-primary)' }}>{selectedReport.stage}</strong></div>
+              <div>المرحلة: <strong style={{ color: 'var(--text-primary)' }}>{selectedReport.stage} {selectedReport.discipline && selectedReport.discipline !== '—' ? `(${selectedReport.discipline})` : ''}</strong></div>
               <div>المستوى: <strong style={{ color: 'var(--text-primary)' }}>{selectedReport.level}</strong></div>
               <div style={{ gridColumn: 'span 2' }}>المادة: <strong style={{ color: 'var(--accent-gold)' }}>{selectedReport.subject}</strong></div>
               <div>المحاضر: <strong style={{ color: 'var(--text-primary)' }}>{selectedReport.teacher}</strong></div>
