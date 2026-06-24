@@ -157,7 +157,7 @@ function ShariaDailyReports() {
 
     // 3. Find teachers registered in this governorate
     const govTeachers = shariaTeachers
-      .filter(t => t.governorate === selectedGov)
+      .filter(t => t.governorate === selectedGov || t.governorate === 'جميع المحافظات')
       .map(t => t.name);
 
     // Combine and deduplicate
@@ -273,7 +273,7 @@ function ShariaDailyReports() {
 
   const getFilteredReports = () => {
     return shariaDailyReports.filter(r => {
-      const matchGov = filterGov === 'الكل' || r.governorate === filterGov;
+      const matchGov = filterGov === 'الكل' || r.governorate === filterGov || r.governorate === 'جميع المحافظات';
       const matchStage = filterStage === 'الكل' || r.stage === filterStage;
       const matchSearch = 
         r.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -565,6 +565,7 @@ function ShariaDailyReports() {
                   opacity: isSuperAdmin ? 1 : 0.8
                 }}
               >
+                <option value="جميع المحافظات">جميع المحافظات</option>
                 {GOVERNORATES.map(gov => (
                   <option key={gov} value={gov}>{gov}</option>
                 ))}
@@ -1081,6 +1082,7 @@ function ShariaDailyReports() {
               }}
             >
               {isSuperAdmin && <option value="الكل">الكل (جميع المحافظات)</option>}
+              <option value="جميع المحافظات">جميع المحافظات</option>
               {isSuperAdmin ? (
                 GOVERNORATES.map(gov => (
                   <option key={gov} value={gov}>{gov}</option>
