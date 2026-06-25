@@ -85,6 +85,8 @@ function ShariaDashboard() {
     return 'الكل';
   });
   const [selectedBranch, setSelectedBranch] = useState('الكل');
+  const [selectedLiveStage, setSelectedLiveStage] = useState('الكل');
+  const [selectedLiveLevel, setSelectedLiveLevel] = useState('الكل');
 
   useEffect(() => {
     const targetTab = tabParam || 'overview';
@@ -219,20 +221,35 @@ function ShariaDashboard() {
   const [examForm, setExamForm] = useState({ name: '', level: 'تمهيدية - المستوى الأول', date: '', duration: '90 دقيقة', totalQuestions: 40, status: 'مجدول' });
   const [resultForm, setResultForm] = useState({ studentName: '', examName: '', score: 85, grade: 'جيد جداً', status: 'ناجح', governorate: 'الجامع الأزهر' });
   const [newsForm, setNewsForm] = useState({ title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'إعلان عام', status: 'منشور' });
-  const [liveForm, setLiveForm] = useState({
-    title: '',
-    governorate: 'الجامع الأزهر',
-    stage: 'التمهيدية',
-    level: 'المستوى الأول',
-    discipline: '—',
-    teacher: '',
-    day: 'الأحد',
-    timeStart: '',
-    timeEnd: '',
-    link: '',
-    streamType: 'embedded',
-    isWeekly: true,
-    status: 'مجدول'
+  const [liveForm, setLiveForm] = useState(() => {
+    try {
+      const saved = localStorage.getItem('lastLiveForm');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...parsed,
+          title: '',
+          link: ''
+        };
+      }
+    } catch (e) {
+      console.error("Error reading lastLiveForm from localStorage:", e);
+    }
+    return {
+      title: '',
+      governorate: 'الجامع الأزهر',
+      stage: 'التمهيدية',
+      level: 'المستوى الأول',
+      discipline: '—',
+      teacher: '',
+      day: 'الأحد',
+      timeStart: '',
+      timeEnd: '',
+      link: '',
+      streamType: 'embedded',
+      isWeekly: true,
+      status: 'مجدول'
+    };
   });
   const [teacherForm, setTeacherForm] = useState({
     name: '',
@@ -531,21 +548,22 @@ function ShariaDashboard() {
     }
     addShariaLive(liveForm);
     setShowAddModal(null);
-    setLiveForm({
+    // Save to localStorage (without title and link)
+    try {
+      localStorage.setItem('lastLiveForm', JSON.stringify({
+        ...liveForm,
+        title: '',
+        link: ''
+      }));
+    } catch (err) {
+      console.error("Error saving lastLiveForm to localStorage:", err);
+    }
+    // Keep last added fields for easy scheduling, only clearing title and link
+    setLiveForm(prev => ({
+      ...prev,
       title: '',
-      governorate: 'الجامع الأزهر',
-      stage: 'التمهيدية',
-      level: 'المستوى الأول',
-      discipline: '—',
-      teacher: '',
-      day: 'الأحد',
-      timeStart: '',
-      timeEnd: '',
-      link: '',
-      streamType: 'embedded',
-      isWeekly: true,
-      status: 'مجدول'
-    });
+      link: ''
+    }));
   };
 
   const handleAddTeacher = (e) => {
@@ -1228,10 +1246,22 @@ function ShariaDashboard() {
       filtered = filtered.filter(l => 
         currentUser?.name && normalizeArabic(l.teacher) === normalizeArabic(currentUser.name)
       );
+      if (selectedLiveStage !== 'الكل') {
+        filtered = filtered.filter(l => l.stage === selectedLiveStage);
+      }
+      if (selectedLiveLevel !== 'الكل') {
+        filtered = filtered.filter(l => l.level === selectedLiveLevel);
+      }
     } else {
       filtered = filtered.filter(l => 
         (selectedGov === 'الكل' || l.governorate === selectedGov)
       );
+      if (selectedLiveStage !== 'الكل') {
+        filtered = filtered.filter(l => l.stage === selectedLiveStage);
+      }
+      if (selectedLiveLevel !== 'الكل') {
+        filtered = filtered.filter(l => l.level === selectedLiveLevel);
+      }
     }
     if (showOnlyActiveLives) {
       filtered = filtered.filter(isLectureActiveNow);
@@ -3304,6 +3334,103 @@ function ShariaDashboard() {
               )}
             </div>
           </div>
+
+          {/* Filters for Stage and Level */}
+          {!isShariaStudent && (
+            <div style={{
+              display: 'flex',
+              gap: '15px',
+              alignItems: 'center',
+              marginBottom: '20px',
+              padding: '12px 16px',
+              backgroundColor: 'var(--bg-main)',
+              borderRadius: '8px',
+              border: '1px solid var(--border-subtle)',
+              flexWrap: 'wrap'
+            }}>
+              <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>تصفية المحاضرات:</span>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>المحافظة:</label>
+                <select
+                  value={selectedGov}
+                  onChange={(e) => {
+                    setSelectedGov(e.target.value);
+                    setSelectedBranch('الكل');
+                  }}
+                  disabled={isGovOfficial}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-subtle)',
+                    backgroundColor: 'var(--bg-card)',
+                    color: 'var(--text-primary)',
+                    fontSize: '12px',
+                    cursor: isGovOfficial ? 'not-allowed' : 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  {isGovOfficial ? (
+                    <option value={userAdminGov}>{userAdminGov}</option>
+                  ) : (
+                    <>
+                      <option value="الكل">كل المحافظات</option>
+                      {GOVERNORATES.map(gov => (
+                        <option key={gov} value={gov}>{gov}</option>
+                      ))}
+                    </>
+                  )}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>المرحلة:</label>
+                <select
+                  value={selectedLiveStage}
+                  onChange={(e) => setSelectedLiveStage(e.target.value)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-subtle)',
+                    backgroundColor: 'var(--bg-card)',
+                    color: 'var(--text-primary)',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="الكل">كل المراحل</option>
+                  <option value="التمهيدية">التمهيدية</option>
+                  <option value="المتوسطة">المتوسطة</option>
+                  <option value="المتقدمة">المتقدمة</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>المستوى:</label>
+                <select
+                  value={selectedLiveLevel}
+                  onChange={(e) => setSelectedLiveLevel(e.target.value)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-subtle)',
+                    backgroundColor: 'var(--bg-card)',
+                    color: 'var(--text-primary)',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="الكل">كل المستويات</option>
+                  <option value="المستوى الأول">المستوى الأول</option>
+                  <option value="المستوى الثاني">المستوى الثاني</option>
+                  <option value="المستوى الثالث">المستوى الثالث</option>
+                  <option value="المستوى الرابع">المستوى الرابع</option>
+                </select>
+              </div>
+            </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
             {getFilteredLiveLectures().length === 0 ? (
