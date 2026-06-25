@@ -13,6 +13,7 @@ const branchSchema = new mongoose.Schema(
     timeTo: String,
     phone: String,
     address: String,
+    isArchived: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

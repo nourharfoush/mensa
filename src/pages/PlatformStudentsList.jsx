@@ -66,7 +66,7 @@ function PlatformStudentsList() {
       'الرواق': s.rowaq,
       'الجنس': s.gender,
       'المستوى': s.level,
-      'الحلقة': s.session_id,
+      'الحلقة': s.session_no || '',
       'رقم جواز السفر': s.passport_no || s.national_id || '',
       'رقم التليفون': s.phone || '',
       'العنوان': s.address || '',

@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, Users, FileText, Calendar, GitBranch, 
-  BookOpen, Building, MapPin, UserPlus, FilePlus, Settings, User, LogOut, Shield, ArrowRightLeft, BookOpen as BookIcon, Award, Video, Newspaper
+  BookOpen, Building, MapPin, UserPlus, FilePlus, Settings, User, LogOut, Shield, ArrowRightLeft, BookOpen as BookIcon, Award, Video, Newspaper, Archive
 } from 'lucide-react';
 import './Sidebar.css';
 import { useAppData } from '../context/AppDataContext';
@@ -36,6 +36,7 @@ const menuGroups = [
       { name: 'تقارير المحفظين', icon: FileText, path: '/mohfez-reports' },
       { name: 'الدارسين', icon: BookOpen, path: '/students' },
       { name: 'المتقدمين الجدد', icon: UserPlus, path: '/applicants' },
+      { name: 'الأرشيف', icon: Archive, path: '/archive' },
     ]
   },
   {
@@ -76,6 +77,7 @@ const menuGroups = [
       { name: 'قسم الدارسين والطلاب', icon: Users, path: '/sharia-dashboard?tab=students' },
       { name: 'البث المباشر والمحاضرات', icon: Video, path: '/sharia-dashboard?tab=live' },
       { name: 'جدول المحاضرات الحضورية', icon: Calendar, path: '/sharia-dashboard?tab=schedules' },
+      { name: 'التقارير اليومية للمحاضرات', icon: FileText, path: '/sharia-daily-reports' },
       { name: 'الاختبارات والامتحانات', icon: FileText, path: '/sharia-dashboard?tab=exams' },
       { name: 'نتائج الامتحانات', icon: Award, path: '/sharia-dashboard?tab=results' },
       { name: 'الأخبار والإعلانات', icon: Newspaper, path: '/sharia-dashboard?tab=news' },
@@ -142,7 +144,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
     }
 
     // Sharia paths allowed for admin, rowaq_admin, and the four designated specialties
-    if (path.startsWith('/sharia-dashboard') || ['/sharia-courses', '/sharia-teachers', '/sharia-students', '/sharia-sessions'].includes(path)) {
+    if (path.startsWith('/sharia-dashboard') || ['/sharia-courses', '/sharia-teachers', '/sharia-students', '/sharia-sessions', '/sharia-daily-reports'].includes(path)) {
       const shariaSpecialties = [
         'مدير الإدارة',
         'العضو التقني',
@@ -225,8 +227,8 @@ function Sidebar({ isOpen, toggleSidebar }) {
       return !forbidden.includes(path);
     }
 
-    // 6. rowaq_tech / rowaq_member
-    if (['rowaq_tech', 'rowaq_member'].includes(userRole)) {
+    // 6. rowaq_tech
+    if (userRole === 'rowaq_tech') {
       const forbidden = [
         '/platform-dashboard',
         '/platform-top-management',
@@ -240,6 +242,26 @@ function Sidebar({ isOpen, toggleSidebar }) {
         '/permissions',
         '/settings',
         '/towers'
+      ];
+      return !forbidden.includes(path);
+    }
+
+    // 6b. rowaq_member
+    if (userRole === 'rowaq_member') {
+      const forbidden = [
+        '/platform-dashboard',
+        '/platform-top-management',
+        '/platform-supervisors',
+        '/platform-coordinators',
+        '/platform-mohfez',
+        '/platform-sessions',
+        '/platform-students',
+        '/platform-applicants',
+        '/users',
+        '/permissions',
+        '/settings',
+        '/towers',
+        '/archive'
       ];
       return !forbidden.includes(path);
     }

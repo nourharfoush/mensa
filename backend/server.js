@@ -78,6 +78,7 @@ import shariaBranchRoutes from './routes/shariabranches.js';
 import shariaStudentRoutes from './routes/shariastudents.js';
 import shariaTeacherRoutes from './routes/shariateachers.js';
 import shariaLiveRoutes from './routes/sharialives.js';
+import shariaDailyReportRoutes from './routes/shariadailyreports.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -180,6 +181,7 @@ app.delete('/api/:collection/all', async (req, res) => {
       case 'shariastudents': modelName = 'ShariaStudent'; break;
       case 'shariateachers': modelName = 'ShariaTeacher'; break;
       case 'sharialives': modelName = 'ShariaLive'; break;
+      case 'shariadailyreports': modelName = 'ShariaDailyReport'; break;
       default:
         return res.status(400).json({ message: 'Invalid collection name' });
     }
@@ -223,6 +225,7 @@ app.use('/api/shariabranches', shariaBranchRoutes);
 app.use('/api/shariastudents', shariaStudentRoutes);
 app.use('/api/shariateachers', shariaTeacherRoutes);
 app.use('/api/sharialives', shariaLiveRoutes);
+app.use('/api/shariadailyreports', shariaDailyReportRoutes);
 
 // Debug database endpoint
 app.get('/api/debug-db', async (req, res) => {

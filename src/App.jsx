@@ -55,6 +55,7 @@ import ShariaCourses from './pages/ShariaCourses';
 import ShariaTeachers from './pages/ShariaTeachers';
 import ShariaStudents from './pages/ShariaStudents';
 import ShariaSessions from './pages/ShariaSessions';
+import ShariaDailyReports from './pages/ShariaDailyReports';
 
 import AdministrationsList from './pages/AdministrationsList';
 import RowaqsList from './pages/RowaqsList';
@@ -66,6 +67,7 @@ import ApplicantBranchesCreate from './pages/ApplicantBranchesCreate';
 import WatchtowerList from './pages/WatchtowerList';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
+import ArchiveList from './pages/ArchiveList';
 import PublicHome from './pages/PublicHome';
 import PublicQuran from './pages/PublicQuran';
 import PublicIslamicStudies from './pages/PublicIslamicStudies';
@@ -144,6 +146,7 @@ function DashboardLayout() {
             
             {/* Rowaq Statistics */}
             <Route path="/branches" element={<BranchesList />} />
+            <Route path="/archive" element={<ArchiveList />} />
             <Route path="/branches/create" element={<BranchesCreate />} />
             <Route path="/coordinators" element={<CoordinatorsList />} />
             <Route path="/coordinators/create" element={<CoordinatorsCreate />} />
@@ -198,6 +201,7 @@ function DashboardLayout() {
             <Route path="/sharia-teachers" element={<ShariaTeachers />} />
             <Route style={{ direction: 'rtl' }} path="/sharia-students" element={<ShariaStudents />} />
             <Route path="/sharia-sessions" element={<ShariaSessions />} />
+            <Route path="/sharia-daily-reports" element={<ShariaDailyReports />} />
           </Routes>
         </div>
       </main>

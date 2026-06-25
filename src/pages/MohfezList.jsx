@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Plus, Download, Upload, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, Download, Upload, Edit, Trash2, Archive } from 'lucide-react';
 import '../components/Management.css';
 import { useAppData } from '../context/AppDataContext';
 import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
@@ -9,7 +9,7 @@ import egyptCenters from '../data/egyptCenters';
 const governorates = Object.keys(egyptCenters);
 
 function MohfezList() {
-  const { mohfezs, deleteMohfez, addMohfez, branches, hasPermission, sessions, updateSession, deleteAllMohfezs } = useAppData();
+  const { mohfezs, deleteMohfez, addMohfez, branches, hasPermission, sessions, updateSession, deleteAllMohfezs, updateMohfez } = useAppData();
   const importRef = useRef(null);
 
   const getStatusStyle = (status) => {
@@ -127,7 +127,61 @@ function MohfezList() {
       .trim();
   };
 
+  const normalizedGovernoratesSet = new Set(governorates.map(g => normalizeArabic(g)));
+
+  const resolveGeographicFields = (adminVal, centerVal, branchVal, branchesList) => {
+    const normAdmin = normalizeArabic(adminVal);
+    const normCenter = normalizeArabic(centerVal);
+    const normBranch = normalizeArabic(branchVal);
+
+    if (!branchesList || branchesList.length === 0) {
+      return { admin: adminVal, center: centerVal, branch: branchVal };
+    }
+
+    // 1. Check if centerVal is a valid branch name, and branchVal is NOT (shifted columns)
+    const isBranchValValid = normBranch && branchesList.some(b => normalizeArabic(b.name) === normBranch);
+    const isCenterValValid = normCenter && branchesList.some(b => normalizeArabic(b.name) === normCenter);
+
+    if (isCenterValValid && !isBranchValValid) {
+      const matchedBranch = branchesList.find(b => 
+        normalizeArabic(b.name) === normCenter &&
+        (normalizeArabic(b.center) === normAdmin || normalizeArabic(b.admin) === normAdmin)
+      ) || branchesList.find(b => normalizeArabic(b.name) === normCenter);
+      
+      if (matchedBranch) {
+        return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+      }
+    }
+
+    // 2. Exact match
+    let matchedBranch = branchesList.find(b => 
+      normalizeArabic(b.name) === normBranch &&
+      normalizeArabic(b.center) === normCenter &&
+      normalizeArabic(b.admin) === normAdmin
+    );
+    if (matchedBranch) {
+      return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+    }
+
+    // 3. Match by branch name (normBranch)
+    if (isBranchValValid) {
+      const matchedBranch = branchesList.find(b => 
+        normalizeArabic(b.name) === normBranch &&
+        (normalizeArabic(b.center) === normCenter || normalizeArabic(b.admin) === normAdmin)
+      ) || branchesList.find(b => normalizeArabic(b.name) === normBranch);
+
+      if (matchedBranch) {
+        return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+      }
+    }
+
+    return { admin: adminVal, center: centerVal, branch: branchVal };
+  };
+
+  const isAllowedToArchive = ['admin', 'rowaq_admin', 'rowaq_manager', 'rowaq_tech'].includes(role);
+
   const filtered = mohfezs.filter(m => {
+    if (m.isArchived) return false;
     // 1. Geographic role restrictions
     if (isRowaqStaff && userAdmin && normalizeArabic(m.admin) !== normalizeArabic(userAdmin)) return false;
     if (isBranchCoordinator && userBranch && normalizeArabic(m.branch) !== normalizeArabic(userBranch)) return false;
@@ -238,23 +292,44 @@ function MohfezList() {
 
       validRows.forEach(row => {
         const natId = (row['الرقم القومي'] || row['الرقم القومى'] || '').toString().trim();
+        const branchVal = (row['الفرع'] || row['فرع'] || row['اسم الفرع'] || row['اسم فرع'] || '').toString().trim();
+        let adminVal = (row['إدارة'] || row['الإدارة'] || row['المحافظة'] || row['المحافظه'] || '').toString().trim();
+        const centerVal = (row['المركز'] || row['المركز/القسم'] || row['مركز'] || row['قسم'] || '').toString().trim();
+        const phoneVal = (row['الهاتف'] || row['رقم الهاتف'] || row['رقم التليفون'] || row['التليفون'] || '').toString().trim();
+        let decisionVal = (row['رقم القرار'] || row['القرار'] || '').toString().trim();
+
+        // Swap if decision_no is actually a governorate and admin is not
+        const normalizedAdmin = normalizeArabic(adminVal);
+        const normalizedDecision = normalizeArabic(decisionVal);
+        if (
+          decisionVal &&
+          normalizedGovernoratesSet.has(normalizedDecision) &&
+          !normalizedGovernoratesSet.has(normalizedAdmin)
+        ) {
+          const temp = adminVal;
+          adminVal = decisionVal;
+          decisionVal = temp;
+        }
+
+        // Resolve geographic fields using branches lookup
+        const resolved = resolveGeographicFields(adminVal, centerVal, branchVal, branches);
 
         addMohfez({
           name: row['الاسم'] || '',
           status: row['الحالة'] || '',
           rowaq: row['رواق'] || row['الرواق'] || '',
-          admin: row['إدارة'] || row['الإدارة'] || '',
-          center: row['المركز'] || '',
-          branch: row['الفرع'] || '',
-          registry_no: row['رقم السجل'] || '',
+          admin: resolved.admin,
+          center: resolved.center,
+          branch: resolved.branch,
+          registry_no: row['رقم السجل'] || row['السجل'] || '',
           national_id: natId,
           job: row['الوظيفة'] || '',
           workplace: row['جهة العمل'] || '',
           job_grade: row['الدرجة الوظيفية'] || '',
           qualification: row['المؤهل'] || '',
-          decision_no: row['رقم القرار'] || '',
+          decision_no: decisionVal,
           address: row['العنوان'] || '',
-          phone: row['الهاتف'] || '',
+          phone: phoneVal,
         });
 
         // Handle sessions mapping if specified
@@ -436,6 +511,9 @@ function MohfezList() {
                     </span>
                   </td>
                   <td className="actions-cell">
+                    {isAllowedToArchive && (
+                      <button className="action-icon edit" title="أرشفة" onClick={() => { if (window.confirm('هل أنت متأكد من أرشفة المحفظ؟')) updateMohfez(m.id, { isArchived: true }); }} style={{ color: 'var(--accent-gold)' }}><Archive size={16}/></button>
+                    )}
                     {hasPermission('mohfezs', 'edit') && (
                       <Link to={`/mohfez/create?id=${m.id}`} className="action-icon edit" style={{textDecoration: 'none', color: 'inherit'}}><Edit size={16}/></Link>
                     )}

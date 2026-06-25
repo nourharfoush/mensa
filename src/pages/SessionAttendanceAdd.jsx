@@ -42,15 +42,19 @@ function SessionAttendanceAdd() {
   // Find students in this session.
   const sessionStudents = isPlatform
     ? platformStudents.filter(s => 
-        (s.session_id && String(s.session_id) === String(session?.id)) ||
-        (String(s.session_no) === String(session?.session_no))
+        !s.isArchived && (
+          (s.session_id && String(s.session_id) === String(session?.id)) ||
+          (String(s.session_no) === String(session?.session_no))
+        )
       )
     : students.filter(s => 
-        (s.session_id && String(s.session_id) === String(session?.id)) ||
-        (String(s.session_no) === String(session?.session_no) &&
-         normalizeArabic(s.branch) === normalizeArabic(session?.branch) &&
-         normalizeArabic(s.center) === normalizeArabic(session?.center) &&
-         normalizeArabic(s.admin) === normalizeArabic(session?.admin))
+        !s.isArchived && (
+          (s.session_id && String(s.session_id) === String(session?.id)) ||
+          (String(s.session_no) === String(session?.session_no) &&
+           normalizeArabic(s.branch) === normalizeArabic(session?.branch) &&
+           normalizeArabic(s.center) === normalizeArabic(session?.center) &&
+           normalizeArabic(s.admin) === normalizeArabic(session?.admin))
+        )
       );
   
   const [date, setDate] = useState(new Date().toISOString().split('T')[0].replace(/-/g, '/'));

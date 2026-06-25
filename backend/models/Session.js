@@ -15,6 +15,7 @@ const sessionSchema = new mongoose.Schema(
     teacher_name: String,
     status: { type: String, default: 'active' },
     branchName: String,
+    isArchived: { type: Boolean, default: false },
   },
   { strict: false, timestamps: true }
 );

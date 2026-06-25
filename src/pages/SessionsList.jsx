@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Plus, Download, Upload, Edit, Trash2, ClipboardCheck, FileText } from 'lucide-react';
+import { Search, Plus, Download, Upload, Edit, Trash2, ClipboardCheck, FileText, Archive } from 'lucide-react';
 import '../components/Management.css';
 import { useAppData } from '../context/AppDataContext';
 import { exportToXLSX, importFromXLSX } from '../utils/xlsxHelper';
@@ -94,10 +94,62 @@ function SessionsList() {
       .trim();
   };
 
+  const resolveGeographicFields = (adminVal, centerVal, branchVal, branchesList) => {
+    const normAdmin = normalizeArabic(adminVal);
+    const normCenter = normalizeArabic(centerVal);
+    const normBranch = normalizeArabic(branchVal);
+
+    if (!branchesList || branchesList.length === 0) {
+      return { admin: adminVal, center: centerVal, branch: branchVal };
+    }
+
+    // 1. Check if centerVal is a valid branch name, and branchVal is NOT (shifted columns)
+    const isBranchValValid = normBranch && branchesList.some(b => normalizeArabic(b.name) === normBranch);
+    const isCenterValValid = normCenter && branchesList.some(b => normalizeArabic(b.name) === normCenter);
+
+    if (isCenterValValid && !isBranchValValid) {
+      const matchedBranch = branchesList.find(b => 
+        normalizeArabic(b.name) === normCenter &&
+        (normalizeArabic(b.center) === normAdmin || normalizeArabic(b.admin) === normAdmin)
+      ) || branchesList.find(b => normalizeArabic(b.name) === normCenter);
+      
+      if (matchedBranch) {
+        return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+      }
+    }
+
+    // 2. Exact match
+    let matchedBranch = branchesList.find(b => 
+      normalizeArabic(b.name) === normBranch &&
+      normalizeArabic(b.center) === normCenter &&
+      normalizeArabic(b.admin) === normAdmin
+    );
+    if (matchedBranch) {
+      return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+    }
+
+    // 3. Match by branch name (normBranch)
+    if (isBranchValValid) {
+      const matchedBranch = branchesList.find(b => 
+        normalizeArabic(b.name) === normBranch &&
+        (normalizeArabic(b.center) === normCenter || normalizeArabic(b.admin) === normAdmin)
+      ) || branchesList.find(b => normalizeArabic(b.name) === normBranch);
+
+      if (matchedBranch) {
+        return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+      }
+    }
+
+    return { admin: adminVal, center: centerVal, branch: branchVal };
+  };
+
   const availableCenters = filterAdmin ? (egyptCenters[filterAdmin] || []) : [];
   const availableBranches = branches.filter(b => normalizeArabic(b.admin) === normalizeArabic(filterAdmin) && normalizeArabic(b.center) === normalizeArabic(filterCenter));
 
+  const isAllowedToArchive = ['admin', 'rowaq_admin', 'rowaq_manager', 'rowaq_tech'].includes(role);
+
   const filtered = sessions.filter(s => {
+    if (s.isArchived) return false;
     // 1. Geographic role restrictions
     if (isRowaqStaff && userAdmin && normalizeArabic(s.admin) !== normalizeArabic(userAdmin)) return false;
     if (isBranchCoordinator && userBranch && normalizeArabic(s.branch) !== normalizeArabic(userBranch)) return false;
@@ -175,11 +227,13 @@ function SessionsList() {
   const handleExport = () => {
     let exportData = filtered.map(s => {
       const studentCount = (students || []).filter(stud => 
-        (stud.session_id && String(stud.session_id) === String(s.id)) ||
-        (String(stud.session_no) === String(s.session_no) &&
-         normalizeArabic(stud.branch) === normalizeArabic(s.branch) &&
-         normalizeArabic(stud.center) === normalizeArabic(s.center) &&
-         normalizeArabic(stud.admin) === normalizeArabic(s.admin))
+        !stud.isArchived && (
+          (stud.session_id && String(stud.session_id) === String(s.id)) ||
+          (String(stud.session_no) === String(s.session_no) &&
+           normalizeArabic(stud.branch) === normalizeArabic(s.branch) &&
+           normalizeArabic(stud.center) === normalizeArabic(s.center) &&
+           normalizeArabic(stud.admin) === normalizeArabic(s.admin))
+        )
       ).length;
       return {
         'رقم الحلقة': s.session_no || '',
@@ -259,23 +313,26 @@ function SessionsList() {
         const sessionNo = (row['رقم الحلقة'] || '').toString().trim();
         if (!sessionNo) return;
         
-        const adminVal = row['إدارة'] || row['الإدارة'] || '';
-        const centerVal = row['المركز'] || '';
-        const branchVal = row['الفرع'] || '';
+        const adminVal = (row['إدارة'] || row['الإدارة'] || row['المحافظة'] || row['المحافظه'] || '').toString().trim();
+        const centerVal = (row['المركز'] || row['المركز/القسم'] || row['مركز'] || row['قسم'] || '').toString().trim();
+        const branchVal = (row['الفرع'] || row['فرع'] || row['اسم الفرع'] || row['اسم فرع'] || '').toString().trim();
+
+        // Resolve geographic fields using branches lookup
+        const resolved = resolveGeographicFields(adminVal, centerVal, branchVal, branches);
 
         const isMatch = (s) => 
           String(s.session_no) === String(sessionNo) &&
-          normalizeArabic(s.branch) === normalizeArabic(branchVal) &&
-          normalizeArabic(s.center) === normalizeArabic(centerVal) &&
-          normalizeArabic(s.admin) === normalizeArabic(adminVal);
+          normalizeArabic(s.branch) === normalizeArabic(resolved.branch) &&
+          normalizeArabic(s.center) === normalizeArabic(resolved.center) &&
+          normalizeArabic(s.admin) === normalizeArabic(resolved.admin);
 
         const existingSession = sessions.find(isMatch) || processedSessions.find(isMatch);
 
         const sessionData = {
           session_no: sessionNo,
-          admin: adminVal,
-          center: centerVal,
-          branch: branchVal,
+          admin: resolved.admin,
+          center: resolved.center,
+          branch: resolved.branch,
           rowaq: row['الرواق'] || '',
           level: row['المستوى'] || '',
           mohfez_type: mohfezType,
@@ -431,25 +488,29 @@ function SessionsList() {
               <th>الرواق</th>
               <th>المستوى</th>
               <th>نوع الدارسين</th>
+              <th>الوقت من</th>
+              <th>الوقت إلى</th>
               <th>الدارسين</th>
               <th>الإجراءات</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {filtered.filter(s => !s.isArchived).length === 0 ? (
               <tr>
-                <td colSpan="10" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>
+                <td colSpan="12" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>
                   لا توجد بيانات.
                 </td>
               </tr>
             ) : (
-              filtered.map(s => {
+              filtered.filter(s => !s.isArchived).map(s => {
                 const studentCount = (students || []).filter(stud => 
-                  (stud.session_id && String(stud.session_id) === String(s.id)) ||
-                  (String(stud.session_no) === String(s.session_no) &&
-                   normalizeArabic(stud.branch) === normalizeArabic(s.branch) &&
-                   normalizeArabic(stud.center) === normalizeArabic(s.center) &&
-                   normalizeArabic(stud.admin) === normalizeArabic(s.admin))
+                  !stud.isArchived && (
+                    (stud.session_id && String(stud.session_id) === String(s.id)) ||
+                    (String(stud.session_no) === String(s.session_no) &&
+                     normalizeArabic(stud.branch) === normalizeArabic(s.branch) &&
+                     normalizeArabic(stud.center) === normalizeArabic(s.center) &&
+                     normalizeArabic(stud.admin) === normalizeArabic(s.admin))
+                  )
                 ).length;
                 return (
                   <tr key={s.id}>
@@ -461,6 +522,8 @@ function SessionsList() {
                     <td>{s.rowaq}</td>
                     <td>{s.level}</td>
                     <td>{s.student_type}</td>
+                    <td style={{ direction: 'ltr', textAlign: 'center' }}>{formatTimeTo12Hour(s.time_start) || '-'}</td>
+                    <td style={{ direction: 'ltr', textAlign: 'center' }}>{formatTimeTo12Hour(s.time_end) || '-'}</td>
                     <td>{studentCount}</td>
                     <td className="actions-cell" style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
                       <Link to={`/sessions/${s.id}/attendance`} title="الغياب" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#10b981', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', textDecoration: 'none' }}>
@@ -469,6 +532,9 @@ function SessionsList() {
                       <Link to={`/sessions/${s.id}/reports`} title="التقارير اليومية" style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontFamily: 'inherit', textDecoration: 'none' }}>
                         <FileText size={14}/> التقارير
                       </Link>
+                      {isAllowedToArchive && (
+                        <button className="action-icon edit" title="أرشفة" onClick={() => { if (window.confirm('هل أنت متأكد من أرشفة الحلقة؟')) updateSession(s.id, { isArchived: true }); }} style={{ color: 'var(--accent-gold)' }}><Archive size={16}/></button>
+                      )}
                       {hasPermission('sessions', 'edit') && (
                         <Link to={`/sessions/create?id=${s.id}`} className="action-icon edit" style={{textDecoration: 'none', color: 'inherit'}} title="تعديل"><Edit size={16}/></Link>
                       )}

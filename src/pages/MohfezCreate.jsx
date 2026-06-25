@@ -60,8 +60,20 @@ function MohfezCreate() {
           password: mohfezToEdit.password || ''
         });
       }
+    } else {
+      const paramAdmin = searchParams.get('admin') || '';
+      const paramCenter = searchParams.get('center') || '';
+      const paramBranch = searchParams.get('branch') || '';
+      if (paramAdmin || paramCenter || paramBranch) {
+        setForm(f => ({
+          ...f,
+          admin: paramAdmin,
+          center: paramCenter,
+          branch: paramBranch
+        }));
+      }
     }
-  }, [isEditing, mohfezId, mohfezs]);
+  }, [isEditing, mohfezId, mohfezs, searchParams]);
 
   const handleSubmit = () => {
     if (form.phone && form.phone.length !== 11) {
@@ -151,7 +163,12 @@ function MohfezCreate() {
       }
       alert('تم إضافة المحفظ بنجاح');
     }
-    navigate('/mohfez');
+    const redirectPath = searchParams.get('redirect');
+    if (redirectPath) {
+      navigate(redirectPath);
+    } else {
+      navigate('/mohfez');
+    }
   };
 
   return (
@@ -275,7 +292,7 @@ function MohfezCreate() {
 
       <div className="form-actions" style={{ justifyContent: 'center', marginTop: '30px' }}>
         <button className="btn btn-primary" style={{ padding: '10px 40px' }} onClick={handleSubmit}>حفظ</button>
-        <Link to="/mohfez" className="btn btn-outline" style={{ textDecoration: 'none', padding: '10px 40px' }}>إلغاء</Link>
+        <Link to={searchParams.get('redirect') || "/mohfez"} className="btn btn-outline" style={{ textDecoration: 'none', padding: '10px 40px' }}>إلغاء</Link>
       </div>
     </div>
   );

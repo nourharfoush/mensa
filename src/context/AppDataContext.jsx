@@ -6,7 +6,7 @@ import {
   sessionReportsAPI, platformTopManagementAPI, platformSupervisorsAPI, platformCoordinatorsAPI,
   platformMohfezsAPI, platformSessionsAPI, platformStudentsAPI, platformApplicantsAPI,
   platformRowaqsAPI, administrationsAPI, rolePermissionsAPI,
-  shariaCoursesAPI, shariaBranchesAPI, shariaStudentsAPI, shariaTeachersAPI, shariaLivesAPI
+  shariaCoursesAPI, shariaBranchesAPI, shariaStudentsAPI, shariaTeachersAPI, shariaLivesAPI, shariaDailyReportsAPI
 } from '../utils/apiService';
 
 const AppDataContext = createContext(null);
@@ -28,6 +28,82 @@ const saveToLocalStorage = (key, value) => {
   } catch (error) {
     console.error(`Error saving to localStorage (${key}):`, error);
   }
+};
+
+const normalizeArabic = (str) => {
+  if (!str) return '';
+  return str
+    .toString()
+    .trim()
+    .normalize('NFKD')
+    .normalize('NFC')
+    .replace(/ً/g, '')
+    .replace(/ٌ/g, '')
+    .replace(/ٍ/g, '')
+    .replace(/َ/g, '')
+    .replace(/ُ/g, '')
+    .replace(/ِ/g, '')
+    .replace(/ّ/g, '')
+    .replace(/ْ/g, '')
+    .replace(/[أإآا]/g, 'ا')
+    .replace(/[ىي]/g, 'ي')
+    .replace(/[ة]/g, 'ه')
+    .replace(/[ـ]/g, '')
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+    .trim();
+};
+
+const governorates = Object.keys(egyptCenters || {});
+const normalizedGovernoratesSet = new Set(governorates.map(g => normalizeArabic(g)));
+
+const resolveGeographicFields = (adminVal, centerVal, branchVal, branchesList) => {
+  const normAdmin = normalizeArabic(adminVal);
+  const normCenter = normalizeArabic(centerVal);
+  const normBranch = normalizeArabic(branchVal);
+
+  if (!branchesList || branchesList.length === 0) {
+    return { admin: adminVal, center: centerVal, branch: branchVal };
+  }
+
+  // 1. Check if centerVal is a valid branch name, and branchVal is NOT (shifted columns)
+  const isBranchValValid = normBranch && branchesList.some(b => normalizeArabic(b.name) === normBranch);
+  const isCenterValValid = normCenter && branchesList.some(b => normalizeArabic(b.name) === normCenter);
+
+  if (isCenterValValid && !isBranchValValid) {
+    const matchedBranch = branchesList.find(b => 
+      normalizeArabic(b.name) === normCenter &&
+      (normalizeArabic(b.center) === normAdmin || normalizeArabic(b.admin) === normAdmin)
+    ) || branchesList.find(b => normalizeArabic(b.name) === normCenter);
+    
+    if (matchedBranch) {
+      return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+    }
+  }
+
+  // 2. Exact match
+  let matchedBranch = branchesList.find(b => 
+    normalizeArabic(b.name) === normBranch &&
+    normalizeArabic(b.center) === normCenter &&
+    normalizeArabic(b.admin) === normAdmin
+  );
+  if (matchedBranch) {
+    return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+  }
+
+  // 3. Match by branch name (normBranch)
+  if (isBranchValValid) {
+    const matchedBranch = branchesList.find(b => 
+      normalizeArabic(b.name) === normBranch &&
+      (normalizeArabic(b.center) === normCenter || normalizeArabic(b.admin) === normAdmin)
+    ) || branchesList.find(b => normalizeArabic(b.name) === normBranch);
+
+    if (matchedBranch) {
+      return { admin: matchedBranch.admin, center: matchedBranch.center, branch: matchedBranch.name };
+    }
+  }
+
+  return { admin: adminVal, center: centerVal, branch: branchVal };
 };
 
 const defaultPermissions = {
@@ -330,6 +406,7 @@ export function AppDataProvider({ children }) {
 
   const [shariaAttendance, setShariaAttendance] = useState(() => getFromLocalStorage('sharia_attendance', []));
   const [lectureAccessLogs, setLectureAccessLogs] = useState(() => getFromLocalStorage('lecture_access_logs', []));
+  const [shariaDailyReports, setShariaDailyReports] = useState(() => getFromLocalStorage('sharia_daily_reports', []));
 
   // Save permissions to localStorage
   useEffect(() => {
@@ -429,6 +506,200 @@ export function AppDataProvider({ children }) {
         await syncCollection(shariaStudentsAPI, shariaStudents, setShariaStudents, 'sharia_students', s => ({ ...s, stage: normalizeStage(s.stage) }));
         await syncCollection(shariaTeachersAPI, shariaTeachers, setShariaTeachers, 'sharia_teachers');
         await syncCollection(shariaLivesAPI, shariaLiveLectures, setShariaLiveLectures, 'sharia_live', l => ({ ...l, stage: normalizeStage(l.stage) }));
+        await syncCollection(shariaDailyReportsAPI, shariaDailyReports, setShariaDailyReports, 'sharia_daily_reports');
+
+        // One-time correction for swapped admin and decision_no fields and shifted columns in database
+        try {
+          const storedBranches = getFromLocalStorage('branches', []);
+
+          const storedCoordinators = getFromLocalStorage('coordinators', []);
+          let coordinatorsUpdated = false;
+          const updatedCoordinators = storedCoordinators.map(c => {
+            let currentAdmin = c.admin || '';
+            let currentDecision = c.decision_no || '';
+            let currentCenter = c.center || '';
+            let currentBranch = c.branch || '';
+            let itemChanged = false;
+
+            const normAdmin = normalizeArabic(currentAdmin);
+            const normDecision = normalizeArabic(currentDecision);
+            const isSwapped = 
+              currentDecision && 
+              normalizedGovernoratesSet.has(normDecision) && 
+              !normalizedGovernoratesSet.has(normAdmin);
+            if (isSwapped) {
+              const temp = currentAdmin;
+              currentAdmin = currentDecision;
+              currentDecision = temp;
+              itemChanged = true;
+            }
+
+            const resolved = resolveGeographicFields(currentAdmin, currentCenter, currentBranch, storedBranches);
+            if (resolved.admin !== currentAdmin || resolved.center !== currentCenter || resolved.branch !== currentBranch) {
+              currentAdmin = resolved.admin;
+              currentCenter = resolved.center;
+              currentBranch = resolved.branch;
+              itemChanged = true;
+            }
+
+            if (itemChanged) {
+              coordinatorsUpdated = true;
+              console.log(`[Sync] Correcting coordinator ${c.name} fields:`, { admin: currentAdmin, center: currentCenter, branch: currentBranch, decision_no: currentDecision });
+              coordinatorsAPI.update(c.id, { 
+                admin: currentAdmin, 
+                center: currentCenter, 
+                branch: currentBranch, 
+                decision_no: currentDecision 
+              }).catch(err => console.error(err));
+              return { ...c, admin: currentAdmin, center: currentCenter, branch: currentBranch, decision_no: currentDecision };
+            }
+            return c;
+          });
+          if (coordinatorsUpdated) {
+            setCoordinators(updatedCoordinators);
+            saveToLocalStorage('coordinators', updatedCoordinators);
+          }
+
+          const storedMohfezs = getFromLocalStorage('mohfezs', []);
+          let mohfezsUpdated = false;
+          const updatedMohfezs = storedMohfezs.map(m => {
+            let currentAdmin = m.admin || '';
+            let currentDecision = m.decision_no || '';
+            let currentCenter = m.center || '';
+            let currentBranch = m.branch || '';
+            let itemChanged = false;
+
+            const normAdmin = normalizeArabic(currentAdmin);
+            const normDecision = normalizeArabic(currentDecision);
+            const isSwapped = 
+              currentDecision && 
+              normalizedGovernoratesSet.has(normDecision) && 
+              !normalizedGovernoratesSet.has(normAdmin);
+            if (isSwapped) {
+              const temp = currentAdmin;
+              currentAdmin = currentDecision;
+              currentDecision = temp;
+              itemChanged = true;
+            }
+
+            const resolved = resolveGeographicFields(currentAdmin, currentCenter, currentBranch, storedBranches);
+            if (resolved.admin !== currentAdmin || resolved.center !== currentCenter || resolved.branch !== currentBranch) {
+              currentAdmin = resolved.admin;
+              currentCenter = resolved.center;
+              currentBranch = resolved.branch;
+              itemChanged = true;
+            }
+
+            if (itemChanged) {
+              mohfezsUpdated = true;
+              console.log(`[Sync] Correcting mohfez ${m.name} fields:`, { admin: currentAdmin, center: currentCenter, branch: currentBranch, decision_no: currentDecision });
+              mohfezsAPI.update(m.id, { 
+                admin: currentAdmin, 
+                center: currentCenter, 
+                branch: currentBranch, 
+                decision_no: currentDecision 
+              }).catch(err => console.error(err));
+              return { ...m, admin: currentAdmin, center: currentCenter, branch: currentBranch, decision_no: currentDecision };
+            }
+            return m;
+          });
+          if (mohfezsUpdated) {
+            setMohfezs(updatedMohfezs);
+            saveToLocalStorage('mohfezs', updatedMohfezs);
+          }
+
+          const storedSessions = getFromLocalStorage('sessions', []);
+          let sessionsUpdated = false;
+          const updatedSessions = storedSessions.map(s => {
+            let currentAdmin = s.admin || '';
+            let currentCenter = s.center || '';
+            let currentBranch = s.branch || '';
+            let itemChanged = false;
+
+            const resolved = resolveGeographicFields(currentAdmin, currentCenter, currentBranch, storedBranches);
+            if (resolved.admin !== currentAdmin || resolved.center !== currentCenter || resolved.branch !== currentBranch) {
+              currentAdmin = resolved.admin;
+              currentCenter = resolved.center;
+              currentBranch = resolved.branch;
+              itemChanged = true;
+            }
+
+            if (itemChanged) {
+              sessionsUpdated = true;
+              console.log(`[Sync] Correcting session ${s.session_no} fields:`, { admin: currentAdmin, center: currentCenter, branch: currentBranch });
+              sessionsAPI.update(s.id, { 
+                admin: currentAdmin, 
+                center: currentCenter, 
+                branch: currentBranch 
+              }).catch(err => console.error(err));
+              return { ...s, admin: currentAdmin, center: currentCenter, branch: currentBranch };
+            }
+            return s;
+          });
+          if (sessionsUpdated) {
+            setSessions(updatedSessions);
+            saveToLocalStorage('sessions', updatedSessions);
+          }
+
+          const storedStudents = getFromLocalStorage('students', []);
+          let studentsUpdated = false;
+          const updatedStudents = storedStudents.map(st => {
+            let currentAdmin = st.admin || '';
+            let currentCenter = st.center || '';
+            let currentBranch = st.branch || '';
+            let itemChanged = false;
+
+            const resolved = resolveGeographicFields(currentAdmin, currentCenter, currentBranch, storedBranches);
+            if (resolved.admin !== currentAdmin || resolved.center !== currentCenter || resolved.branch !== currentBranch) {
+              currentAdmin = resolved.admin;
+              currentCenter = resolved.center;
+              currentBranch = resolved.branch;
+              itemChanged = true;
+            }
+
+            if (itemChanged) {
+              studentsUpdated = true;
+              console.log(`[Sync] Correcting student ${st.name} fields:`, { admin: currentAdmin, center: currentCenter, branch: currentBranch });
+              studentsAPI.update(st.id, { 
+                admin: currentAdmin, 
+                center: currentCenter, 
+                branch: currentBranch 
+              }).catch(err => console.error(err));
+              return { ...st, admin: currentAdmin, center: currentCenter, branch: currentBranch };
+            }
+            return st;
+          });
+          if (studentsUpdated) {
+            setStudents(updatedStudents);
+            saveToLocalStorage('students', updatedStudents);
+          }
+
+          const storedManagers = getFromLocalStorage('managers', []);
+          let managersUpdated = false;
+          const updatedManagers = storedManagers.map(m => {
+            const mAdmin = m.admin || '';
+            const mDecision = m.decision_no || '';
+            const normAdmin = normalizeArabic(mAdmin);
+            const normDecision = normalizeArabic(mDecision);
+            const isSwapped = 
+              mDecision && 
+              normalizedGovernoratesSet.has(normDecision) && 
+              !normalizedGovernoratesSet.has(normAdmin);
+            if (isSwapped) {
+              managersUpdated = true;
+              console.log(`[Sync] Correcting swapped manager ${m.name}:`, mDecision, mAdmin);
+              managersAPI.update(m.id, { admin: mDecision, decision_no: mAdmin }).catch(err => console.error(err));
+              return { ...m, admin: mDecision, decision_no: mAdmin };
+            }
+            return m;
+          });
+          if (managersUpdated) {
+            setManagers(updatedManagers);
+            saveToLocalStorage('managers', updatedManagers);
+          }
+        } catch (correctErr) {
+          console.error('[Sync] Error during database correction:', correctErr);
+        }
 
         setDbSynced(true);
         console.log('✓ Database synchronization complete!');
@@ -861,6 +1132,10 @@ export function AppDataProvider({ children }) {
   }, [lectureAccessLogs]);
 
   useEffect(() => {
+    saveToLocalStorage('sharia_daily_reports', shariaDailyReports);
+  }, [shariaDailyReports]);
+
+  useEffect(() => {
     setAdministrations(prev => {
       let changed = false;
       const next = prev.map(admin => {
@@ -919,8 +1194,52 @@ export function AppDataProvider({ children }) {
     branchesAPI.create(newBranch).catch(err => console.error(err));
   };
   const updateBranch = (id, updatedBranch) => {
+    // 1. Update the branch itself
     setBranches(prev => prev.map(b => String(b.id) === String(id) ? { ...b, ...updatedBranch } : b));
     branchesAPI.update(id, updatedBranch).catch(err => console.error(err));
+
+    // 2. Cascade logic
+    if (updatedBranch.isArchived !== undefined) {
+      const targetArchiveState = updatedBranch.isArchived;
+      const branchObj = branches.find(b => String(b.id) === String(id));
+      if (branchObj) {
+        const { admin, center, name } = branchObj;
+        const normAdmin = normalizeArabic(admin);
+        const normCenter = normalizeArabic(center);
+        const normName = normalizeArabic(name);
+
+        const matchesGeographically = (item) => 
+          normalizeArabic(item.admin) === normAdmin &&
+          normalizeArabic(item.center) === normCenter &&
+          normalizeArabic(item.branch) === normName;
+
+        // Fetch matches from current state
+        const matchingStudents = students.filter(s => matchesGeographically(s) && !!s.isArchived !== targetArchiveState);
+        const matchingSessions = sessions.filter(s => matchesGeographically(s) && !!s.isArchived !== targetArchiveState);
+        const matchingCoordinators = coordinators.filter(c => matchesGeographically(c) && !!c.isArchived !== targetArchiveState);
+        const matchingMohfezs = mohfezs.filter(m => matchesGeographically(m) && !!m.isArchived !== targetArchiveState);
+
+        // Fire API calls
+        matchingStudents.forEach(s => studentsAPI.update(s.id, { isArchived: targetArchiveState }).catch(err => console.error(err)));
+        matchingSessions.forEach(s => sessionsAPI.update(s.id, { isArchived: targetArchiveState }).catch(err => console.error(err)));
+        matchingCoordinators.forEach(c => coordinatorsAPI.update(c.id, { isArchived: targetArchiveState }).catch(err => console.error(err)));
+        matchingMohfezs.forEach(m => mohfezsAPI.update(m.id, { isArchived: targetArchiveState }).catch(err => console.error(err)));
+
+        // Update states
+        if (matchingStudents.length > 0) {
+          setStudents(prev => prev.map(s => matchesGeographically(s) ? { ...s, isArchived: targetArchiveState } : s));
+        }
+        if (matchingSessions.length > 0) {
+          setSessions(prev => prev.map(s => matchesGeographically(s) ? { ...s, isArchived: targetArchiveState } : s));
+        }
+        if (matchingCoordinators.length > 0) {
+          setCoordinators(prev => prev.map(c => matchesGeographically(c) ? { ...c, isArchived: targetArchiveState } : c));
+        }
+        if (matchingMohfezs.length > 0) {
+          setMohfezs(prev => prev.map(m => matchesGeographically(m) ? { ...m, isArchived: targetArchiveState } : m));
+        }
+      }
+    }
   };
   const deleteBranch = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
@@ -968,8 +1287,29 @@ export function AppDataProvider({ children }) {
     coordinatorsAPI.create(newCoordinator).catch(err => console.error(err));
   };
   const updateCoordinator = (id, updatedCoordinator) => {
-    setCoordinators(prev => prev.map(c => String(c.id) === String(id) ? { ...c, ...updatedCoordinator } : c));
-    coordinatorsAPI.update(id, updatedCoordinator).catch(err => console.error(err));
+    let resolvedIsArchived = undefined;
+    const current = coordinators.find(c => String(c.id) === String(id));
+    if (current) {
+      resolvedIsArchived = updatedCoordinator.isArchived !== undefined ? updatedCoordinator.isArchived : current.isArchived;
+      if (updatedCoordinator.admin !== undefined || updatedCoordinator.center !== undefined || updatedCoordinator.branch !== undefined) {
+        const finalAdmin = updatedCoordinator.admin !== undefined ? updatedCoordinator.admin : current.admin;
+        const finalCenter = updatedCoordinator.center !== undefined ? updatedCoordinator.center : current.center;
+        const finalBranch = updatedCoordinator.branch !== undefined ? updatedCoordinator.branch : current.branch;
+        const targetBranch = branches.find(b => 
+          normalizeArabic(b.admin) === normalizeArabic(finalAdmin) &&
+          normalizeArabic(b.center) === normalizeArabic(finalCenter) &&
+          normalizeArabic(b.name) === normalizeArabic(finalBranch)
+        );
+        if (targetBranch && !targetBranch.isArchived) {
+          resolvedIsArchived = false;
+        }
+      }
+    }
+    const payload = resolvedIsArchived !== undefined 
+      ? { ...updatedCoordinator, isArchived: resolvedIsArchived }
+      : updatedCoordinator;
+    setCoordinators(prev => prev.map(c => String(c.id) === String(id) ? { ...c, ...payload } : c));
+    coordinatorsAPI.update(id, payload).catch(err => console.error(err));
   };
   const deleteCoordinator = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
@@ -986,8 +1326,29 @@ export function AppDataProvider({ children }) {
     mohfezsAPI.create(newMohfez).catch(err => console.error(err));
   };
   const updateMohfez = (id, updatedMohfez) => {
-    setMohfezs(prev => prev.map(m => String(m.id) === String(id) ? { ...m, ...updatedMohfez } : m));
-    mohfezsAPI.update(id, updatedMohfez).catch(err => console.error(err));
+    let resolvedIsArchived = undefined;
+    const current = mohfezs.find(m => String(m.id) === String(id));
+    if (current) {
+      resolvedIsArchived = updatedMohfez.isArchived !== undefined ? updatedMohfez.isArchived : current.isArchived;
+      if (updatedMohfez.admin !== undefined || updatedMohfez.center !== undefined || updatedMohfez.branch !== undefined) {
+        const finalAdmin = updatedMohfez.admin !== undefined ? updatedMohfez.admin : current.admin;
+        const finalCenter = updatedMohfez.center !== undefined ? updatedMohfez.center : current.center;
+        const finalBranch = updatedMohfez.branch !== undefined ? updatedMohfez.branch : current.branch;
+        const targetBranch = branches.find(b => 
+          normalizeArabic(b.admin) === normalizeArabic(finalAdmin) &&
+          normalizeArabic(b.center) === normalizeArabic(finalCenter) &&
+          normalizeArabic(b.name) === normalizeArabic(finalBranch)
+        );
+        if (targetBranch && !targetBranch.isArchived) {
+          resolvedIsArchived = false;
+        }
+      }
+    }
+    const payload = resolvedIsArchived !== undefined 
+      ? { ...updatedMohfez, isArchived: resolvedIsArchived }
+      : updatedMohfez;
+    setMohfezs(prev => prev.map(m => String(m.id) === String(id) ? { ...m, ...payload } : m));
+    mohfezsAPI.update(id, payload).catch(err => console.error(err));
   };
   const deleteMohfez = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
@@ -1004,8 +1365,29 @@ export function AppDataProvider({ children }) {
     sessionsAPI.create(newSession).catch(err => console.error(err));
   };
   const updateSession = (id, updatedSession) => {
-    setSessions(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...updatedSession } : s));
-    sessionsAPI.update(id, updatedSession).catch(err => console.error(err));
+    let resolvedIsArchived = undefined;
+    const current = sessions.find(s => String(s.id) === String(id));
+    if (current) {
+      resolvedIsArchived = updatedSession.isArchived !== undefined ? updatedSession.isArchived : current.isArchived;
+      if (updatedSession.admin !== undefined || updatedSession.center !== undefined || updatedSession.branch !== undefined) {
+        const finalAdmin = updatedSession.admin !== undefined ? updatedSession.admin : current.admin;
+        const finalCenter = updatedSession.center !== undefined ? updatedSession.center : current.center;
+        const finalBranch = updatedSession.branch !== undefined ? updatedSession.branch : current.branch;
+        const targetBranch = branches.find(b => 
+          normalizeArabic(b.admin) === normalizeArabic(finalAdmin) &&
+          normalizeArabic(b.center) === normalizeArabic(finalCenter) &&
+          normalizeArabic(b.name) === normalizeArabic(finalBranch)
+        );
+        if (targetBranch && !targetBranch.isArchived) {
+          resolvedIsArchived = false;
+        }
+      }
+    }
+    const payload = resolvedIsArchived !== undefined 
+      ? { ...updatedSession, isArchived: resolvedIsArchived }
+      : updatedSession;
+    setSessions(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...payload } : s));
+    sessionsAPI.update(id, payload).catch(err => console.error(err));
   };
   const deleteSession = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
@@ -1020,8 +1402,29 @@ export function AppDataProvider({ children }) {
     studentsAPI.create(newStudent).catch(err => console.error(err));
   };
   const updateStudent = (id, updatedStudent) => {
-    setStudents(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...updatedStudent } : s));
-    studentsAPI.update(id, updatedStudent).catch(err => console.error(err));
+    let resolvedIsArchived = undefined;
+    const current = students.find(s => String(s.id) === String(id));
+    if (current) {
+      resolvedIsArchived = updatedStudent.isArchived !== undefined ? updatedStudent.isArchived : current.isArchived;
+      if (updatedStudent.admin !== undefined || updatedStudent.center !== undefined || updatedStudent.branch !== undefined) {
+        const finalAdmin = updatedStudent.admin !== undefined ? updatedStudent.admin : current.admin;
+        const finalCenter = updatedStudent.center !== undefined ? updatedStudent.center : current.center;
+        const finalBranch = updatedStudent.branch !== undefined ? updatedStudent.branch : current.branch;
+        const targetBranch = branches.find(b => 
+          normalizeArabic(b.admin) === normalizeArabic(finalAdmin) &&
+          normalizeArabic(b.center) === normalizeArabic(finalCenter) &&
+          normalizeArabic(b.name) === normalizeArabic(finalBranch)
+        );
+        if (targetBranch && !targetBranch.isArchived) {
+          resolvedIsArchived = false;
+        }
+      }
+    }
+    const payload = resolvedIsArchived !== undefined 
+      ? { ...updatedStudent, isArchived: resolvedIsArchived }
+      : updatedStudent;
+    setStudents(prev => prev.map(s => String(s.id) === String(id) ? { ...s, ...payload } : s));
+    studentsAPI.update(id, payload).catch(err => console.error(err));
   };
   const deleteStudent = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
@@ -1737,6 +2140,22 @@ export function AppDataProvider({ children }) {
     });
   };
 
+  const addShariaDailyReport = (report) => {
+    const newReport = { ...report, id: String(Date.now() + Math.random()) };
+    setShariaDailyReports(prev => [newReport, ...prev]);
+    shariaDailyReportsAPI.create(newReport).catch(err => console.error(err));
+  };
+  const updateShariaDailyReport = (id, updatedReport) => {
+    setShariaDailyReports(prev => prev.map(r => String(r.id) === String(id) ? { ...r, ...updatedReport } : r));
+    shariaDailyReportsAPI.update(id, updatedReport).catch(err => console.error(err));
+  };
+  const deleteShariaDailyReport = (id) => {
+    if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      setShariaDailyReports(prev => prev.filter(r => String(r.id) !== String(id)));
+      shariaDailyReportsAPI.delete(id).catch(err => console.error(err));
+    }
+  };
+
   const updateRolePermissions = (newPermissions) => {
     setRolePermissions(newPermissions);
   };
@@ -1791,6 +2210,7 @@ export function AppDataProvider({ children }) {
       shariaSchedules, addShariaSchedule, updateShariaSchedule, deleteShariaSchedule,
       shariaAttendance, addShariaAttendance,
       lectureAccessLogs, addLectureAccessLog, updateLectureAccessDuration,
+      shariaDailyReports, addShariaDailyReport, updateShariaDailyReport, deleteShariaDailyReport,
 
       theme, toggleTheme,
       rolePermissions, updateRolePermissions, hasPermission,

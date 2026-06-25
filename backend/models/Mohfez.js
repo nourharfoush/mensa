@@ -14,6 +14,7 @@ const mohfezSchema = new mongoose.Schema(
     status: String,
     phone: String,
     registry_no: String,
+    isArchived: { type: Boolean, default: false },
   },
   { strict: false, timestamps: true }
 );
