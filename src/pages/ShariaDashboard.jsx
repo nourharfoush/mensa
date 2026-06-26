@@ -88,6 +88,8 @@ function ShariaDashboard() {
   const [selectedLiveStage, setSelectedLiveStage] = useState('الكل');
   const [selectedLiveLevel, setSelectedLiveLevel] = useState('الكل');
   const [selectedLiveDiscipline, setSelectedLiveDiscipline] = useState('الكل');
+  const [teacherFilterGov, setTeacherFilterGov] = useState('الكل');
+  const [teacherFilterBranch, setTeacherFilterBranch] = useState('الكل');
 
   useEffect(() => {
     const targetTab = tabParam || 'overview';
@@ -1234,7 +1236,7 @@ function ShariaDashboard() {
     return teachers.filter(t => {
       // 1. Governorate match
       let matchGov = false;
-      if (selectedGov === 'الكل') {
+      if (teacherFilterGov === 'الكل') {
         matchGov = true;
       } else {
         const teacherGov = t.governorate || '';
@@ -1242,18 +1244,18 @@ function ShariaDashboard() {
         const teacherBranches = Array.isArray(t.branches) ? t.branches : (teacherBranchStr ? teacherBranchStr.split(/,|،/).map(b => b.trim()) : []);
         
         // Check if any of the branches or the branch string itself contains the selected governorate name
-        const branchContainsGov = teacherBranches.some(bName => bName.includes(selectedGov)) || teacherBranchStr.includes(selectedGov);
+        const branchContainsGov = teacherBranches.some(bName => bName.includes(teacherFilterGov)) || teacherBranchStr.includes(teacherFilterGov);
         
-        matchGov = (teacherGov === selectedGov) || 
+        matchGov = (teacherGov === teacherFilterGov) || 
                    (teacherGov === 'جميع المحافظات' && !teacherBranchStr) || 
                    (teacherGov === 'الكل' && !teacherBranchStr) || 
                    branchContainsGov;
       }
 
       // 2. Branch match
-      const matchBranch = selectedBranch === 'الكل' || 
-                          (t.branch && t.branch.split(/,|،/).map(b => b.trim()).includes(selectedBranch)) ||
-                          (Array.isArray(t.branches) && t.branches.includes(selectedBranch));
+      const matchBranch = teacherFilterBranch === 'الكل' || 
+                          (t.branch && t.branch.split(/,|،/).map(b => b.trim()).includes(teacherFilterBranch)) ||
+                          (Array.isArray(t.branches) && t.branches.includes(teacherFilterBranch));
 
       // 3. Search term match
       const matchSearch = t.name.includes(searchTerm) || 
@@ -2098,11 +2100,11 @@ function ShariaDashboard() {
             <div>
               <h2 style={{ fontSize: '18px', color: 'var(--text-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Users size={20} color="#f59e0b" />
-                أعضاء هيئة التدريس والمحاضرين لـ [ {selectedGov === 'الكل' ? 'جميع المواقع والجامع الأزهر' : selectedGov} ]
+                أعضاء هيئة التدريس والمحاضرين لـ [ {teacherFilterGov === 'الكل' ? 'جميع المواقع والجامع الأزهر' : teacherFilterGov} ] {teacherFilterBranch !== 'الكل' && ` - فرع [ ${teacherFilterBranch} ]`}
               </h2>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>تصفية أعضاء هيئة التدريس وبياناتهم الأكاديمية والوظيفية حسب الموقع الجغرافي النشط</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '4px' }}>تصفية أعضاء هيئة التدريس وبياناتهم الأكاديمية والوظيفية حسب المحافظة والفرع المختارين محلياً</p>
             </div>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
               <div style={{ position: 'relative' }}>
                 <input
                   type="text"
@@ -2116,11 +2118,58 @@ function ShariaDashboard() {
                     border: '1px solid var(--border-subtle)',
                     color: 'var(--text-primary)',
                     fontSize: '13px',
-                    width: '200px'
+                    width: '180px'
                   }}
                 />
                 <Search size={14} color="var(--text-secondary)" style={{ position: 'absolute', right: '12px', top: '11px' }} />
               </div>
+
+              {/* Local Governorate Selector */}
+              <select
+                value={teacherFilterGov}
+                onChange={(e) => {
+                  setTeacherFilterGov(e.target.value);
+                  setTeacherFilterBranch('الكل');
+                }}
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border-subtle)',
+                  backgroundColor: 'var(--bg-main)',
+                  color: 'var(--text-primary)',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              >
+                <option value="الكل">كل المحافظات</option>
+                {GOVERNORATES.map(gov => (
+                  <option key={gov} value={gov}>{gov}</option>
+                ))}
+              </select>
+
+              {/* Local Branch Selector */}
+              {teacherFilterGov !== 'الكل' && (
+                <select
+                  value={teacherFilterBranch}
+                  onChange={(e) => setTeacherFilterBranch(e.target.value)}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-subtle)',
+                    backgroundColor: 'var(--bg-main)',
+                    color: 'var(--text-primary)',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="الكل">كل الفروع</option>
+                  {shariaBranches.filter(b => b.governorate === teacherFilterGov).map(b => (
+                    <option key={b.id || b._id} value={b.name}>{b.name}</option>
+                  ))}
+                </select>
+              )}
               
               {!isShariaStudent && (
                 <>
@@ -2170,7 +2219,7 @@ function ShariaDashboard() {
               {!isShariaStudent && (
                 <button 
                   onClick={() => {
-                    setTeacherForm({ ...teacherForm, governorate: selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov });
+                    setTeacherForm({ ...teacherForm, governorate: teacherFilterGov === 'الكل' ? 'الجامع الأزهر' : teacherFilterGov });
                     setShowAddModal('teacher');
                   }}
                   style={{
@@ -2212,8 +2261,8 @@ function ShariaDashboard() {
               <tbody>
                 {getFilteredTeachers().length === 0 ? (
                   <tr>
-                    <td colSpan="8" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
-                      لا يوجد أعضاء هيئة تدريس مسجلين في {selectedGov === 'الكل' ? 'أي موقع' : selectedGov} حالياً.
+                    <td colSpan="9" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+                      لا يوجد أعضاء هيئة تدريس مسجلين في {teacherFilterGov === 'الكل' ? 'أي موقع' : teacherFilterGov} حالياً.
                     </td>
                   </tr>
                 ) : (
