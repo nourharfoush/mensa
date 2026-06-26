@@ -87,6 +87,7 @@ function ShariaDashboard() {
   const [selectedBranch, setSelectedBranch] = useState('الكل');
   const [selectedLiveStage, setSelectedLiveStage] = useState('الكل');
   const [selectedLiveLevel, setSelectedLiveLevel] = useState('الكل');
+  const [selectedLiveDiscipline, setSelectedLiveDiscipline] = useState('الكل');
 
   useEffect(() => {
     const targetTab = tabParam || 'overview';
@@ -1250,6 +1251,9 @@ function ShariaDashboard() {
       );
       if (selectedLiveStage !== 'الكل') {
         filtered = filtered.filter(l => l.stage === selectedLiveStage);
+        if (selectedLiveStage === 'المتقدمة' && selectedLiveDiscipline !== 'الكل') {
+          filtered = filtered.filter(l => getDisciplineKey(l.discipline) === selectedLiveDiscipline);
+        }
       }
       if (selectedLiveLevel !== 'الكل') {
         filtered = filtered.filter(l => l.level === selectedLiveLevel);
@@ -1260,6 +1264,9 @@ function ShariaDashboard() {
       );
       if (selectedLiveStage !== 'الكل') {
         filtered = filtered.filter(l => l.stage === selectedLiveStage);
+        if (selectedLiveStage === 'المتقدمة' && selectedLiveDiscipline !== 'الكل') {
+          filtered = filtered.filter(l => getDisciplineKey(l.discipline) === selectedLiveDiscipline);
+        }
       }
       if (selectedLiveLevel !== 'الكل') {
         filtered = filtered.filter(l => l.level === selectedLiveLevel);
@@ -3390,7 +3397,12 @@ function ShariaDashboard() {
                 <label style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>المرحلة:</label>
                 <select
                   value={selectedLiveStage}
-                  onChange={(e) => setSelectedLiveStage(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedLiveStage(e.target.value);
+                    if (e.target.value !== 'المتقدمة') {
+                      setSelectedLiveDiscipline('الكل');
+                    }
+                  }}
                   style={{
                     padding: '6px 12px',
                     borderRadius: '6px',
@@ -3408,6 +3420,33 @@ function ShariaDashboard() {
                   <option value="المتقدمة">المتقدمة</option>
                 </select>
               </div>
+
+              {selectedLiveStage === 'المتقدمة' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <label style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>التخصص:</label>
+                  <select
+                    value={selectedLiveDiscipline}
+                    onChange={(e) => setSelectedLiveDiscipline(e.target.value)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border-subtle)',
+                      backgroundColor: 'var(--bg-card)',
+                      color: 'var(--text-primary)',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      outline: 'none'
+                    }}
+                  >
+                    <option value="الكل">كل التخصصات</option>
+                    <option value="fiqh">الفقه وأصوله</option>
+                    <option value="tafsir">التفسير والحديث</option>
+                    <option value="aqeedah">العقيدة الإسلامية</option>
+                    <option value="arabic">اللغة العربية وآدابها</option>
+                    <option value="general">عامة</option>
+                  </select>
+                </div>
+              )}
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <label style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>المستوى:</label>
