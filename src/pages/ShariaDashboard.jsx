@@ -5764,14 +5764,18 @@ function ShariaDashboard() {
                       padding: '8px',
                       backgroundColor: 'var(--bg-main)'
                     }}>
-                      {shariaBranches.filter(b => b.governorate === teacherForm.governorate).length === 0 ? (
-                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>لا توجد فروع مسجلة لهذه المحافظة</span>
-                      ) : (
-                        shariaBranches.filter(b => b.governorate === teacherForm.governorate).map(b => (
-                          <div key={b.id || b._id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      {(() => {
+                        const filteredBranches = shariaBranches.filter(b => b.governorate === teacherForm.governorate);
+                        const hasOnline = filteredBranches.some(b => b.name.includes('أونلاين') || b.name.includes('انلاين') || b.name.toLowerCase().includes('online'));
+                        const displayBranches = hasOnline 
+                          ? filteredBranches 
+                          : [{ id: 'online-virtual', name: 'أونلاين', governorate: teacherForm.governorate }, ...filteredBranches];
+
+                        return displayBranches.map(b => (
+                          <div key={b.id || b._id || b.name} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                             <input 
                               type="checkbox" 
-                              id={`add-branch-${b.id || b._id}`}
+                              id={`add-branch-${b.id || b._id || b.name}`}
                               checked={teacherForm.branches?.includes(b.name) || false}
                               onChange={(e) => {
                                 const checked = e.target.checked;
@@ -5785,12 +5789,12 @@ function ShariaDashboard() {
                               }}
                               style={{ cursor: 'pointer' }}
                             />
-                            <label htmlFor={`add-branch-${b.id || b._id}`} style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer' }}>
+                            <label htmlFor={`add-branch-${b.id || b._id || b.name}`} style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer' }}>
                               {b.name}
                             </label>
                           </div>
-                        ))
-                      )}
+                        ));
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -5961,40 +5965,42 @@ function ShariaDashboard() {
                       padding: '8px',
                       backgroundColor: 'var(--bg-main)'
                     }}>
-                      {shariaBranches.filter(b => b.governorate === editingTeacher.governorate).length === 0 ? (
-                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>لا توجد فروع مسجلة لهذه المحافظة</span>
-                      ) : (
-                        shariaBranches.filter(b => b.governorate === editingTeacher.governorate).map(b => {
-                          const currentBranches = Array.isArray(editingTeacher.branches) 
-                            ? editingTeacher.branches 
-                            : (editingTeacher.branch ? editingTeacher.branch.split('، ') : []);
-                          
-                          return (
-                            <div key={b.id || b._id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                              <input 
-                                type="checkbox" 
-                                id={`edit-branch-${b.id || b._id}`}
-                                checked={currentBranches.includes(b.name)}
-                                onChange={(e) => {
-                                  const checked = e.target.checked;
-                                  const newBranches = checked 
-                                    ? [...currentBranches, b.name]
-                                    : currentBranches.filter(name => name !== b.name);
-                                  setEditingTeacher({
-                                    ...editingTeacher,
-                                    branches: newBranches,
-                                    branch: newBranches.join('، ')
-                                  });
-                                }}
-                                style={{ cursor: 'pointer' }}
-                              />
-                              <label htmlFor={`edit-branch-${b.id || b._id}`} style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer' }}>
-                                {b.name}
-                              </label>
-                            </div>
-                          );
-                        })
-                      )}
+                      {(() => {
+                        const filteredBranches = shariaBranches.filter(b => b.governorate === editingTeacher.governorate);
+                        const hasOnline = filteredBranches.some(b => b.name.includes('أونلاين') || b.name.includes('انلاين') || b.name.toLowerCase().includes('online'));
+                        const displayBranches = hasOnline 
+                          ? filteredBranches 
+                          : [{ id: 'online-virtual', name: 'أونلاين', governorate: editingTeacher.governorate }, ...filteredBranches];
+
+                        const currentBranches = Array.isArray(editingTeacher.branches) 
+                          ? editingTeacher.branches 
+                          : (editingTeacher.branch ? editingTeacher.branch.split('، ') : []);
+
+                        return displayBranches.map(b => (
+                          <div key={b.id || b._id || b.name} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                            <input 
+                              type="checkbox" 
+                              id={`edit-branch-${b.id || b._id || b.name}`}
+                              checked={currentBranches.includes(b.name)}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                const newBranches = checked 
+                                  ? [...currentBranches, b.name]
+                                  : currentBranches.filter(name => name !== b.name);
+                                setEditingTeacher({
+                                  ...editingTeacher,
+                                  branches: newBranches,
+                                  branch: newBranches.join('، ')
+                                });
+                              }}
+                              style={{ cursor: 'pointer' }}
+                            />
+                            <label htmlFor={`edit-branch-${b.id || b._id || b.name}`} style={{ fontSize: '13px', color: 'var(--text-primary)', cursor: 'pointer' }}>
+                              {b.name}
+                            </label>
+                          </div>
+                        ));
+                      })()}
                     </div>
                   </div>
                 </div>
