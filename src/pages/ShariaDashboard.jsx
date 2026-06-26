@@ -534,6 +534,10 @@ function ShariaDashboard() {
     for (const l of liveLectures) {
       if (excludeId && l.id === excludeId) continue;
       
+      // Skip conflict check if the live lecture's course no longer exists (orphaned live)
+      const courseExists = shariaCourses.some(c => normalizeArabic(c.name).trim() === normalizeArabic(l.title).trim());
+      if (!courseExists) continue;
+      
       // Check if same day
       if (cleanDay(l.day) !== cleanDay(newLive.day)) continue;
 
