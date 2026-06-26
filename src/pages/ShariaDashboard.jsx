@@ -207,7 +207,33 @@ function ShariaDashboard() {
 
   const [exams, setExams] = useState([]);
   const [results, setResults] = useState([]);
-  const [news, setNews] = useState([]);
+  const [news, setNews] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sharia_news');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error("Error reading sharia_news from localStorage:", e);
+    }
+    return [
+      {
+        id: 1,
+        title: "بدء الفصل الدراسي الجديد لعام 2026",
+        content: "يسر قطاع العلوم الشرعية والعربية بالجامع الأزهر الشريف الإعلان عن بدء الدراسة في فروع الرواق الأزهري لمرحلة العلوم الشرعية والعربية بكافة المحافظات بدءاً من السبت القادم. يرجى من جميع الدارسين مراجعة المناهج والجداول المرفقة.",
+        date: new Date().toISOString().split('T')[0],
+        category: "إعلان عام",
+        status: "منشور",
+        attachments: []
+      }
+    ];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('sharia_news', JSON.stringify(news));
+    } catch (e) {
+      console.error("Error saving sharia_news to localStorage:", e);
+    }
+  }, [news]);
 
 
   // --- NEW ITEM FORM STATES ---
@@ -238,7 +264,7 @@ function ShariaDashboard() {
   });
   const [examForm, setExamForm] = useState({ name: '', level: 'تمهيدية - المستوى الأول', date: '', duration: '90 دقيقة', totalQuestions: 40, status: 'مجدول' });
   const [resultForm, setResultForm] = useState({ studentName: '', examName: '', score: 85, grade: 'جيد جداً', status: 'ناجح', governorate: 'الجامع الأزهر' });
-  const [newsForm, setNewsForm] = useState({ title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'إعلان عام', status: 'منشور' });
+  const [newsForm, setNewsForm] = useState({ title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'إعلان عام', status: 'منشور', attachments: [] });
   const [liveForm, setLiveForm] = useState(() => {
     try {
       const saved = localStorage.getItem('lastLiveForm');
@@ -512,11 +538,46 @@ function ShariaDashboard() {
     setResultForm({ studentName: '', examName: '', score: 85, grade: 'جيد جداً', status: 'ناجح', governorate: 'الجامع الأزهر' });
   };
 
+  const handleNewsFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    let loadedFiles = [];
+    let count = 0;
+    
+    files.forEach(file => {
+      const isImage = file.type.startsWith('image/');
+      const isVideo = file.type.startsWith('video/');
+      const isPdf = file.type === 'application/pdf';
+      
+      let type = 'file';
+      if (isImage) type = 'image';
+      else if (isVideo) type = 'video';
+      else if (isPdf) type = 'pdf';
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        loadedFiles.push({
+          name: file.name,
+          type: type,
+          data: event.target.result
+        });
+        
+        count++;
+        if (count === files.length) {
+          setNewsForm(prev => ({
+            ...prev,
+            attachments: [...(prev.attachments || []), ...loadedFiles]
+          }));
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleAddNews = (e) => {
     e.preventDefault();
     setNews([...news, { ...newsForm, id: Date.now() }]);
     setShowAddModal(null);
-    setNewsForm({ title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'إعلان عام', status: 'منشور' });
+    setNewsForm({ title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'إعلان عام', status: 'منشور', attachments: [] });
   };
 
   const checkLiveConflict = (newLive, excludeId = null) => {
@@ -3360,6 +3421,45 @@ function ShariaDashboard() {
                 </div>
                 <h3 style={{ fontSize: '16px', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '8px' }}>{n.title}</h3>
                 <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.7', margin: 0 }}>{n.content}</p>
+                {n.attachments && n.attachments.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
+                    {n.attachments.map((file, idx) => {
+                      if (file.type === 'image') {
+                        return (
+                          <div key={idx} style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-subtle)', maxWidth: 'fit-content' }}>
+                            <img src={file.data} alt={file.name} style={{ maxWidth: '100%', maxHeight: '400px', display: 'block', objectFit: 'contain' }} />
+                          </div>
+                        );
+                      } else if (file.type === 'video') {
+                        return (
+                          <div key={idx} style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-subtle)', maxWidth: 'fit-content' }}>
+                            <video src={file.data} controls style={{ maxWidth: '100%', maxHeight: '400px', display: 'block' }} />
+                          </div>
+                        );
+                      } else {
+                        return (
+                          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <a href={file.data} download={file.name} className="btn btn-secondary" style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              fontSize: '12px',
+                              padding: '6px 12px',
+                              backgroundColor: 'rgba(255,255,255,0.08)',
+                              border: '1px solid var(--border-subtle)',
+                              color: 'var(--text-primary)',
+                              borderRadius: '6px',
+                              textDecoration: 'none'
+                            }}>
+                              <FileText size={16} />
+                              تحميل المرفق ({file.name})
+                            </a>
+                          </div>
+                        );
+                      }
+                    })}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -4790,6 +4890,42 @@ function ShariaDashboard() {
                 <div>
                   <label style={labelStyle}>محتوى الخبر بالكامل</label>
                   <textarea required rows="4" value={newsForm.content} onChange={(e) => setNewsForm({ ...newsForm, content: e.target.value })} style={{ ...inputStyle, fontFamily: 'inherit', resize: 'vertical' }}></textarea>
+                </div>
+                <div>
+                  <label style={labelStyle}>المرفقات (صور، فيديو، أو ملفات PDF)</label>
+                  <input 
+                    type="file" 
+                    accept="image/*,video/*,application/pdf" 
+                    multiple 
+                    onChange={handleNewsFileChange} 
+                    style={{ ...inputStyle, padding: '6px 10px' }} 
+                  />
+                  {newsForm.attachments && newsForm.attachments.length > 0 && (
+                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      {newsForm.attachments.map((file, index) => (
+                        <div key={index} style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          backgroundColor: 'rgba(255,255,255,0.05)',
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          fontSize: '13px'
+                        }}>
+                          <span style={{ color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80%' }}>
+                            {file.name} ({file.type === 'image' ? 'صورة' : file.type === 'video' ? 'فيديو' : 'ملف PDF'})
+                          </span>
+                          <button 
+                            type="button" 
+                            onClick={() => setNewsForm(prev => ({ ...prev, attachments: prev.attachments.filter((_, i) => i !== index) }))}
+                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '12px' }}
+                          >
+                            حذف
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
                   <button type="button" onClick={() => setShowAddModal(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
