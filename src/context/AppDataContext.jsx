@@ -1971,6 +1971,25 @@ export function AppDataProvider({ children }) {
   };
   const deleteShariaCourse = (id) => {
     if (window.confirm('هل أنت متأكد من عملية الحذف؟')) {
+      const courseToDelete = shariaCourses.find(c => String(c.id) === String(id));
+      if (courseToDelete) {
+        const normCourseName = normalizeArabic(courseToDelete.name).trim();
+        
+        // Remove associated shariaLiveLectures from state, localStorage, and DB
+        setShariaLiveLectures(prev => {
+          const remaining = prev.filter(l => normalizeArabic(l.title).trim() !== normCourseName);
+          const livesToDelete = prev.filter(l => normalizeArabic(l.title).trim() === normCourseName);
+          livesToDelete.forEach(l => {
+            shariaLivesAPI.delete(l.id).catch(err => console.error(err));
+          });
+          return remaining;
+        });
+
+        // Clean up shariaSchedules as well
+        setShariaSchedules(prev => {
+          return prev.filter(s => normalizeArabic(s.courseName || s.title).trim() !== normCourseName);
+        });
+      }
       setShariaCourses(prev => prev.filter(c => String(c.id) !== String(id)));
       shariaCoursesAPI.delete(id).catch(err => console.error(err));
     }
