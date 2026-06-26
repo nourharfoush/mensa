@@ -553,10 +553,9 @@ function ShariaDashboard() {
         const normNewTitle = normalizeArabic(newLive.title).toLowerCase().trim();
         const sameStage = l.stage === newLive.stage;
         const sameLevel = l.level === newLive.level;
-        const sameDiscipline = l.stage !== 'المتقدمة' || l.discipline === newLive.discipline;
         
-        // Allow repetition for the same teacher if it's the exact same course/subject, stage, and level
-        if (normLTitle === normNewTitle && normNewTitle !== '' && sameStage && sameLevel && sameDiscipline) {
+        // Allow repetition for the same teacher if it's the exact same course/subject, stage, and level (even if the discipline is different in Advanced stage)
+        if (normLTitle === normNewTitle && normNewTitle !== '' && sameStage && sameLevel) {
           continue;
         }
 
