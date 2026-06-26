@@ -40,6 +40,18 @@ const normalizeArabic = (str) => {
     .replace(/ِ|ُ|َ|ً|ٌ|ٍ|ّ|ْ/g, ''); // Remove diacritics
 };
 
+const isOnlineTeacher = (t) => {
+  if (!t) return false;
+  const teacherBranchStr = t.branch || '';
+  const teacherBranches = Array.isArray(t.branches) ? t.branches : (teacherBranchStr ? teacherBranchStr.split(/,|،/).map(b => b.trim()) : []);
+  
+  return teacherBranches.some(bName => 
+    bName.includes('أونلاين') || 
+    bName.includes('انلاين') || 
+    bName.toLowerCase().includes('online')
+  );
+};
+
 
 function ShariaDashboard() {
   const {
@@ -4903,7 +4915,7 @@ function ShariaDashboard() {
                     style={selectStyle}
                   >
                     {teachers.filter(t => 
-                      (liveForm.governorate === 'جميع المحافظات' || t.governorate === liveForm.governorate) &&
+                      (liveForm.governorate === 'جميع المحافظات' || t.governorate === liveForm.governorate || isOnlineTeacher(t)) &&
                       (!teacherSearchQuery || t.name.toLowerCase().includes(teacherSearchQuery.toLowerCase()))
                     ).length === 0 ? (
                       <option value="">لا يوجد محاضرين يطابقون البحث في هذه الإدارة حالياً</option>
@@ -4911,7 +4923,7 @@ function ShariaDashboard() {
                       <>
                         <option value="">اختر الأستاذ المحاضر...</option>
                         {teachers.filter(t => 
-                          (liveForm.governorate === 'جميع المحافظات' || t.governorate === liveForm.governorate) &&
+                          (liveForm.governorate === 'جميع المحافظات' || t.governorate === liveForm.governorate || isOnlineTeacher(t)) &&
                           (!teacherSearchQuery || t.name.toLowerCase().includes(teacherSearchQuery.toLowerCase()))
                         ).map(t => (
                           <option key={t.id} value={t.name}>{t.name}</option>
@@ -4919,7 +4931,7 @@ function ShariaDashboard() {
                       </>
                     )}
                   </select>
-                  {teachers.filter(t => liveForm.governorate === 'جميع المحافظات' || t.governorate === liveForm.governorate).length === 0 && (
+                  {teachers.filter(t => liveForm.governorate === 'جميع المحافظات' || t.governorate === liveForm.governorate || isOnlineTeacher(t)).length === 0 && (
                     <span style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px', display: 'block' }}>
                       * يرجى إضافة محاضرين لهذه الإدارة أولاً من تبويب "أعضاء هيئة التدريس".
                     </span>
@@ -5600,7 +5612,7 @@ function ShariaDashboard() {
                       style={selectStyle}
                     >
                       {teachers.filter(t => 
-                        (editingLive.governorate === 'جميع المحافظات' || t.governorate === editingLive.governorate) &&
+                        (editingLive.governorate === 'جميع المحافظات' || t.governorate === editingLive.governorate || isOnlineTeacher(t)) &&
                         (!editTeacherSearchQuery || t.name.toLowerCase().includes(editTeacherSearchQuery.toLowerCase()))
                       ).length === 0 ? (
                         <option value="">لا يوجد محاضرين يطابقون البحث في هذه الإدارة حالياً</option>
@@ -5608,7 +5620,7 @@ function ShariaDashboard() {
                         <>
                           <option value="">اختر الأستاذ المحاضر...</option>
                           {teachers.filter(t => 
-                            (editingLive.governorate === 'جميع المحافظات' || t.governorate === editingLive.governorate) &&
+                            (editingLive.governorate === 'جميع المحافظات' || t.governorate === editingLive.governorate || isOnlineTeacher(t)) &&
                             (!editTeacherSearchQuery || t.name.toLowerCase().includes(editTeacherSearchQuery.toLowerCase()))
                           ).map(t => (
                             <option key={t.id} value={t.name}>{t.name}</option>
@@ -5616,7 +5628,7 @@ function ShariaDashboard() {
                         </>
                       )}
                     </select>
-                    {teachers.filter(t => editingLive.governorate === 'جميع المحافظات' || t.governorate === editingLive.governorate).length === 0 && (
+                    {teachers.filter(t => editingLive.governorate === 'جميع المحافظات' || t.governorate === editingLive.governorate || isOnlineTeacher(t)).length === 0 && (
                       <span style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px', display: 'block' }}>
                         * يرجى إضافة محاضرين لهذه الإدارة أولاً من تبويب "أعضاء هيئة التدريس".
                       </span>
