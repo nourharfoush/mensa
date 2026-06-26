@@ -549,6 +549,17 @@ function ShariaDashboard() {
 
       // Conflict Type A: Same teacher
       if (l.teacher === newLive.teacher && newLive.teacher !== '') {
+        const normLTitle = normalizeArabic(l.title).toLowerCase().trim();
+        const normNewTitle = normalizeArabic(newLive.title).toLowerCase().trim();
+        const sameStage = l.stage === newLive.stage;
+        const sameLevel = l.level === newLive.level;
+        const sameDiscipline = l.stage !== 'المتقدمة' || l.discipline === newLive.discipline;
+        
+        // Allow repetition for the same teacher if it's the exact same course/subject, stage, and level
+        if (normLTitle === normNewTitle && normNewTitle !== '' && sameStage && sameLevel && sameDiscipline) {
+          continue;
+        }
+
         const getDisciplineName = (val) => {
           if (!val || val === '—') return '';
           if (val === 'fiqh' || val === 'فقه وأصوله') return 'فقه وأصوله';
