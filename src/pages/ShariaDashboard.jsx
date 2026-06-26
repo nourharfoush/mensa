@@ -251,6 +251,8 @@ function ShariaDashboard() {
       status: 'مجدول'
     };
   });
+  const [teacherSearchQuery, setTeacherSearchQuery] = useState('');
+  const [editTeacherSearchQuery, setEditTeacherSearchQuery] = useState('');
   const [teacherForm, setTeacherForm] = useState({
     name: '',
     nationalId: '',
@@ -4758,18 +4760,31 @@ function ShariaDashboard() {
                 {/* Lecturer (Teacher) filtered by Governorate */}
                 <div>
                   <label style={labelStyle}>المحاضر (من قائمة المحاضرين بالإدارة)</label>
+                  <input 
+                    type="text" 
+                    placeholder="ابحث عن المحاضر بالاسم..." 
+                    value={teacherSearchQuery} 
+                    onChange={(e) => setTeacherSearchQuery(e.target.value)} 
+                    style={{ ...inputStyle, marginBottom: '8px' }} 
+                  />
                   <select 
                     required 
                     value={liveForm.teacher} 
                     onChange={(e) => setLiveForm({ ...liveForm, teacher: e.target.value })} 
                     style={selectStyle}
                   >
-                    {teachers.filter(t => liveForm.governorate === 'جميع المحافظات' || t.governorate === liveForm.governorate).length === 0 ? (
-                      <option value="">لا يوجد محاضرين مسجلين في هذه الإدارة حالياً</option>
+                    {teachers.filter(t => 
+                      (liveForm.governorate === 'جميع المحافظات' || t.governorate === liveForm.governorate) &&
+                      (!teacherSearchQuery || t.name.toLowerCase().includes(teacherSearchQuery.toLowerCase()))
+                    ).length === 0 ? (
+                      <option value="">لا يوجد محاضرين يطابقون البحث في هذه الإدارة حالياً</option>
                     ) : (
                       <>
                         <option value="">اختر الأستاذ المحاضر...</option>
-                        {teachers.filter(t => liveForm.governorate === 'جميع المحافظات' || t.governorate === liveForm.governorate).map(t => (
+                        {teachers.filter(t => 
+                          (liveForm.governorate === 'جميع المحافظات' || t.governorate === liveForm.governorate) &&
+                          (!teacherSearchQuery || t.name.toLowerCase().includes(teacherSearchQuery.toLowerCase()))
+                        ).map(t => (
                           <option key={t.id} value={t.name}>{t.name}</option>
                         ))}
                       </>
@@ -5442,18 +5457,31 @@ function ShariaDashboard() {
                   {/* Lecturer (Teacher) filtered by Governorate */}
                   <div>
                     <label style={labelStyle}>المحاضر (من قائمة المحاضرين بالإدارة)</label>
+                    <input 
+                      type="text" 
+                      placeholder="ابحث عن المحاضر بالاسم..." 
+                      value={editTeacherSearchQuery} 
+                      onChange={(e) => setEditTeacherSearchQuery(e.target.value)} 
+                      style={{ ...inputStyle, marginBottom: '8px' }} 
+                    />
                     <select 
                       required 
                       value={editingLive.teacher} 
                       onChange={(e) => setEditingLive({ ...editingLive, teacher: e.target.value })} 
                       style={selectStyle}
                     >
-                      {teachers.filter(t => editingLive.governorate === 'جميع المحافظات' || t.governorate === editingLive.governorate).length === 0 ? (
-                        <option value="">لا يوجد محاضرين مسجلين في هذه الإدارة حالياً</option>
+                      {teachers.filter(t => 
+                        (editingLive.governorate === 'جميع المحافظات' || t.governorate === editingLive.governorate) &&
+                        (!editTeacherSearchQuery || t.name.toLowerCase().includes(editTeacherSearchQuery.toLowerCase()))
+                      ).length === 0 ? (
+                        <option value="">لا يوجد محاضرين يطابقون البحث في هذه الإدارة حالياً</option>
                       ) : (
                         <>
                           <option value="">اختر الأستاذ المحاضر...</option>
-                          {teachers.filter(t => editingLive.governorate === 'جميع المحافظات' || t.governorate === editingLive.governorate).map(t => (
+                          {teachers.filter(t => 
+                            (editingLive.governorate === 'جميع المحافظات' || t.governorate === editingLive.governorate) &&
+                            (!editTeacherSearchQuery || t.name.toLowerCase().includes(editTeacherSearchQuery.toLowerCase()))
+                          ).map(t => (
                             <option key={t.id} value={t.name}>{t.name}</option>
                           ))}
                         </>
