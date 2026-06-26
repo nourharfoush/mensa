@@ -553,6 +553,11 @@ function ShariaDashboard() {
       const sameLevel = l.level === newLive.level;
       const sameDiscipline = l.stage !== 'المتقدمة' || l.discipline === newLive.discipline;
       if (sameStage && sameLevel && sameDiscipline) {
+        const normLTitle = normalizeArabic(l.title).toLowerCase().trim();
+        const normNewTitle = normalizeArabic(newLive.title).toLowerCase().trim();
+        if (normLTitle === normNewTitle && normNewTitle !== '') {
+          continue;
+        }
         return `تعارض في جدول المستوى: هذا المستوى لديه محاضرة أخرى مجدولة في نفس الوقت ("${l.title}")`;
       }
     }
