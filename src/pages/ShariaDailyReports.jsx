@@ -30,7 +30,7 @@ const getDisciplineKey = (arabicVal) => {
   if (clean === 'تفسير وحديث' || clean === 'التفسير والحديث' || clean === 'tafsir') return 'tafsir';
   if (clean === 'عقيدة' || clean === 'العقيدة الإسلامية' || clean === 'aqeedah') return 'aqeedah';
   if (clean === 'لغة عربية' || clean === 'اللغة العربية وآدابها' || clean === 'arabic') return 'arabic';
-  if (clean === 'عامة' || clean === 'محاضرات عامة / مشتركة' || clean === 'general') return 'general';
+  if (clean === 'عامة' || clean === ' عامة ' || clean === 'general') return 'general';
   return clean;
 };
 
