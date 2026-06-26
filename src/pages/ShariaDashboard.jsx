@@ -1216,11 +1216,37 @@ function ShariaDashboard() {
   };
 
   const getFilteredTeachers = () => {
-    return teachers.filter(t => 
-      (selectedGov === 'الكل' || t.governorate === selectedGov || t.governorate === 'جميع المحافظات') &&
-      (selectedBranch === 'الكل' || t.branch === selectedBranch) &&
-      (t.name.includes(searchTerm) || t.department.includes(searchTerm) || t.university.includes(searchTerm))
-    );
+    return teachers.filter(t => {
+      // 1. Governorate match
+      let matchGov = false;
+      if (selectedGov === 'الكل') {
+        matchGov = true;
+      } else {
+        const teacherGov = t.governorate || '';
+        const teacherBranchStr = t.branch || '';
+        const teacherBranches = Array.isArray(t.branches) ? t.branches : (teacherBranchStr ? teacherBranchStr.split(/,|،/).map(b => b.trim()) : []);
+        
+        // Check if any of the branches or the branch string itself contains the selected governorate name
+        const branchContainsGov = teacherBranches.some(bName => bName.includes(selectedGov)) || teacherBranchStr.includes(selectedGov);
+        
+        matchGov = (teacherGov === selectedGov) || 
+                   (teacherGov === 'جميع المحافظات' && !teacherBranchStr) || 
+                   (teacherGov === 'الكل' && !teacherBranchStr) || 
+                   branchContainsGov;
+      }
+
+      // 2. Branch match
+      const matchBranch = selectedBranch === 'الكل' || 
+                          (t.branch && t.branch.split(/,|،/).map(b => b.trim()).includes(selectedBranch)) ||
+                          (Array.isArray(t.branches) && t.branches.includes(selectedBranch));
+
+      // 3. Search term match
+      const matchSearch = t.name.includes(searchTerm) || 
+                          t.department.includes(searchTerm) || 
+                          t.university.includes(searchTerm);
+
+      return matchGov && matchBranch && matchSearch;
+    });
   };
 
   const getFilteredLiveLectures = () => {

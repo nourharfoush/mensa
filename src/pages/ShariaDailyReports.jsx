@@ -158,7 +158,17 @@ function ShariaDailyReports() {
 
     // 3. Find teachers registered in this governorate
     const govTeachers = shariaTeachers
-      .filter(t => t.governorate === selectedGov || t.governorate === 'جميع المحافظات')
+      .filter(t => {
+        const teacherGov = t.governorate || '';
+        const teacherBranchStr = t.branch || '';
+        const teacherBranches = Array.isArray(t.branches) ? t.branches : (teacherBranchStr ? teacherBranchStr.split(/,|،/).map(b => b.trim()) : []);
+        const branchContainsGov = teacherBranches.some(bName => bName.includes(selectedGov)) || teacherBranchStr.includes(selectedGov);
+        
+        return (teacherGov === selectedGov) || 
+               (teacherGov === 'جميع المحافظات' && !teacherBranchStr) || 
+               (teacherGov === 'الكل' && !teacherBranchStr) || 
+               branchContainsGov;
+      })
       .map(t => t.name);
 
     // Combine and deduplicate
