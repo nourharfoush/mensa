@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAppData } from '../context/AppDataContext';
-import { 
-  FileText, Plus, Search, Trash2, Download, Printer, 
+import {
+  FileText, Plus, Search, Trash2, Download, Printer,
   ChevronRight, Calendar, User, BookOpen, Layers, Award,
   CheckCircle, HelpCircle, XCircle
 } from 'lucide-react';
 import { exportToXLSX } from '../utils/xlsxHelper';
 
 const GOVERNORATES = [
-  'الجامع الأزهر', 'القاهرة', 'الجيزة', 'الإسكندرية', 'الدقهلية', 
-  'البحر الأحمر', 'البحيرة', 'الفيوم', 'الغربية', 'الإسماعيلية', 
-  'المنوفية', 'المنيا', 'القليوبية', 'الوادي الجديد', 'الشرقية', 
-  'السويس', 'أسوان', 'أسيوط', 'بني سويف', 'بورسعيد', 'دمياط', 
+  'الجامع الأزهر', 'القاهرة', 'الجيزة', 'الإسكندرية', 'الدقهلية',
+  'البحر الأحمر', 'البحيرة', 'الفيوم', 'الغربية', 'الإسماعيلية',
+  'المنوفية', 'المنيا', 'القليوبية', 'الوادي الجديد', 'الشرقية',
+  'السويس', 'أسوان', 'أسيوط', 'بني سويف', 'بورسعيد', 'دمياط',
   'جنوب سيناء', 'كفر الشيخ', 'مطروح', 'الأقصر', 'قنا', 'شمال سيناء', 'سوهاج'
 ];
 
@@ -30,7 +30,7 @@ const getDisciplineKey = (arabicVal) => {
   if (clean === 'تفسير وحديث' || clean === 'التفسير والحديث' || clean === 'tafsir') return 'tafsir';
   if (clean === 'عقيدة' || clean === 'العقيدة الإسلامية' || clean === 'aqeedah') return 'aqeedah';
   if (clean === 'لغة عربية' || clean === 'اللغة العربية وآدابها' || clean === 'arabic') return 'arabic';
-  if (clean === 'عامة' || clean === 'محاضرات عامة / مشتركة' || clean === 'general') return 'general';
+  if (clean === 'عامة' || clean === ' عامة  ' || clean === 'general') return 'general';
   return clean;
 };
 
@@ -44,13 +44,13 @@ const getDisciplineLabel = (key) => {
 };
 
 function ShariaDailyReports() {
-  const { 
-    shariaCourses = [], 
-    shariaTeachers = [], 
-    shariaDailyReports = [], 
+  const {
+    shariaCourses = [],
+    shariaTeachers = [],
+    shariaDailyReports = [],
     shariaSchedules = [],
-    addShariaDailyReport, 
-    deleteShariaDailyReport 
+    addShariaDailyReport,
+    deleteShariaDailyReport
   } = useAppData();
 
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || 'null');
@@ -59,7 +59,7 @@ function ShariaDailyReports() {
   const userAdminGov = currentUser ? (currentUser.userAdmin || currentUser.governorate) : '';
 
   const isSuperAdmin = userRole === 'admin' || userRole === 'rowaq_admin';
-  
+
   const allowedSpecialties = [
     'مدير الإدارة',
     'العضو التقني',
@@ -93,7 +93,7 @@ function ShariaDailyReports() {
   const [question1, setQuestion1] = useState('');
   const [question2, setQuestion2] = useState('');
   const [question2Answer, setQuestion2Answer] = useState('صح');
-  
+
   const [question3, setQuestion3] = useState('');
   const [q3OptA, setQ3OptA] = useState('');
   const [q3OptB, setQ3OptB] = useState('');
@@ -115,10 +115,10 @@ function ShariaDailyReports() {
 
   // Dynamic filter lists
   const levels = LEVELS_BY_STAGE[stage] || [];
-  
+
   // Subjects (Courses) filtered by stage and level
-  const filteredCourses = shariaCourses.filter(c => 
-    c.stage === stage && 
+  const filteredCourses = shariaCourses.filter(c =>
+    c.stage === stage &&
     c.level === level &&
     (stage !== 'المتقدمة' || !c.discipline || c.discipline === '—' || getDisciplineKey(c.discipline) === getDisciplineKey(discipline))
   );
@@ -169,7 +169,7 @@ function ShariaDailyReports() {
     ])).filter(Boolean);
 
     setAvailableLecturers(combined);
-    
+
     // Auto select first lecturer
     if (combined.length > 0) {
       if (!combined.includes(teacher)) {
@@ -213,7 +213,7 @@ function ShariaDailyReports() {
 
     addShariaDailyReport(reportData);
     alert('تم حفظ التقرير بنجاح');
-    
+
     // Reset questions form fields
     setLectureTitle('');
     setQuestion1('');
@@ -223,7 +223,7 @@ function ShariaDailyReports() {
     setQ3OptB('');
     setQ3OptC('');
     setQ3OptD('');
-    
+
     setShowAddForm(false);
   };
 
@@ -283,11 +283,11 @@ function ShariaDailyReports() {
     return shariaDailyReports.filter(r => {
       const matchGov = filterGov === 'الكل' || r.governorate === filterGov || r.governorate === 'جميع المحافظات';
       const matchStage = filterStage === 'الكل' || r.stage === filterStage;
-      const matchSearch = 
+      const matchSearch =
         r.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
         r.teacher.toLowerCase().includes(searchQuery.toLowerCase()) ||
         r.reporter.toLowerCase().includes(searchQuery.toLowerCase());
-      
+
       return matchGov && matchStage && matchSearch;
     });
   };
@@ -504,7 +504,7 @@ function ShariaDailyReports() {
 
   return (
     <div style={{ direction: 'rtl', padding: '10px 0' }}>
-      
+
       {/* Page Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '15px' }}>
         <div>
@@ -516,20 +516,20 @@ function ShariaDailyReports() {
             إنشاء واستعراض تقارير اليومية وتوثيق أسئلة المحاضرات لدارسي العلوم الشرعية بالمحافظات
           </p>
         </div>
-        
+
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button 
-            onClick={handleDownloadTemplate} 
-            className="btn btn-outline" 
+          <button
+            onClick={handleDownloadTemplate}
+            className="btn btn-outline"
             style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', fontSize: '13px', fontWeight: 'bold' }}
           >
             <Download size={16} />
             تنزيل نموذج فارغ
           </button>
-          
-          <button 
-            onClick={() => setShowAddForm(!showAddForm)} 
-            className="btn btn-primary" 
+
+          <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="btn btn-primary"
             style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', fontSize: '14px', fontWeight: 'bold' }}
           >
             <Plus size={18} />
@@ -553,7 +553,7 @@ function ShariaDailyReports() {
           </h3>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
-            
+
             {/* Governorate field (disabled for governorate officials) */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <label style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '600' }}>المحافظة / المقر</label>
@@ -810,7 +810,7 @@ function ShariaDailyReports() {
 
           {/* Form Questions Block */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '20px' }}>
-            
+
             {/* Question 1: Essay */}
             <div style={{
               background: 'rgba(255, 255, 255, 0.02)',
@@ -1066,9 +1066,9 @@ function ShariaDailyReports() {
         boxShadow: '0 4px 16px rgba(0,0,0,0.05)'
       }}>
         <h4 style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '14px' }}>فلاتر البحث والمشاهدة</h4>
-        
+
         <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
-          
+
           {/* Search box */}
           <div style={{ position: 'relative', flex: '2', minWidth: '250px' }}>
             <input
@@ -1196,7 +1196,7 @@ function ShariaDailyReports() {
               </thead>
               <tbody>
                 {reportsList.map((report) => (
-                  <tr 
+                  <tr
                     key={report.id || report._id}
                     style={{ borderBottom: '1px solid var(--border-subtle)', transition: 'background-color 0.2s', cursor: 'pointer' }}
                     onClick={() => setSelectedReport(report)}
@@ -1234,7 +1234,7 @@ function ShariaDailyReports() {
                         >
                           <Printer size={15} />
                         </button>
-                        
+
                         <button
                           onClick={() => deleteShariaDailyReport(report.id || report._id)}
                           title="حذف التقرير"
@@ -1287,7 +1287,7 @@ function ShariaDailyReports() {
             position: 'relative'
           }}>
             {/* Modal Close Button */}
-            <button 
+            <button
               onClick={() => setSelectedReport(null)}
               style={{
                 position: 'absolute',
@@ -1333,7 +1333,7 @@ function ShariaDailyReports() {
 
             {/* Questions preview */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              
+
               {/* Q1 */}
               <div style={{ border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '14px', backgroundColor: 'rgba(255,255,255,0.01)' }}>
                 <h5 style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '8px' }}>السؤال الأول: مقالي</h5>
@@ -1354,16 +1354,16 @@ function ShariaDailyReports() {
               <div style={{ border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '14px', backgroundColor: 'rgba(255,255,255,0.01)' }}>
                 <h5 style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '8px' }}>السؤال الثالث: اختيار من متعدد</h5>
                 <p style={{ fontSize: '14px', color: 'var(--text-primary)', margin: '0 0 10px 0', fontWeight: '500', lineHeight: '1.5' }}>{selectedReport.question3}</p>
-                
+
                 {selectedReport.question3Options && selectedReport.question3Options.length > 0 && (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
                     {selectedReport.question3Options.map((opt, i) => (
-                      <div 
-                        key={i} 
-                        style={{ 
-                          padding: '6px 10px', 
-                          borderRadius: '6px', 
-                          border: '1px solid var(--border-subtle)', 
+                      <div
+                        key={i}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-subtle)',
                           fontSize: '12px',
                           color: opt === selectedReport.question3Answer ? '#10b981' : 'var(--text-secondary)',
                           backgroundColor: opt === selectedReport.question3Answer ? 'rgba(16, 185, 129, 0.08)' : 'transparent',
@@ -1375,7 +1375,7 @@ function ShariaDailyReports() {
                     ))}
                   </div>
                 )}
-                
+
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>
                   <CheckCircle size={14} />
                   <span>الإجابة الصحيحة: {selectedReport.question3Answer}</span>
@@ -1386,15 +1386,15 @@ function ShariaDailyReports() {
 
             {/* Modal Actions */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '24px', borderTop: '1px solid var(--border-subtle)', paddingTop: '16px' }}>
-              <button 
-                onClick={() => setSelectedReport(null)} 
+              <button
+                onClick={() => setSelectedReport(null)}
                 className="btn btn-secondary"
                 style={{ padding: '8px 16px', fontSize: '13px' }}
               >
                 إغلاق
               </button>
-              <button 
-                onClick={() => handlePrint(selectedReport)} 
+              <button
+                onClick={() => handlePrint(selectedReport)}
                 className="btn btn-primary"
                 style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 18px', fontSize: '13px', fontWeight: 'bold' }}
               >
