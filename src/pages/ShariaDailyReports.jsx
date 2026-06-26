@@ -633,7 +633,7 @@ function ShariaDailyReports() {
                   <option value="tafsir">التفسير والحديث</option>
                   <option value="aqeedah">العقيدة الإسلامية</option>
                   <option value="arabic">اللغة العربية وآدابها</option>
-                  <option value="general">محاضرات عامة / مشتركة</option>
+                  <option value="general"> عامة </option>
                 </select>
               </div>
             )}
