@@ -42,14 +42,17 @@ const normalizeArabic = (str) => {
 
 const isOnlineTeacher = (t) => {
   if (!t) return false;
+  
+  // Automatically enable online for all lecturers of Al-Azhar Mosque (الجامع الأزهر)
+  if (t.governorate === 'الجامع الأزهر') return true;
+  
   const teacherBranchStr = t.branch || '';
   const teacherBranches = Array.isArray(t.branches) ? t.branches : (teacherBranchStr ? teacherBranchStr.split(/,|،/).map(b => b.trim()) : []);
   
-  return teacherBranches.some(bName => 
-    bName.includes('أونلاين') || 
-    bName.includes('انلاين') || 
-    bName.toLowerCase().includes('online')
-  );
+  return teacherBranches.some(bName => {
+    const norm = normalizeArabic(bName).toLowerCase().replace(/\s+/g, '');
+    return norm.includes('اونلاين') || norm.includes('online');
+  });
 };
 
 
