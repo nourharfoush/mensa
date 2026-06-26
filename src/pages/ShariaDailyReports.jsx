@@ -39,7 +39,7 @@ const getDisciplineLabel = (key) => {
   if (key === 'tafsir') return 'التفسير والحديث';
   if (key === 'aqeedah') return 'العقيدة الإسلامية';
   if (key === 'arabic') return 'اللغة العربية وآدابها';
-  if (key === 'general') return 'محاضرات عامة / مشتركة';
+  if (key === 'general') return ' عامة ';
   return key || '—';
 };
 
