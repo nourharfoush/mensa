@@ -4915,15 +4915,15 @@ function ShariaDashboard() {
                     style={selectStyle}
                   >
                     {teachers.filter(t => 
-                      (liveForm.governorate === 'جميع المحافظات' || t.governorate === liveForm.governorate || isOnlineTeacher(t)) &&
+                      isOnlineTeacher(t) &&
                       (!teacherSearchQuery || t.name.toLowerCase().includes(teacherSearchQuery.toLowerCase()))
                     ).length === 0 ? (
-                      <option value="">لا يوجد محاضرين يطابقون البحث في هذه الإدارة حالياً</option>
+                      <option value="">لا يوجد محاضرين مفعل لهم خيار الأونلاين حالياً</option>
                     ) : (
                       <>
                         <option value="">اختر الأستاذ المحاضر...</option>
                         {teachers.filter(t => 
-                          (liveForm.governorate === 'جميع المحافظات' || t.governorate === liveForm.governorate || isOnlineTeacher(t)) &&
+                          isOnlineTeacher(t) &&
                           (!teacherSearchQuery || t.name.toLowerCase().includes(teacherSearchQuery.toLowerCase()))
                         ).map(t => (
                           <option key={t.id} value={t.name}>{t.name}</option>
@@ -4931,9 +4931,9 @@ function ShariaDashboard() {
                       </>
                     )}
                   </select>
-                  {teachers.filter(t => liveForm.governorate === 'جميع المحافظات' || t.governorate === liveForm.governorate || isOnlineTeacher(t)).length === 0 && (
+                  {teachers.filter(t => isOnlineTeacher(t)).length === 0 && (
                     <span style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px', display: 'block' }}>
-                      * يرجى إضافة محاضرين لهذه الإدارة أولاً من تبويب "أعضاء هيئة التدريس".
+                      * يرجى تفعيل خيار الأونلاين لمحاضر واحد على الأقل من تبويب "أعضاء هيئة التدريس".
                     </span>
                   )}
                 </div>
@@ -5612,15 +5612,15 @@ function ShariaDashboard() {
                       style={selectStyle}
                     >
                       {teachers.filter(t => 
-                        (editingLive.governorate === 'جميع المحافظات' || t.governorate === editingLive.governorate || isOnlineTeacher(t)) &&
+                        isOnlineTeacher(t) &&
                         (!editTeacherSearchQuery || t.name.toLowerCase().includes(editTeacherSearchQuery.toLowerCase()))
                       ).length === 0 ? (
-                        <option value="">لا يوجد محاضرين يطابقون البحث في هذه الإدارة حالياً</option>
+                        <option value="">لا يوجد محاضرين مفعل لهم خيار الأونلاين حالياً</option>
                       ) : (
                         <>
                           <option value="">اختر الأستاذ المحاضر...</option>
                           {teachers.filter(t => 
-                            (editingLive.governorate === 'جميع المحافظات' || t.governorate === editingLive.governorate || isOnlineTeacher(t)) &&
+                            isOnlineTeacher(t) &&
                             (!editTeacherSearchQuery || t.name.toLowerCase().includes(editTeacherSearchQuery.toLowerCase()))
                           ).map(t => (
                             <option key={t.id} value={t.name}>{t.name}</option>
@@ -5628,9 +5628,9 @@ function ShariaDashboard() {
                         </>
                       )}
                     </select>
-                    {teachers.filter(t => editingLive.governorate === 'جميع المحافظات' || t.governorate === editingLive.governorate || isOnlineTeacher(t)).length === 0 && (
+                    {teachers.filter(t => isOnlineTeacher(t)).length === 0 && (
                       <span style={{ fontSize: '11px', color: '#f59e0b', marginTop: '4px', display: 'block' }}>
-                        * يرجى إضافة محاضرين لهذه الإدارة أولاً من تبويب "أعضاء هيئة التدريس".
+                        * يرجى تفعيل خيار الأونلاين لمحاضر واحد على الأقل من تبويب "أعضاء هيئة التدريس".
                       </span>
                     )}
                   </div>
