@@ -5769,7 +5769,7 @@ function ShariaDashboard() {
                         const hasOnline = filteredBranches.some(b => b.name.includes('أونلاين') || b.name.includes('انلاين') || b.name.toLowerCase().includes('online'));
                         const displayBranches = hasOnline 
                           ? filteredBranches 
-                          : [{ id: 'online-virtual', name: 'أونلاين', governorate: teacherForm.governorate }, ...filteredBranches];
+                          : [...filteredBranches, { id: 'online-virtual', name: 'أونلاين', governorate: teacherForm.governorate }];
 
                         return displayBranches.map(b => (
                           <div key={b.id || b._id || b.name} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -5970,7 +5970,7 @@ function ShariaDashboard() {
                         const hasOnline = filteredBranches.some(b => b.name.includes('أونلاين') || b.name.includes('انلاين') || b.name.toLowerCase().includes('online'));
                         const displayBranches = hasOnline 
                           ? filteredBranches 
-                          : [{ id: 'online-virtual', name: 'أونلاين', governorate: editingTeacher.governorate }, ...filteredBranches];
+                          : [...filteredBranches, { id: 'online-virtual', name: 'أونلاين', governorate: editingTeacher.governorate }];
 
                         const currentBranches = Array.isArray(editingTeacher.branches) 
                           ? editingTeacher.branches 
