@@ -810,6 +810,21 @@ function ShariaDashboard() {
       validRows.forEach(row => {
         const natId = (row['الرقم القومي'] || row['الرقم القومى'] || '').toString().trim();
         
+        let gov = (row['المحافظة'] || '').toString().trim();
+        const branchesVal = (row['الفروع'] || row['الفرع'] || '').toString().trim();
+        
+        // If governorate is empty or 'الكل'/'جميع المحافظات', try to extract from branch name
+        if (!gov || gov === 'الكل' || gov === 'جميع المحافظات') {
+          const matchedGov = GOVERNORATES.find(g => branchesVal.includes(g));
+          if (matchedGov) {
+            gov = matchedGov;
+          }
+        }
+        
+        if (!gov) {
+          gov = selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov;
+        }
+
         const finalForm = {
           name: row['الاسم'] || '',
           nationalId: natId,
@@ -818,8 +833,8 @@ function ShariaDashboard() {
           university: row['الجامعة'] || '',
           college: row['الكلية'] || '',
           department: row['القسم'] || '',
-          governorate: row['المحافظة'] || (selectedGov === 'الكل' ? 'الجامع الأزهر' : selectedGov),
-          branch: row['الفروع'] || row['الفرع'] || ''
+          governorate: gov,
+          branch: branchesVal
         };
         newTeachers.push(finalForm);
       });
