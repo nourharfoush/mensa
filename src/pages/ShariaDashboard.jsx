@@ -545,7 +545,18 @@ function ShariaDashboard() {
 
       // Conflict Type A: Same teacher
       if (l.teacher === newLive.teacher && newLive.teacher !== '') {
-        return `تعارض في جدول المحاضر: المحاضر "${newLive.teacher}" لديه محاضرة أخرى في هذا الوقت ("${l.title}")`;
+        const getDisciplineName = (val) => {
+          if (!val || val === '—') return '';
+          if (val === 'fiqh' || val === 'فقه وأصوله') return 'فقه وأصوله';
+          if (val === 'tafsir' || val === 'تفسير وحديث') return 'تفسير وحديث';
+          if (val === 'aqeedah' || val === 'عقيدة') return 'عقيدة';
+          if (val === 'arabic' || val === 'لغة عربية') return 'لغة عربية';
+          if (val === 'general' || val === 'عامة') return 'عامة';
+          return val;
+        };
+        const discName = getDisciplineName(l.discipline);
+        const details = ` - [المرحلة: ${l.stage} | المستوى: ${l.level}${l.stage === 'المتقدمة' && discName ? ` | التخصص: ${discName}` : ''}]`;
+        return `تعارض في جدول المحاضر: المحاضر "${newLive.teacher}" لديه محاضرة أخرى في هذا الوقت ("${l.title}"${details})`;
       }
 
       // Conflict Type B: Same level (stage + level + discipline)
