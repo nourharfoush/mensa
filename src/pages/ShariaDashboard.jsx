@@ -748,6 +748,10 @@ function ShariaDashboard() {
   const handleEditLive = (e) => {
     e.preventDefault();
     if (!editingLive) return;
+    if (isGovOfficial) {
+      alert('عذراً، ليس لديك صلاحية تعديل المحاضرات الأونلاين.');
+      return;
+    }
     const conflictError = checkLiveConflict(editingLive, editingLive.id);
     if (conflictError) {
       alert(conflictError);
@@ -806,7 +810,13 @@ function ShariaDashboard() {
         setNews(news.filter(x => x.id !== id));
       }
     }
-    if (listName === 'live') deleteShariaLive(id);
+    if (listName === 'live') {
+      if (isGovOfficial) {
+        alert('عذراً، ليس لديك صلاحية حذف المحاضرات الأونلاين.');
+        return;
+      }
+      deleteShariaLive(id);
+    }
     if (listName === 'teachers') deleteShariaTeacher(id);
   };
 
@@ -3792,7 +3802,7 @@ function ShariaDashboard() {
                             </span>
                           )}
                         </div>
-                        {!isShariaStudent && !isShariaTeacher && (
+                        {!isShariaStudent && !isShariaTeacher && !isGovOfficial && (
                           <div style={{ display: 'flex', gap: '8px', marginRight: 'auto', alignItems: 'center' }}>
                             <button 
                               onClick={() => setEditingLive(live)}
