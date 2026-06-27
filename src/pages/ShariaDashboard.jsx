@@ -290,7 +290,7 @@ function ShariaDashboard() {
       timeStart: '',
       timeEnd: '',
       link: '',
-      streamType: 'embedded',
+      streamType: 'external',
       isWeekly: true,
       status: 'مجدول'
     };
@@ -5170,17 +5170,17 @@ function ShariaDashboard() {
                 <div>
                   <label style={labelStyle}>نوع البث المباشر</label>
                   <select 
-                    value={liveForm.streamType || 'embedded'} 
+                    value={liveForm.streamType || 'external'} 
                     onChange={(e) => setLiveForm({ ...liveForm, streamType: e.target.value, link: e.target.value === 'embedded' ? '' : liveForm.link })} 
                     style={selectStyle}
                   >
-                    <option value="embedded">بث مدمج داخل الموقع (Jitsi Meet - مجاني وموصى به)</option>
                     <option value="external">رابط خارجي (Microsoft Teams / Zoom / إلخ)</option>
+                    <option value="embedded">بث مدمج داخل الموقع (Jitsi Meet - مجاني وموصى به)</option>
                   </select>
                 </div>
 
                 {/* Link */}
-                {liveForm.streamType === 'external' && (
+                {(liveForm.streamType || 'external') === 'external' && (
                   <div>
                     <label style={labelStyle}>رابط المحاضرة الخارجي</label>
                     <input 
@@ -5867,17 +5867,17 @@ function ShariaDashboard() {
                   <div>
                     <label style={labelStyle}>نوع البث المباشر</label>
                     <select 
-                      value={editingLive.streamType || 'embedded'} 
+                      value={editingLive.streamType || 'external'} 
                       onChange={(e) => setEditingLive({ ...editingLive, streamType: e.target.value, link: e.target.value === 'embedded' ? '' : editingLive.link })} 
                       style={selectStyle}
                     >
-                      <option value="embedded">بث مدمج داخل الموقع (Jitsi Meet - مجاني وموصى به)</option>
                       <option value="external">رابط خارجي (Microsoft Teams / Zoom / إلخ)</option>
+                      <option value="embedded">بث مدمج داخل الموقع (Jitsi Meet - مجاني وموصى به)</option>
                     </select>
                   </div>
 
                   {/* Link */}
-                  {(editingLive.streamType || 'embedded') === 'external' && (
+                  {(editingLive.streamType || 'external') === 'external' && (
                     <div>
                       <label style={labelStyle}>رابط المحاضرة الخارجي</label>
                       <input 
