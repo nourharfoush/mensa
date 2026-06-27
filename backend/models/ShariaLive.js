@@ -14,6 +14,7 @@ const shariaLiveSchema = new mongoose.Schema(
     link: String,
     isWeekly: Boolean,
     status: String,
+    streamType: String,
   },
   { strict: false, timestamps: true }
 );
