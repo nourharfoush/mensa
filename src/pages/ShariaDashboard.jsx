@@ -615,9 +615,16 @@ function ShariaDashboard() {
         const sameStage = l.stage === newLive.stage;
         const sameLevel = l.level === newLive.level;
         
+        // Find teacher to check if they are online
+        const teacherObj = shariaTeachers.find(t => t.name === newLive.teacher);
+        const isOnline = teacherObj ? isOnlineTeacher(teacherObj) : false;
+
         // Allow repetition for the same teacher if it's the exact same course/subject, stage, and level (even if the discipline is different in Advanced stage)
-        if (normLTitle === normNewTitle && normNewTitle !== '' && sameStage && sameLevel) {
-          continue;
+        // Also allow repetition for online teachers if it's the same course/subject and within the same stage (even if level is different)
+        if (normLTitle === normNewTitle && normNewTitle !== '') {
+          if ((sameStage && sameLevel) || (isOnline && sameStage)) {
+            continue;
+          }
         }
 
         const getDisciplineName = (val) => {
