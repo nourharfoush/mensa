@@ -204,6 +204,7 @@ function ShariaDashboard() {
   const [editingShariaBranch, setEditingShariaBranch] = useState(null);
   const [editingLive, setEditingLive] = useState(null);
   const [editingSchedule, setEditingSchedule] = useState(null);
+  const [enlargeImage, setEnlargeImage] = useState(null);
 
   const [exams, setExams] = useState([]);
   const [results, setResults] = useState([]);
@@ -538,12 +539,61 @@ function ShariaDashboard() {
     setResultForm({ studentName: '', examName: '', score: 85, grade: 'جيد جداً', status: 'ناجح', governorate: 'الجامع الأزهر' });
   };
 
-  const handleNewsFileChange = (e) => {
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const MAX_LEN = 1200;
+          
+          if (width > MAX_LEN || height > MAX_LEN) {
+            if (width > height) {
+              height = Math.round((height * MAX_LEN) / width);
+              width = MAX_LEN;
+            } else {
+              width = Math.round((width * MAX_LEN) / height);
+              height = MAX_LEN;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          const compressed = canvas.toDataURL('image/jpeg', 0.7);
+          resolve(compressed);
+        };
+        img.onerror = () => {
+          resolve(event.target.result);
+        };
+      };
+      reader.onerror = () => {
+        resolve(null);
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const readFileAsDataURL = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleNewsFileChange = async (e) => {
     const files = Array.from(e.target.files);
     let loadedFiles = [];
-    let count = 0;
     
-    files.forEach(file => {
+    for (const file of files) {
       const isImage = file.type.startsWith('image/');
       const isVideo = file.type.startsWith('video/');
       const isPdf = file.type === 'application/pdf';
@@ -553,24 +603,29 @@ function ShariaDashboard() {
       else if (isVideo) type = 'video';
       else if (isPdf) type = 'pdf';
       
-      const reader = new FileReader();
-      reader.onload = (event) => {
+      let data = null;
+      if (isImage) {
+        data = await compressImage(file);
+      } else {
+        data = await readFileAsDataURL(file);
+      }
+      
+      if (data) {
         loadedFiles.push({
           name: file.name,
           type: type,
-          data: event.target.result
+          data: data
         });
-        
-        count++;
-        if (count === files.length) {
-          setNewsForm(prev => ({
-            ...prev,
-            attachments: [...(prev.attachments || []), ...loadedFiles]
-          }));
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+      }
+    }
+    
+    if (loadedFiles.length > 0) {
+      setNewsForm(prev => ({
+        ...prev,
+        attachments: [...(prev.attachments || []), ...loadedFiles]
+      }));
+    }
+    e.target.value = '';
   };
 
   const handleAddNews = (e) => {
@@ -3439,22 +3494,38 @@ function ShariaDashboard() {
                 <h3 style={{ fontSize: '16px', color: 'var(--text-primary)', fontWeight: 'bold', marginBottom: '8px' }}>{n.title}</h3>
                 <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.7', margin: 0 }}>{n.content}</p>
                 {n.attachments && n.attachments.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
-                    {n.attachments.map((file, idx) => {
-                      if (file.type === 'image') {
-                        return (
-                          <div key={idx} style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-subtle)', maxWidth: 'fit-content' }}>
-                            <img src={file.data} alt={file.name} style={{ maxWidth: '100%', maxHeight: '400px', display: 'block', objectFit: 'contain' }} />
+                  <div className="news-attachments-container">
+                    {/* Images Grid (5 to 6 columns on desktop) */}
+                    {n.attachments.filter(f => f.type === 'image').length > 0 && (
+                      <div className="news-images-grid">
+                        {n.attachments.filter(f => f.type === 'image').map((file, idx) => (
+                          <div 
+                            key={idx} 
+                            className="news-image-wrapper"
+                            onClick={() => setEnlargeImage(file.data)}
+                            title="اضغط لتكبير الصورة"
+                          >
+                            <img src={file.data} alt={file.name} className="news-image-thumbnail" />
                           </div>
-                        );
-                      } else if (file.type === 'video') {
-                        return (
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Videos */}
+                    {n.attachments.filter(f => f.type === 'video').length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        {n.attachments.filter(f => f.type === 'video').map((file, idx) => (
                           <div key={idx} style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-subtle)', maxWidth: 'fit-content' }}>
                             <video src={file.data} controls style={{ maxWidth: '100%', maxHeight: '400px', display: 'block' }} />
                           </div>
-                        );
-                      } else {
-                        return (
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Other Files */}
+                    {n.attachments.filter(f => f.type !== 'image' && f.type !== 'video').length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {n.attachments.filter(f => f.type !== 'image' && f.type !== 'video').map((file, idx) => (
                           <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <a href={file.data} download={file.name} className="btn btn-secondary" style={{
                               display: 'inline-flex',
@@ -3472,9 +3543,9 @@ function ShariaDashboard() {
                               تحميل المرفق ({file.name})
                             </a>
                           </div>
-                        );
-                      }
-                    })}
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -6374,6 +6445,65 @@ function ShariaDashboard() {
           updateLectureAccessDuration={updateLectureAccessDuration}
           loggedInStudent={loggedInStudent}
         />
+      )}
+
+      {enlargeImage && (
+        <div 
+          onClick={() => setEnlargeImage(null)} 
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            cursor: 'zoom-out',
+            backdropFilter: 'blur(5px)',
+            padding: '20px'
+          }}
+        >
+          <div style={{ position: 'relative', maxWidth: '90%', maxHeight: '90%', display: 'flex', justifyContent: 'center', alignItems: 'center' }} onClick={(e) => e.stopPropagation()}>
+            <img 
+              src={enlargeImage} 
+              alt="Enlarged news attachment" 
+              style={{ 
+                maxWidth: '100%', 
+                maxHeight: '90vh', 
+                borderRadius: '8px', 
+                border: '2px solid rgba(255,255,255,0.1)',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
+                objectFit: 'contain',
+                cursor: 'default'
+              }} 
+            />
+            <button 
+              onClick={() => setEnlargeImage(null)}
+              style={{
+                position: 'absolute',
+                top: '-40px',
+                right: '0',
+                background: 'rgba(255,255,255,0.15)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                cursor: 'pointer',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                transition: 'background 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.3)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
       )}
 
       <Footer />
