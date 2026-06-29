@@ -56,6 +56,53 @@ const isOnlineTeacher = (t) => {
 };
 
 
+// Native IndexedDB Helper for news storage (bypass 5MB localStorage limit)
+const initNewsDB = () => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('ShariaNewsDB', 1);
+    request.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('newsStore')) {
+        db.createObjectStore('newsStore');
+      }
+    };
+    request.onsuccess = (e) => resolve(e.target.result);
+    request.onerror = (e) => reject(e.target.error);
+  });
+};
+
+const getNewsFromDB = async () => {
+  try {
+    const db = await initNewsDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('newsStore', 'readonly');
+      const store = tx.objectStore('newsStore');
+      const req = store.get('sharia_news');
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => reject(req.error);
+    });
+  } catch (err) {
+    console.error("IndexedDB error reading news:", err);
+    return null;
+  }
+};
+
+const saveNewsToDB = async (newsData) => {
+  try {
+    const db = await initNewsDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction('newsStore', 'readwrite');
+      const store = tx.objectStore('newsStore');
+      const req = store.put(newsData, 'sharia_news');
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  } catch (err) {
+    console.error("IndexedDB error writing news:", err);
+  }
+};
+
+
 function ShariaDashboard() {
   const {
     managers = [], addManager, deleteManager, addUser, updateUser, users = [], branches = [],
@@ -208,33 +255,81 @@ function ShariaDashboard() {
 
   const [exams, setExams] = useState([]);
   const [results, setResults] = useState([]);
-  const [news, setNews] = useState(() => {
-    try {
-      const saved = localStorage.getItem('sharia_news');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.error("Error reading sharia_news from localStorage:", e);
-    }
-    return [
-      {
-        id: 1,
-        title: "بدء الفصل الدراسي الجديد لعام 2026",
-        content: "يسر قطاع العلوم الشرعية والعربية بالجامع الأزهر الشريف الإعلان عن بدء الدراسة في فروع الرواق الأزهري لمرحلة العلوم الشرعية والعربية بكافة المحافظات بدءاً من السبت القادم. يرجى من جميع الدارسين مراجعة المناهج والجداول المرفقة.",
-        date: new Date().toISOString().split('T')[0],
-        category: "إعلان عام",
-        status: "منشور",
-        attachments: []
-      }
-    ];
-  });
+  const [news, setNews] = useState([]);
+  const [isNewsLoaded, setIsNewsLoaded] = useState(false);
 
+  // Load news asynchronously from IndexedDB, with localStorage fallback
   useEffect(() => {
-    try {
-      localStorage.setItem('sharia_news', JSON.stringify(news));
-    } catch (e) {
-      console.error("Error saving sharia_news to localStorage:", e);
-    }
-  }, [news]);
+    const loadNewsData = async () => {
+      try {
+        let saved = await getNewsFromDB();
+        if (!saved) {
+          // Fallback to localStorage
+          const localSaved = localStorage.getItem('sharia_news');
+          if (localSaved) {
+            try {
+              saved = JSON.parse(localSaved);
+              // Migrate to IndexedDB
+              await saveNewsToDB(saved);
+            } catch (err) {
+              console.error("Error parsing localSaved sharia_news:", err);
+            }
+          }
+        }
+        
+        if (saved && Array.isArray(saved) && saved.length > 0) {
+          setNews(saved);
+        } else {
+          // Default news item if empty
+          const defaultNews = [
+            {
+              id: 1,
+              title: "بدء الفصل الدراسي الجديد لعام 2026",
+              content: "يسر قطاع العلوم الشرعية والعربية بالجامع الأزهر الشريف الإعلان عن بدء الدراسة في فروع الرواق الأزهري لمرحلة العلوم الشرعية والعربية بكافة المحافظات بدءاً من السبت القادم. يرجى من جميع الدارسين مراجعة المناهج والجداول المرفقة.",
+              date: new Date().toISOString().split('T')[0],
+              category: "إعلان عام",
+              status: "منشور",
+              attachments: []
+            }
+          ];
+          setNews(defaultNews);
+          await saveNewsToDB(defaultNews);
+        }
+      } catch (e) {
+        console.error("Error loading news in dashboard:", e);
+      } finally {
+        setIsNewsLoaded(true);
+      }
+    };
+
+    loadNewsData();
+  }, []);
+
+  // Save news to IndexedDB when updated
+  useEffect(() => {
+    if (!isNewsLoaded) return;
+    
+    const saveNewsData = async () => {
+      try {
+        await saveNewsToDB(news);
+        
+        // Save a clean backup to localStorage WITHOUT large base64 attachments to avoid QuotaExceededError
+        const backupNews = news.map(item => ({
+          ...item,
+          attachments: (item.attachments || []).map(att => 
+            att.type === 'image' && att.data && att.data.startsWith('data:') 
+              ? { ...att, data: '' } // strip large base64 data for backup
+              : att
+          )
+        }));
+        localStorage.setItem('sharia_news_backup', JSON.stringify(backupNews));
+      } catch (e) {
+        console.error("Error saving news to database/backup:", e);
+      }
+    };
+
+    saveNewsData();
+  }, [news, isNewsLoaded]);
 
 
   // --- NEW ITEM FORM STATES ---
@@ -266,6 +361,7 @@ function ShariaDashboard() {
   const [examForm, setExamForm] = useState({ name: '', level: 'تمهيدية - المستوى الأول', date: '', duration: '90 دقيقة', totalQuestions: 40, status: 'مجدول' });
   const [resultForm, setResultForm] = useState({ studentName: '', examName: '', score: 85, grade: 'جيد جداً', status: 'ناجح', governorate: 'الجامع الأزهر' });
   const [newsForm, setNewsForm] = useState({ title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'إعلان عام', status: 'منشور', attachments: [] });
+  const [externalUrl, setExternalUrl] = useState('');
   const [liveForm, setLiveForm] = useState(() => {
     try {
       const saved = localStorage.getItem('lastLiveForm');
@@ -549,7 +645,7 @@ function ShariaDashboard() {
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
-          const MAX_LEN = 1200;
+          const MAX_LEN = 800;
           
           if (width > MAX_LEN || height > MAX_LEN) {
             if (width > height) {
@@ -566,7 +662,7 @@ function ShariaDashboard() {
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
           
-          const compressed = canvas.toDataURL('image/jpeg', 0.7);
+          const compressed = canvas.toDataURL('image/jpeg', 0.55);
           resolve(compressed);
         };
         img.onerror = () => {
@@ -628,11 +724,57 @@ function ShariaDashboard() {
     e.target.value = '';
   };
 
+  const handleAddExternalUrl = (e) => {
+    e.preventDefault();
+    if (!externalUrl.trim()) return;
+    
+    const url = externalUrl.trim();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      alert('الرجاء إدخال رابط صحيح يبدأ بـ http:// أو https://');
+      return;
+    }
+
+    let type = 'file';
+    const isImage = /\.(jpeg|jpg|gif|png|webp|svg)/i.test(url) || url.includes('image') || url.includes('img') || url.includes('imgbb') || url.includes('postimg') || url.includes('ibb.co');
+    const isVideo = /\.(mp4|webm|ogg|mov)/i.test(url) || url.includes('video');
+    const isPdf = /\.pdf/i.test(url) || url.includes('pdf');
+
+    if (isImage) type = 'image';
+    else if (isVideo) type = 'video';
+    else if (isPdf) type = 'pdf';
+
+    let name = 'رابط خارجي';
+    try {
+      const urlObj = new URL(url);
+      const pathname = urlObj.pathname;
+      const filename = pathname.substring(pathname.lastIndexOf('/') + 1);
+      if (filename && filename.includes('.')) {
+        name = decodeURIComponent(filename);
+      } else {
+        name = urlObj.hostname + ' (رابط)';
+      }
+    } catch (_) {}
+
+    const newAttachment = {
+      name: name,
+      type: type,
+      data: url
+    };
+
+    setNewsForm(prev => ({
+      ...prev,
+      attachments: [...(prev.attachments || []), newAttachment]
+    }));
+
+    setExternalUrl('');
+  };
+
   const handleAddNews = (e) => {
     e.preventDefault();
     setNews([...news, { ...newsForm, id: Date.now() }]);
     setShowAddModal(null);
     setNewsForm({ title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'إعلان عام', status: 'منشور', attachments: [] });
+    setExternalUrl('');
   };
 
   const checkLiveConflict = (newLive, excludeId = null) => {
@@ -4981,13 +5123,52 @@ function ShariaDashboard() {
                 </div>
                 <div>
                   <label style={labelStyle}>المرفقات (صور، فيديو، أو ملفات PDF)</label>
-                  <input 
-                    type="file" 
-                    accept="image/*,video/*,application/pdf" 
-                    multiple 
-                    onChange={handleNewsFileChange} 
-                    style={{ ...inputStyle, padding: '6px 10px' }} 
-                  />
+                  
+                  {/* File Upload Input */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>رفع من الجهاز:</span>
+                    <input 
+                      type="file" 
+                      accept="image/*,video/*,application/pdf" 
+                      multiple 
+                      onChange={handleNewsFileChange} 
+                      style={{ ...inputStyle, padding: '6px 10px' }} 
+                    />
+                  </div>
+
+                  {/* External URL Input */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '10px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>أو أضف رابط صورة/ملف خارجي مباشرة (لتوفير مساحة المتصفح):</span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input 
+                        type="text" 
+                        placeholder="مثال: https://i.ibb.co/xyz/image.jpg" 
+                        value={externalUrl}
+                        onChange={(e) => setExternalUrl(e.target.value)}
+                        style={{ ...inputStyle, flex: 1, padding: '6px 10px', fontSize: '13px' }} 
+                      />
+                      <button 
+                        type="button"
+                        onClick={handleAddExternalUrl}
+                        style={{
+                          backgroundColor: 'rgba(255,255,255,0.08)',
+                          border: '1px solid var(--border-subtle)',
+                          color: 'var(--text-primary)',
+                          borderRadius: '6px',
+                          padding: '0 15px',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        إضافة رابط
+                      </button>
+                    </div>
+                    <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', marginBottom: '0', direction: 'rtl', lineHeight: '1.5' }}>
+                      💡 لتجنب امتلاء مساحة المتصفح، يمكنك رفع ملفاتك/صورك على موقع رفع خارجي مثل <a href="https://imgbb.com" target="_blank" rel="noreferrer" style={{ color: '#84cc16', textDecoration: 'underline' }}>ImgBB</a> أو <a href="https://postimages.org" target="_blank" rel="noreferrer" style={{ color: '#84cc16', textDecoration: 'underline' }}>PostImages</a> ثم نسخ "الرابط المباشر (Direct Link)" ولصقه هنا.
+                    </p>
+                  </div>
+
                   {newsForm.attachments && newsForm.attachments.length > 0 && (
                     <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
                       {newsForm.attachments.map((file, index) => (
