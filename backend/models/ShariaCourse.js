@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const shariaCourseSchema = new mongoose.Schema(
   {
+    id: { type: String, unique: true, sparse: true },
     name: { type: String, required: true },
     stage: String,
     level: String,

@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const shariaLiveSchema = new mongoose.Schema(
   {
+    id: { type: String, unique: true, sparse: true },
     title: { type: String, required: true },
     governorate: String,
     stage: String,

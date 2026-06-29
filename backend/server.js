@@ -8,6 +8,7 @@ dotenv.config();
 
 // Disable buffering to prevent serverless function timeouts on connection issues
 mongoose.set('bufferCommands', false);
+mongoose.set('strictQuery', false);
 
 // Mongoose query middleware plugin to handle queries searching by custom 'id' field
 // that might actually be MongoDB's native '_id'.

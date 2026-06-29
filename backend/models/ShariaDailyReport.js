@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const shariaDailyReportSchema = new mongoose.Schema(
   {
+    id: { type: String, unique: true, sparse: true },
     governorate: { type: String, required: true },
     stage: { type: String, required: true },
     level: { type: String, required: true },
