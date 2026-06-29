@@ -67,7 +67,7 @@ function ShariaDashboard() {
     shariaStudents = [], addShariaStudent, updateShariaStudent, deleteShariaStudent, bulkImportShariaStudents,
     shariaTeachers = [], addShariaTeacher, updateShariaTeacher, deleteShariaTeacher, bulkImportShariaTeachers,
     shariaLiveLectures = [], addShariaLive, updateShariaLive, deleteShariaLive,
-    shariaNews: news = [], addShariaNews, deleteShariaNews,
+    shariaNews: news = [], addShariaNews, updateShariaNews, deleteShariaNews,
     shariaSchedules = [], addShariaSchedule, updateShariaSchedule, deleteShariaSchedule,
     shariaAttendance = [], addShariaAttendance,
     lectureAccessLogs = [], addLectureAccessLog, updateLectureAccessDuration
@@ -207,6 +207,7 @@ function ShariaDashboard() {
   const [editingCourse, setEditingCourse] = useState(null);
   const [editingShariaBranch, setEditingShariaBranch] = useState(null);
   const [editingLive, setEditingLive] = useState(null);
+  const [editingNews, setEditingNews] = useState(null);
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [enlargeImage, setEnlargeImage] = useState(null);
 
@@ -599,10 +600,17 @@ function ShariaDashboard() {
     }
     
     if (loadedFiles.length > 0) {
-      setNewsForm(prev => ({
-        ...prev,
-        attachments: [...(prev.attachments || []), ...loadedFiles]
-      }));
+      if (editingNews) {
+        setEditingNews(prev => ({
+          ...prev,
+          attachments: [...(prev.attachments || []), ...loadedFiles]
+        }));
+      } else {
+        setNewsForm(prev => ({
+          ...prev,
+          attachments: [...(prev.attachments || []), ...loadedFiles]
+        }));
+      }
     }
     e.target.value = '';
   };
@@ -644,10 +652,17 @@ function ShariaDashboard() {
       data: url
     };
 
-    setNewsForm(prev => ({
-      ...prev,
-      attachments: [...(prev.attachments || []), newAttachment]
-    }));
+    if (editingNews) {
+      setEditingNews(prev => ({
+        ...prev,
+        attachments: [...(prev.attachments || []), newAttachment]
+      }));
+    } else {
+      setNewsForm(prev => ({
+        ...prev,
+        attachments: [...(prev.attachments || []), newAttachment]
+      }));
+    }
 
     setExternalUrl('');
   };
@@ -658,6 +673,13 @@ function ShariaDashboard() {
     setShowAddModal(null);
     setNewsForm({ title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'إعلان عام', status: 'منشور', attachments: [] });
     setExternalUrl('');
+  };
+
+  const handleEditNews = (e) => {
+    e.preventDefault();
+    if (!editingNews) return;
+    updateShariaNews(editingNews.id, editingNews);
+    setEditingNews(null);
   };
 
   const checkLiveConflict = (newLive, excludeId = null) => {
@@ -3507,12 +3529,22 @@ function ShariaDashboard() {
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{n.date}</span>
                     {!isShariaStudent && (
-                      <button 
-                        onClick={() => handleDelete(n.id, 'news')}
-                        style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}
-                      >
-                        <Trash size={15} />
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button 
+                          onClick={() => setEditingNews(n)}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          title="تعديل الخبر"
+                        >
+                          <Edit size={15} />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(n.id, 'news')}
+                          style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          title="حذف الخبر"
+                        >
+                          <Trash size={15} />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -5082,6 +5114,115 @@ function ShariaDashboard() {
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
                   <button type="button" onClick={() => setShowAddModal(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
                   <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#84cc16', border: 'none', color: 'white' }}>نشر الآن</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 7b: Edit News */}
+      {editingNews && (
+        <div style={modalOverlayStyle}>
+          <div style={modalContentStyle}>
+            <div style={modalHeaderStyle}>
+              <h2 style={{ fontSize: '17px', color: 'var(--text-primary)', fontWeight: 'bold' }}>تعديل الإعلان أو الخبر</h2>
+              <button onClick={() => setEditingNews(null)} style={closeBtnStyle}><X size={18} /></button>
+            </div>
+            <form onSubmit={handleEditNews}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '15px' }}>
+                <div>
+                  <label style={labelStyle}>عنوان الخبر / الإعلان</label>
+                  <input type="text" required placeholder="عنوان جاذب وواضح" value={editingNews.title} onChange={(e) => setEditingNews({ ...editingNews, title: e.target.value })} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>نوع الإعلان</label>
+                  <select value={editingNews.category} onChange={(e) => setEditingNews({ ...editingNews, category: e.target.value })} style={selectStyle}>
+                    <option value="إعلان عام">إعلان عام</option>
+                    <option value="تعديل جدول">تعديل جدول</option>
+                    <option value="نتائج امتحانات">نتائج امتحانات</option>
+                    <option value="فعالية علمية">فعالية علمية</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>محتوى الخبر بالكامل</label>
+                  <textarea required rows="4" value={editingNews.content} onChange={(e) => setEditingNews({ ...editingNews, content: e.target.value })} style={{ ...inputStyle, fontFamily: 'inherit', resize: 'vertical' }}></textarea>
+                </div>
+                <div>
+                  <label style={labelStyle}>المرفقات (صور، فيديو، أو ملفات PDF)</label>
+                  
+                  {/* File Upload Input */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>رفع من الجهاز:</span>
+                    <input 
+                      type="file" 
+                      accept="image/*,video/*,application/pdf" 
+                      multiple 
+                      onChange={handleNewsFileChange} 
+                      style={{ ...inputStyle, padding: '6px 10px' }} 
+                    />
+                  </div>
+
+                  {/* External URL Input */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '10px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>أو أضف رابط صورة/ملف خارجي مباشرة (لتوفير مساحة المتصفح):</span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input 
+                        type="text" 
+                        placeholder="مثال: https://i.ibb.co/xyz/image.jpg" 
+                        value={externalUrl}
+                        onChange={(e) => setExternalUrl(e.target.value)}
+                        style={{ ...inputStyle, flex: 1, padding: '6px 10px', fontSize: '13px' }} 
+                      />
+                      <button 
+                        type="button"
+                        onClick={handleAddExternalUrl}
+                        style={{
+                          backgroundColor: 'rgba(255,255,255,0.08)',
+                          border: '1px solid var(--border-subtle)',
+                          color: 'var(--text-primary)',
+                          borderRadius: '6px',
+                          padding: '0 15px',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        إضافة رابط
+                      </button>
+                    </div>
+                  </div>
+
+                  {editingNews.attachments && editingNews.attachments.length > 0 && (
+                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      {editingNews.attachments.map((file, index) => (
+                        <div key={index} style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          backgroundColor: 'rgba(255,255,255,0.05)',
+                          padding: '6px 10px',
+                          borderRadius: '6px',
+                          fontSize: '13px'
+                        }}>
+                          <span style={{ color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '80%' }}>
+                            {file.name} ({file.type === 'image' ? 'صورة' : file.type === 'video' ? 'فيديو' : 'ملف PDF'})
+                          </span>
+                          <button 
+                            type="button" 
+                            onClick={() => setEditingNews(prev => ({ ...prev, attachments: prev.attachments.filter((_, i) => i !== index) }))}
+                            style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '12px' }}
+                          >
+                            حذف
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px' }}>
+                  <button type="button" onClick={() => setEditingNews(null)} className="btn btn-secondary" style={{ padding: '8px 16px' }}>إلغاء</button>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '8px 20px', fontWeight: 'bold', backgroundColor: '#84cc16', border: 'none', color: 'white' }}>حفظ التعديلات</button>
                 </div>
               </div>
             </form>

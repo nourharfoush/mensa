@@ -2138,6 +2138,10 @@ export function AppDataProvider({ children }) {
     setShariaNews(prev => [...prev, newNews]);
     shariaNewsAPI.create(newNews).catch(err => console.error(err));
   };
+  const updateShariaNews = (id, updatedNews) => {
+    setShariaNews(prev => prev.map(n => String(n.id) === String(id) ? { ...n, ...updatedNews } : n));
+    shariaNewsAPI.update(id, updatedNews).catch(err => console.error(err));
+  };
   const deleteShariaNews = (id) => {
     setShariaNews(prev => prev.filter(n => String(n.id) !== String(id)));
     shariaNewsAPI.delete(id).catch(err => console.error(err));
@@ -2248,7 +2252,7 @@ export function AppDataProvider({ children }) {
       shariaStudents, addShariaStudent, updateShariaStudent, deleteShariaStudent, bulkImportShariaStudents,
       shariaTeachers, addShariaTeacher, updateShariaTeacher, deleteShariaTeacher, bulkImportShariaTeachers,
       shariaLiveLectures, addShariaLive, updateShariaLive, deleteShariaLive,
-      shariaNews, addShariaNews, deleteShariaNews,
+      shariaNews, addShariaNews, updateShariaNews, deleteShariaNews,
       shariaSchedules, addShariaSchedule, updateShariaSchedule, deleteShariaSchedule,
       shariaAttendance, addShariaAttendance,
       lectureAccessLogs, addLectureAccessLog, updateLectureAccessDuration,
