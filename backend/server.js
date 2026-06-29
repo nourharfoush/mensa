@@ -80,6 +80,7 @@ import shariaStudentRoutes from './routes/shariastudents.js';
 import shariaTeacherRoutes from './routes/shariateachers.js';
 import shariaLiveRoutes from './routes/sharialives.js';
 import shariaDailyReportRoutes from './routes/shariadailyreports.js';
+import shariaNewsRoutes from './routes/sharianews.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -227,6 +228,7 @@ app.use('/api/shariastudents', shariaStudentRoutes);
 app.use('/api/shariateachers', shariaTeacherRoutes);
 app.use('/api/sharialives', shariaLiveRoutes);
 app.use('/api/shariadailyreports', shariaDailyReportRoutes);
+app.use('/api/sharianews', shariaNewsRoutes);
 
 // Debug database endpoint
 app.get('/api/debug-db', async (req, res) => {

@@ -6,7 +6,7 @@ import {
   sessionReportsAPI, platformTopManagementAPI, platformSupervisorsAPI, platformCoordinatorsAPI,
   platformMohfezsAPI, platformSessionsAPI, platformStudentsAPI, platformApplicantsAPI,
   platformRowaqsAPI, administrationsAPI, rolePermissionsAPI,
-  shariaCoursesAPI, shariaBranchesAPI, shariaStudentsAPI, shariaTeachersAPI, shariaLivesAPI, shariaDailyReportsAPI
+  shariaCoursesAPI, shariaBranchesAPI, shariaStudentsAPI, shariaTeachersAPI, shariaLivesAPI, shariaDailyReportsAPI, shariaNewsAPI
 } from '../utils/apiService';
 
 const AppDataContext = createContext(null);
@@ -354,6 +354,17 @@ export function AppDataProvider({ children }) {
     const raw = getFromLocalStorage('sharia_courses', []);
     return raw.map(c => ({ ...c, stage: normalizeStage(c.stage) }));
   });
+  const [shariaNews, setShariaNews] = useState(() => getFromLocalStorage('sharia_news', [
+    {
+      id: 'sn-1',
+      title: "بدء الفصل الدراسي الجديد لعام 2026",
+      content: "يسر قطاع العلوم الشرعية والعربية بالجامع الأزهر الشريف الإعلان عن بدء الدراسة في فروع الرواق الأزهري لمرحلة العلوم الشرعية والعربية بكافة المحافظات بدءاً من السبت القادم. يرجى من جميع الدارسين مراجعة المناهج والجداول المرفقة.",
+      date: new Date().toISOString().split('T')[0],
+      category: "إعلان عام",
+      status: "منشور",
+      attachments: []
+    }
+  ]));
   const [shariaBranches, setShariaBranches] = useState(() => getFromLocalStorage('sharia_branches', [
     { id: 'sb-1', name: 'فرع معهد تفهنا الأشراف الشرعي', governorate: 'الدقهلية', code: 'SH-DK01', address: 'معهد فتيات تفهنا الأشراف' },
     { id: 'sb-2', name: 'فرع الجامع الأزهر الرئيسي', governorate: 'الجامع الأزهر', code: 'SH-AZ01', address: 'مقر الجامع الأزهر الشريف بالقاهرة' }
@@ -507,6 +518,7 @@ export function AppDataProvider({ children }) {
         await syncCollection(shariaTeachersAPI, shariaTeachers, setShariaTeachers, 'sharia_teachers');
         await syncCollection(shariaLivesAPI, shariaLiveLectures, setShariaLiveLectures, 'sharia_live', l => ({ ...l, stage: normalizeStage(l.stage) }));
         await syncCollection(shariaDailyReportsAPI, shariaDailyReports, setShariaDailyReports, 'sharia_daily_reports');
+        await syncCollection(shariaNewsAPI, shariaNews, setShariaNews, 'sharia_news');
 
         // One-time correction for swapped admin and decision_no fields and shifted columns in database
         try {
@@ -2121,6 +2133,16 @@ export function AppDataProvider({ children }) {
     }
   };
 
+  const addShariaNews = (newsItem) => {
+    const newNews = { ...newsItem, id: String(Date.now() + Math.random()) };
+    setShariaNews(prev => [...prev, newNews]);
+    shariaNewsAPI.create(newNews).catch(err => console.error(err));
+  };
+  const deleteShariaNews = (id) => {
+    setShariaNews(prev => prev.filter(n => String(n.id) !== String(id)));
+    shariaNewsAPI.delete(id).catch(err => console.error(err));
+  };
+
   const addShariaSchedule = (schedule) => {
     const newSchedule = { ...schedule, id: String(Date.now() + Math.random()) };
     setShariaSchedules(prev => [...prev, newSchedule]);
@@ -2226,6 +2248,7 @@ export function AppDataProvider({ children }) {
       shariaStudents, addShariaStudent, updateShariaStudent, deleteShariaStudent, bulkImportShariaStudents,
       shariaTeachers, addShariaTeacher, updateShariaTeacher, deleteShariaTeacher, bulkImportShariaTeachers,
       shariaLiveLectures, addShariaLive, updateShariaLive, deleteShariaLive,
+      shariaNews, addShariaNews, deleteShariaNews,
       shariaSchedules, addShariaSchedule, updateShariaSchedule, deleteShariaSchedule,
       shariaAttendance, addShariaAttendance,
       lectureAccessLogs, addLectureAccessLog, updateLectureAccessDuration,

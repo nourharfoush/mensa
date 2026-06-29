@@ -56,51 +56,7 @@ const isOnlineTeacher = (t) => {
 };
 
 
-// Native IndexedDB Helper for news storage (bypass 5MB localStorage limit)
-const initNewsDB = () => {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open('ShariaNewsDB', 1);
-    request.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains('newsStore')) {
-        db.createObjectStore('newsStore');
-      }
-    };
-    request.onsuccess = (e) => resolve(e.target.result);
-    request.onerror = (e) => reject(e.target.error);
-  });
-};
 
-const getNewsFromDB = async () => {
-  try {
-    const db = await initNewsDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction('newsStore', 'readonly');
-      const store = tx.objectStore('newsStore');
-      const req = store.get('sharia_news');
-      req.onsuccess = () => resolve(req.result || null);
-      req.onerror = () => reject(req.error);
-    });
-  } catch (err) {
-    console.error("IndexedDB error reading news:", err);
-    return null;
-  }
-};
-
-const saveNewsToDB = async (newsData) => {
-  try {
-    const db = await initNewsDB();
-    return new Promise((resolve, reject) => {
-      const tx = db.transaction('newsStore', 'readwrite');
-      const store = tx.objectStore('newsStore');
-      const req = store.put(newsData, 'sharia_news');
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
-    });
-  } catch (err) {
-    console.error("IndexedDB error writing news:", err);
-  }
-};
 
 
 function ShariaDashboard() {
@@ -111,6 +67,7 @@ function ShariaDashboard() {
     shariaStudents = [], addShariaStudent, updateShariaStudent, deleteShariaStudent, bulkImportShariaStudents,
     shariaTeachers = [], addShariaTeacher, updateShariaTeacher, deleteShariaTeacher, bulkImportShariaTeachers,
     shariaLiveLectures = [], addShariaLive, updateShariaLive, deleteShariaLive,
+    shariaNews: news = [], addShariaNews, deleteShariaNews,
     shariaSchedules = [], addShariaSchedule, updateShariaSchedule, deleteShariaSchedule,
     shariaAttendance = [], addShariaAttendance,
     lectureAccessLogs = [], addLectureAccessLog, updateLectureAccessDuration
@@ -255,81 +212,7 @@ function ShariaDashboard() {
 
   const [exams, setExams] = useState([]);
   const [results, setResults] = useState([]);
-  const [news, setNews] = useState([]);
-  const [isNewsLoaded, setIsNewsLoaded] = useState(false);
 
-  // Load news asynchronously from IndexedDB, with localStorage fallback
-  useEffect(() => {
-    const loadNewsData = async () => {
-      try {
-        let saved = await getNewsFromDB();
-        if (!saved) {
-          // Fallback to localStorage
-          const localSaved = localStorage.getItem('sharia_news');
-          if (localSaved) {
-            try {
-              saved = JSON.parse(localSaved);
-              // Migrate to IndexedDB
-              await saveNewsToDB(saved);
-            } catch (err) {
-              console.error("Error parsing localSaved sharia_news:", err);
-            }
-          }
-        }
-        
-        if (saved && Array.isArray(saved) && saved.length > 0) {
-          setNews(saved);
-        } else {
-          // Default news item if empty
-          const defaultNews = [
-            {
-              id: 1,
-              title: "بدء الفصل الدراسي الجديد لعام 2026",
-              content: "يسر قطاع العلوم الشرعية والعربية بالجامع الأزهر الشريف الإعلان عن بدء الدراسة في فروع الرواق الأزهري لمرحلة العلوم الشرعية والعربية بكافة المحافظات بدءاً من السبت القادم. يرجى من جميع الدارسين مراجعة المناهج والجداول المرفقة.",
-              date: new Date().toISOString().split('T')[0],
-              category: "إعلان عام",
-              status: "منشور",
-              attachments: []
-            }
-          ];
-          setNews(defaultNews);
-          await saveNewsToDB(defaultNews);
-        }
-      } catch (e) {
-        console.error("Error loading news in dashboard:", e);
-      } finally {
-        setIsNewsLoaded(true);
-      }
-    };
-
-    loadNewsData();
-  }, []);
-
-  // Save news to IndexedDB when updated
-  useEffect(() => {
-    if (!isNewsLoaded) return;
-    
-    const saveNewsData = async () => {
-      try {
-        await saveNewsToDB(news);
-        
-        // Save a clean backup to localStorage WITHOUT large base64 attachments to avoid QuotaExceededError
-        const backupNews = news.map(item => ({
-          ...item,
-          attachments: (item.attachments || []).map(att => 
-            att.type === 'image' && att.data && att.data.startsWith('data:') 
-              ? { ...att, data: '' } // strip large base64 data for backup
-              : att
-          )
-        }));
-        localStorage.setItem('sharia_news_backup', JSON.stringify(backupNews));
-      } catch (e) {
-        console.error("Error saving news to database/backup:", e);
-      }
-    };
-
-    saveNewsData();
-  }, [news, isNewsLoaded]);
 
 
   // --- NEW ITEM FORM STATES ---
@@ -771,7 +654,7 @@ function ShariaDashboard() {
 
   const handleAddNews = (e) => {
     e.preventDefault();
-    setNews([...news, { ...newsForm, id: Date.now() }]);
+    addShariaNews(newsForm);
     setShowAddModal(null);
     setNewsForm({ title: '', content: '', date: new Date().toISOString().split('T')[0], category: 'إعلان عام', status: 'منشور', attachments: [] });
     setExternalUrl('');
@@ -1004,7 +887,7 @@ function ShariaDashboard() {
     }
     if (listName === 'news') {
       if (confirm('هل أنت متأكد من رغبتك في حذف هذا السجل؟')) {
-        setNews(news.filter(x => x.id !== id));
+        deleteShariaNews(id);
       }
     }
     if (listName === 'live') {
