@@ -3885,6 +3885,28 @@ function ShariaDashboard() {
                   <option value="الجمعة">الجمعة</option>
                 </select>
               </div>
+
+              <div style={{ 
+                marginRight: 'auto', 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px', 
+                fontSize: '13px', 
+                color: 'var(--text-secondary)',
+                fontWeight: 'bold'
+              }}>
+                <span>عدد المحاضرات:</span>
+                <span style={{ 
+                  backgroundColor: 'rgba(214, 175, 55, 0.1)', 
+                  color: 'var(--accent-gold)', 
+                  padding: '4px 10px', 
+                  borderRadius: '20px', 
+                  fontSize: '12px',
+                  fontWeight: 'bold'
+                }}>
+                  {getFilteredLiveLectures().length}
+                </span>
+              </div>
             </div>
           )}
 
