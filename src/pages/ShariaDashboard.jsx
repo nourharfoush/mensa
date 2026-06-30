@@ -107,6 +107,7 @@ function ShariaDashboard() {
   const [selectedLiveStage, setSelectedLiveStage] = useState('الكل');
   const [selectedLiveLevel, setSelectedLiveLevel] = useState('الكل');
   const [selectedLiveDiscipline, setSelectedLiveDiscipline] = useState('الكل');
+  const [selectedLiveDay, setSelectedLiveDay] = useState('الكل');
   const [teacherFilterGov, setTeacherFilterGov] = useState('الكل');
   const [teacherFilterBranch, setTeacherFilterBranch] = useState('الكل');
 
@@ -1526,6 +1527,9 @@ function ShariaDashboard() {
       if (selectedLiveLevel !== 'الكل') {
         filtered = filtered.filter(l => l.level === selectedLiveLevel);
       }
+      if (selectedLiveDay !== 'الكل') {
+        filtered = filtered.filter(l => l.day === selectedLiveDay);
+      }
     } else {
       filtered = filtered.filter(l => 
         (selectedGov === 'الكل' || l.governorate === selectedGov || l.governorate === 'جميع المحافظات')
@@ -1538,6 +1542,9 @@ function ShariaDashboard() {
       }
       if (selectedLiveLevel !== 'الكل') {
         filtered = filtered.filter(l => l.level === selectedLiveLevel);
+      }
+      if (selectedLiveDay !== 'الكل') {
+        filtered = filtered.filter(l => l.day === selectedLiveDay);
       }
     }
     if (showOnlyActiveLives) {
@@ -3849,6 +3856,33 @@ function ShariaDashboard() {
                   <option value="المستوى الثاني">المستوى الثاني</option>
                   <option value="المستوى الثالث">المستوى الثالث</option>
                   <option value="المستوى الرابع">المستوى الرابع</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>اليوم:</label>
+                <select
+                  value={selectedLiveDay}
+                  onChange={(e) => setSelectedLiveDay(e.target.value)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--border-subtle)',
+                    backgroundColor: 'var(--bg-card)',
+                    color: 'var(--text-primary)',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    outline: 'none'
+                  }}
+                >
+                  <option value="الكل">كل الأيام</option>
+                  <option value="السبت">السبت</option>
+                  <option value="الأحد">الأحد</option>
+                  <option value="الإثنين">الإثنين</option>
+                  <option value="الثلاثاء">الثلاثاء</option>
+                  <option value="الأربعاء">الأربعاء</option>
+                  <option value="الخميس">الخميس</option>
+                  <option value="الجمعة">الجمعة</option>
                 </select>
               </div>
             </div>
